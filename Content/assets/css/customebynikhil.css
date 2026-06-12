@@ -1,0 +1,26 @@
+﻿.nav-dropdown .dropdown-menu-sidebar {
+    display: none;
+    padding-left: 15px;
+}
+
+.nav-dropdown.active .dropdown-menu-sidebar {
+    display: block;
+}
+
+.sub-link {
+    padding-left: 45px;
+    font-size: 14px;
+}
+
+.dropdown-toggle-menu {
+    cursor: pointer;
+}
+
+.dropdown-icon {
+    transition: 0.3s;
+}
+
+.nav-dropdown.active .dropdown-icon {
+    transform: rotate(180deg);
+}
+

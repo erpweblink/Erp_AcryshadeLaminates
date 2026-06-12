@@ -1,0 +1,268 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="MasterPage.master.cs" Inherits="MasterPage" %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Designed for Acryshade Laminates Pvt. Ltd.">
+    <title>Acryshade Laminates</title>
+
+    <link rel="stylesheet" href="../Content/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../Content/assets/vendors/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="../Content/assets/css/customebynikhil.css" />
+    <link rel="stylesheet" href="../Content/assets/css/style.css">
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+
+<body>
+    <div class="admin-shell">
+        <div class="sidebar-backdrop" data-sidebar-close></div>
+        <aside class="admin-sidebar" id="adminSidebar" aria-label="Main navigation">
+            <div class="sidebar-header">
+                <a class="brand-mark" href="https://www.acryshadelaminates.com/" aria-label="Acryshade Laminates">
+                    <span>
+                        <img src="../Content/assets/images/CompanyLogo/CompLogo.jpg" style="width: 39px;" /></span>
+                    <span class="brand-copy">
+                        <span class="brand-title">Acryshade Laminates</span>
+                        <span class="brand-subtitle">Acryshade Laminates Pvt. Ltd.</span>
+                    </span>
+                </a>
+            </div>
+            <%-- {active}... class to make it bold--%>
+            <nav class="sidebar-nav">
+                <a class="nav-link active" href="/Admin/Dashboard.aspx" aria-current="page" id="DashboardTab" runat="server">
+                    <span class="nav-icon"><i class="bi bi-speedometer2" aria-hidden="true"></i></span>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+
+                <div class="nav-dropdown" id="MasterTab" runat="server">
+                    <a href="javascript:void(0);" class="nav-link dropdown-toggle-menu active">
+                        <span class="nav-icon">
+                            <i class="bi bi-window-stack"></i>
+                        </span>
+
+                        <span class="nav-text">Masters</span>
+                        <span class="ms-auto d-none">
+                            <i class="bi bi-chevron-down dropdown-icon" style="color: #3d73ea;font-weight: 900;"></i>
+                        </span>
+                    </a>
+
+                    <div class="dropdown-menu-sidebar">
+                        <a href="/Admin/RoleMaster.aspx" class="nav-link sub-link" id="RolesTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-person-vcard"></i>
+                            </span>
+
+                            <span class="nav-text">Roles</span>
+                        </a>
+
+                        <a href="/Admin/UserList.aspx" class="nav-link sub-link" id="UsersTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-people"></i>
+                            </span>
+
+                            <span class="nav-text">Users</span>
+                        </a>
+
+                        <a href="/Admin/DealerList.aspx" class="nav-link sub-link" id="DealersTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-person"></i>
+                            </span>
+
+                            <span class="nav-text">Dealers</span>
+                        </a>
+
+                        <a href="/Admin/CompanyList.aspx" class="nav-link sub-link" id="CompaniesTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-link"></i>
+                            </span>
+
+                            <span class="nav-text">Sub Dealers</span>
+                        </a>
+
+                        <a href="/Admin/StageList.aspx" class="nav-link sub-link" id="StagesTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-list-nested"></i>
+                            </span>
+
+                            <span class="nav-text">Stages</span>
+                        </a>
+
+                        <a href="/Admin/MachineList.aspx" class="nav-link sub-link" id="MachineTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-tools"></i>
+                            </span>
+
+                            <span class="nav-text">Machine</span>
+                        </a>
+
+                        <a href="/Admin/RawMaterialList.aspx" class="nav-link sub-link" id="RawMatTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-boxes"></i>
+                            </span>
+
+                            <span class="nav-text">Raw Material</span>
+                        </a>
+
+                        <a href="/Admin/ProductList.aspx" class="nav-link sub-link" id="ProductTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-cart-check-fill"></i>
+                            </span>
+
+                            <span class="nav-text">Products</span>
+                        </a>
+
+                        <a href="/Admin/TransporterList.aspx" class="nav-link sub-link" id="TransTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-truck"></i>
+                            </span>
+
+                            <span class="nav-text">Transporter</span>
+                        </a>
+                    </div>
+                </div>
+
+                <a class="nav-link active" href="/Admin/WorkOrderList.aspx" aria-current="page" id="WOrdTab" runat="server">
+                    <span class="nav-icon"><i class="bi bi-card-checklist" aria-hidden="true"></i></span>
+                    <span class="nav-text">Work Order</span>
+                </a>
+
+                <a class="nav-link active" href="/Production/ReceivedWOList.aspx" aria-current="page" id="SchedTab" runat="server">
+                    <span class="nav-icon"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+                    <span class="nav-text">Scheduler</span>
+                </a>
+
+                <div class="nav-dropdown" id="ProductionTab" runat="server">
+                    <a href="javascript:void(0);" class="nav-link dropdown-toggle-menu active">
+                        <span class="nav-icon">
+                            <i class="bi bi-buildings"></i>
+                        </span>
+
+                        <span class="nav-text">Production</span>
+                        <span class="ms-auto d-none">
+                            <i class="bi bi-chevron-down dropdown-icon" style="color: #3d73ea;font-weight: 900;"></i>
+                        </span>
+                    </a>
+
+                    <div class="dropdown-menu-sidebar">
+                        <a href="/Production/AssignMachine.aspx" class="nav-link sub-link" id="AssMCTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-robot"></i>
+                            </span>
+
+                            <span class="nav-text">Assign Machine</span>
+                        </a>
+
+                        <a href="/Production/WorkOrdrForDesign.aspx" class="nav-link sub-link" id="DesAppTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-hand-thumbs-up-fill"></i>
+                            </span>
+
+                            <span class="nav-text">Approve Designs</span>
+                        </a>
+
+                        <a href="/Production/AssignWorkOrder.aspx" class="nav-link sub-link" id="RecWOTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-clipboard-check"></i>
+                            </span>
+
+                            <span class="nav-text">Start Production</span>
+                        </a>
+
+                        <a href="/Production/WOProduction.aspx" class="nav-link sub-link" id="WOProdTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-building-gear"></i>
+                            </span>
+
+                            <span class="nav-text">Production</span>
+                        </a>
+
+                    </div>
+                </div>
+
+
+                <div class="nav-dropdown" id="DIvRep" runat="server">
+                    <a href="javascript:void(0);" class="nav-link dropdown-toggle-menu active">
+                        <span class="nav-icon">
+                            <i class="bi bi-file-earmark-spreadsheet" ></i>
+                        </span>
+
+                        <span class="nav-text">Reports</span>
+                        <span class="ms-auto d-none">
+                            <i class="bi bi-chevron-down dropdown-icon" style="color: #3d73ea;font-weight: 900;"></i>
+                        </span>
+                    </a>
+
+                    <div class="dropdown-menu-sidebar">
+                        <a href="/Production/ProductionTrackingReports.aspx" class="nav-link sub-link" id="PTRTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-caret-right-fill"></i>
+                            </span>
+                            <span class="nav-text">Production Tracking Reports</span>
+                        </a>
+                    </div>
+                </div>
+
+
+                <a class="nav-link active" href="/Authorization/UserAuthorization.aspx" aria-current="page" id="UserAuthorTab" runat="server">
+                    <span class="nav-icon"><i class="bi bi-universal-access" aria-hidden="true"></i></span>
+                    <span class="nav-text">User Authorization</span>
+                </a>
+            </nav>
+        </aside>
+
+        <div class="admin-main">
+            <nav class="navbar admin-navbar navbar-expand bg-white">
+                <div class="container-fluid px-3 px-lg-4">
+                    <button class="sidebar-toggle" type="button" data-sidebar-toggle aria-controls="adminSidebar" aria-expanded="true" aria-label="Toggle sidebar">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <div class="navbar-actions ms-auto">
+                        <button class="icon-button theme-toggle d-none" type="button" data-theme-toggle aria-label="Switch color theme" title="Switch color theme">
+                            <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
+                        </button>
+
+                        <div class="dropdown">
+                            <button class="profile-button dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div id="divAvatar" runat="server" class="avatar-circle">
+                                    A
+                                </div>
+                                <span id="spnUserName" runat="server" class="profile-name d-none d-sm-inline">Admin</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="../Login.aspx">Sign out</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            <main class="dashboard-content">
+                <div class="container-fluid px-3 px-lg-4 py-4">
+                    <form id="mainForm" runat="server">
+                        <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
+                        </asp:ContentPlaceHolder>
+                    </form>
+                </div>
+            </main>
+            <br />
+            <br />
+            <br />
+            <br />
+            <footer class="admin-footer">
+                <div class="container-fluid px-3 px-lg-4 fw-bolder">
+                    <span>Copyright @2026 Acryshade Laminates Pvt. Ltd.
+                        <br>
+                        Developed by <a target="_blank" class="fw-bold text-success" href="https://www.weblinkservices.net/">Web Link Services Pvt. Ltd.</a></span>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <script src="../Content/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="../Content/assets/js/main.js"></script>
+    <script src="../Content/assets/js/customebynikhil.js"></script>
+</body>
+</html>

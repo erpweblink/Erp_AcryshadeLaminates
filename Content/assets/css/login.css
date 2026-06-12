@@ -1,0 +1,368 @@
+﻿/*.container {
+    min-height: 100vh;*/ /* Full screen height */
+    /*display: flex;
+    justify-content: center;*/ /* Horizontal center */
+    /*align-items: center;*/ /* Vertical center */
+    /*background-color: #f4f7fa;
+}
+
+.border-solid {
+    border: 2px solid #ccc;*/ /* solid gray border */
+    /*padding: 15px;*/ /* space inside the border */
+    /*border-radius: 8px;*/ /* rounded corners (optional) */
+    /*background-color: #f9f9f9;*/ /* optional light background */
+    /*margin-bottom: 20px;*/ /* space below the box */
+/*}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa, #dfe9f3);
+    min-height: 100vh;
+}
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.border-solid {
+    width: 100%;
+    max-width: 420px;
+    border-radius: 20px;
+    background: #9a9b93;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+}
+
+.auth-box {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent;
+}
+
+.card-block {
+    padding: 25px;
+}
+
+h3 {
+    font-size: 30px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 10px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-control {
+    width: 100%;
+    height: 52px;
+    border-radius: 12px;
+    border: 1px solid #dcdcdc;
+    padding: 12px 15px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background: #fafafa;
+}
+
+    .form-control:focus {
+        border-color: #0d6efd;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+        outline: none;
+    }
+
+    .form-control::placeholder {
+        color: #999;
+    }
+
+.text-danger,
+span[style*="Red"] {
+    font-size: 13px;
+    margin-top: 5px;
+    display: block;
+}
+
+.checkbox-fade label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #555;
+}
+
+.btn-light-primary {
+    width: 100%;
+    height: 50px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+    .btn-light-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3);
+    }
+
+hr {
+    margin: 25px 0;
+    border: none;
+    border-top: 1px solid #eee;
+}
+
+.text-inverse {
+    color: #555;
+    font-size: 14px;
+}
+
+    .text-inverse b {
+        color: #0d6efd;
+    }
+
+img {
+    max-width: 100%;
+    object-fit: contain;
+}
+
+@media (max-width: 576px) {
+
+    .border-solid {
+        padding: 10px;
+        border-radius: 15px;
+    }
+
+    .card-block {
+        padding: 20px;
+    }
+
+    h3 {
+        font-size: 24px;
+    }
+
+    .form-control {
+        height: 48px;
+    }
+
+    .btn-light-primary {
+        height: 48px;
+        font-size: 15px;
+    }
+}*/
+
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+   
+}
+
+/* ===============================
+   Animated Acrylic Background
+================================== */
+
+.animated-bg {
+    position: fixed;
+    inset: 0;
+    /*background: url('../roots/assets/images/CompanyLogo/animation-1.jpg') center/cover no-repeat;*/
+    /*background: url('../images/ProductImages/10.jpg') center/cover no-repeat;*/
+    background: linear-gradient(65deg, #4e83c5 0%, #d7deeff0 42%, #4976a359 100%);
+    animation: zoomMove 10s ease-in-out infinite alternate;
+    z-index: -3;
+}
+
+.bg-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+    z-index: -2;
+}
+
+@keyframes zoomMove {
+
+    0% {
+        transform: scale(1) translateX(0px);
+    }
+
+    100% {
+        transform: scale(1.1) translateX(-20px);
+    }
+}
+
+/* ===============================
+   Login Container
+================================== */
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* ===============================
+   Glassmorphism Login Box
+================================== */
+
+.border-solid {
+    width: 100%;
+    max-width: 430px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    padding: 20px;
+}
+
+.auth-box {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.card-block {
+    padding: 25px;
+}
+
+h3 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+/* ===============================
+   Inputs
+================================== */
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-control {
+    width: 100%;
+    height: 52px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 12px 15px;
+    font-size: 15px;
+    color: #fff;
+    background: rgba(255,255,255,0.08);
+    transition: all 0.3s ease;
+}
+
+    .form-control::placeholder {
+        color: rgba(255,255,255,0.7);
+    }
+
+    .form-control:focus {
+        border-color: #fff;
+        background: rgba(255,255,255,0.12);
+        box-shadow: 0 0 0 4px rgba(255,255,255,0.15);
+        outline: none;
+    }
+
+/* ===============================
+   Remember Me
+================================== */
+
+.checkbox-fade label,
+.text-inverse {
+    color: #fff;
+    font-size: 14px;
+}
+
+/* ===============================
+   Button
+================================== */
+
+.btn-light-primary {
+    width: 100%;
+    height: 52px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ffffff, #dfe9f3);
+    color: #111;
+    font-size: 16px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+    .btn-light-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255,255,255,0.25);
+    }
+
+/* ===============================
+   Logo
+================================== */
+
+.row img {
+    width: 180px;
+    margin: 10px auto 0;
+    display: block;
+    object-fit: contain;
+}
+
+/* ===============================
+   Validators
+================================== */
+
+span[style*="Red"] {
+    color: #ffb3b3 !important;
+    font-size: 13px;
+    margin-top: 6px;
+    display: block;
+}
+
+/* ===============================
+   Responsive
+================================== */
+
+@media (max-width: 576px) {
+
+    .border-solid {
+        max-width: 100%;
+        border-radius: 18px;
+        padding: 12px;
+    }
+
+    .card-block {
+        padding: 20px;
+    }
+
+    h3 {
+        font-size: 26px;
+    }
+
+    .form-control,
+    .btn-light-primary {
+        height: 48px;
+    }
+}
