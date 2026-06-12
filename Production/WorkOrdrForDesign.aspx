@@ -1,9 +1,8 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="WorkOrdrForDesign.aspx.cs" Inherits="WorkOrdrForDesign" MasterPageFile="~/MasterPage.master" %>
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>
-
-
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <style type="text/css">
         .completionList {
             scroll-behavior: smooth;
@@ -26,7 +25,55 @@
             background-color: #5b78b1;
             font-weight: 900;
         }
+
+        /*CSS fro Image Pop UP*/
+        .product-image-preview {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .image-hover-container {
+            display: inline-block;
+        }
+
+        .image-popup {
+            display: none;
+            position: fixed; /* important */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 99999;
+            background: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 25px rgba(0,0,0,.4);
+        }
+
+            .image-popup img {
+                max-width: 600px;
+                max-height: 500px;
+                width: auto;
+                height: auto;
+            }
+
+        .image-hover-container:hover .image-popup {
+            display: block;
+        }
     </style>
+    <script type="text/javascript">
+        $("[src*=add-black]").live("click", function () {
+            $(this).closest("tr").after("<tr><td colspan = '999'>" + $(this).next().html() + "</td></tr>")
+            $(this).attr("src", "/Content/assets/images/newminus.png");
+        });
+        $("[src*=newminus]").live("click", function () {
+            $(this).attr("src", "/Content/assets/images/add-black.png");
+            $(this).closest("tr").next().remove();
+        });
+    </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <asp:ToolkitScriptManager ID="ToolkitScriptManager1" runat="server"></asp:ToolkitScriptManager>
@@ -39,13 +86,13 @@
                 <div class="card-body">
                     <div class="row align-items-end">
                         <div class="col-md-3">
-                            <asp:Label ID="Label1" runat="server" Font-Bold="true" CssClass="form-label">Dealer Name :</asp:Label>
+                            <asp:Label ID="Label1" runat="server" Font-Bold="true" CssClass="form-label">Search:</asp:Label>
                             <asp:TextBox ID="txtcompanyname" CssClass="form-control" runat="server" Width="100%" OnTextChanged="txtcompanyname_TextChanged" AutoPostBack="true"></asp:TextBox>
-                            <asp:AutoCompleteExtender ID="AutoCompleteExtender1" runat="server" CompletionListCssClass="completionList"
+                            <%--  <asp:AutoCompleteExtender ID="AutoCompleteExtender1" runat="server" CompletionListCssClass="completionList"
                                 CompletionListHighlightedItemCssClass="itemHighlighted" CompletionListItemCssClass="listItem"
                                 CompletionInterval="10" MinimumPrefixLength="1" ServiceMethod="GetCompanyList"
                                 TargetControlID="txtcompanyname" Enabled="true">
-                            </asp:AutoCompleteExtender>
+                            </asp:AutoCompleteExtender>--%>
                         </div>
                         <div class="col-md-1">
                             <asp:LinkButton ID="btnrefresh" runat="server"
@@ -68,19 +115,56 @@
                         <asp:GridView ID="Gvdetails" runat="server" DataKeyNames="ID" OnRowDataBound="Gvdetails_RowDataBound" CssClass="table table-bordered table-striped" HeaderStyle-BackColor="#5b78b1"
                             HeaderStyle-Font-Bold="true" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" AutoGenerateColumns="false" OnRowCommand="Gvdetails_RowCommand">
                             <Columns>
+                                <asp:TemplateField HeaderText=" " ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <img alt="" style="cursor: pointer; width: 26px;" src="/Content/assets/images/add-black.png" />
+                                        <asp:Panel ID="pnlOrders" runat="server" Style="display: none">
+                                            <asp:GridView ID="GVCompany" runat="server" HeaderStyle-HorizontalAlign="Center" CssClass="display table table-striped table-hover" AutoGenerateColumns="false">
+                                                <HeaderStyle BackColor="#7f9abb" />
+                                                <Columns>
+                                                    <asp:TemplateField HeaderText="Sr.No." ItemStyle-HorizontalAlign="Center">
+                                                        <ItemTemplate>
+                                                            <asp:Label ID="lblsnos" runat="server" Text='<%# Container.DataItemIndex+1 %>'></asp:Label>
+                                                        </ItemTemplate>
+                                                    </asp:TemplateField>
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="ProductName" HeaderText="Product Name" />
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="PartNo" HeaderText="Item Code" />
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="Description" HeaderText="Description" />
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="Size" HeaderText="Size" />
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="Unit" HeaderText="Unit" />
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="Qty" HeaderText="Qty" />
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="SqFeet" HeaderText="Sq Feet" />
+                                                    <asp:TemplateField HeaderText="Custom Image" ItemStyle-HorizontalAlign="Center">
+                                                        <ItemTemplate>
+                                                            <div class="image-hover-container">
+                                                                <asp:Image ID="imG" runat="server"
+                                                                    ImageUrl='<%# !string.IsNullOrEmpty(Convert.ToString(Eval("UploadedImage"))) 
+                                                                     ? Convert.ToString(Eval("UploadedImage")).Replace("~/", "/Content/") 
+                                                                     : "https://placehold.co/100x100?text=Image" %>'
+                                                                    CssClass="product-image-preview" />
+
+                                                                <div class="image-popup">
+                                                                    <asp:Image ID="imgLarge" runat="server"
+                                                                        ImageUrl='<%# !string.IsNullOrEmpty(Convert.ToString(Eval("UploadedImage"))) 
+                                                                         ? Convert.ToString(Eval("UploadedImage")).Replace("~/", "/Content/") 
+                                                                         : "https://placehold.co/400x400?text=Image" %>' />
+                                                                </div>
+                                                            </div>
+                                                        </ItemTemplate>
+                                                    </asp:TemplateField>
+                                                </Columns>
+                                            </asp:GridView>
+                                        </asp:Panel>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Sr.No." ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
                                         <asp:Label ID="lblsno" runat="server" Text='<%# Container.DataItemIndex+1 %>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="WorkOrder No" ItemStyle-HorizontalAlign="Center">
+                                <asp:TemplateField HeaderText="Tally Ref No." ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
-                                        <asp:LinkButton ID="lnkWorkOrderNo" runat="server"
-                                            Text='<%# Eval("WorkOrderNo") %>' Font-Bold="true"
-                                            CommandName="ViewWorkOrder"
-                                            CommandArgument='<%# Eval("ID") %>'
-                                            CssClass="text-primary btn-link">
-                                        </asp:LinkButton>
+                                        <asp:Label ID="lblTallyRefNo" runat="server" ForeColor="Red" Font-Bold="true" Text='<%#Eval("TallyRefNo")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="WorkOrder Date" ItemStyle-HorizontalAlign="Center">
@@ -124,8 +208,8 @@
                                             Visible='<%# string.IsNullOrWhiteSpace(Eval("isdesignapproved").ToString())?true:false %>'>
                                              <i class="bi bi-x-lg"></i>
                                         </asp:LinkButton>
-                                        <asp:Label ID="lblVal" runat="server" 
-                                            Visible='<%# !string.IsNullOrWhiteSpace(Eval("isdesignapproved").ToString())?true:false %>' 
+                                        <asp:Label ID="lblVal" runat="server"
+                                            Visible='<%# !string.IsNullOrWhiteSpace(Eval("isdesignapproved").ToString())?true:false %>'
                                             Text='<%#Eval("isdesignapproved").ToString() == "True"?"Approved":"Not Approved" %>'
                                             ForeColor='<%#Eval("isdesignapproved").ToString() == "True"? System.Drawing.Color.Green : System.Drawing.Color.Red %>'
                                             Font-Bold="true">
@@ -134,34 +218,6 @@
                                 </asp:TemplateField>
                             </Columns>
                         </asp:GridView>
-                    </div>
-
-                    <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                            <div class="modal-content modelprofile1" style="background: linear-gradient(65deg, #4e83c5 0%, #d7deeff0 42%, #4976a359 100%);">
-                                <!-- HEADER -->
-                                <div class="modal-header headingcls d-flex align-items-center">
-                                    <h5 class="modal-title mb-0">Work Order Details
-                                    </h5>
-                                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
-                                </div>
-
-                                <div class="modal-body">
-                                    <div class="table-responsive">
-                                        <asp:GridView ID="GvPopup" runat="server" CssClass="table table-bordered table-striped table-sm" HeaderStyle-HorizontalAlign="Center" HeaderStyle-CssClass="table-dark" AutoGenerateColumns="false">
-                                            <Columns>
-                                                <asp:BoundField DataField="ProductName" HeaderText="Product Name" ItemStyle-HorizontalAlign="Center" />
-                                                <asp:BoundField DataField="PartNo" HeaderText="Part No" ItemStyle-HorizontalAlign="Center" />
-                                                <asp:BoundField DataField="Description" HeaderText="Description" ItemStyle-HorizontalAlign="Center" />
-                                                <asp:BoundField DataField="Size" HeaderText="Size" ItemStyle-HorizontalAlign="Center" />
-                                                <asp:BoundField DataField="Unit" HeaderText="Unit" ItemStyle-HorizontalAlign="Center" />
-                                                <asp:BoundField DataField="Qty" HeaderText="Qty" ItemStyle-HorizontalAlign="Center" />
-                                            </Columns>
-                                        </asp:GridView>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

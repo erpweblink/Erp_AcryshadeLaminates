@@ -81,14 +81,6 @@ public partial class WorkOrdrForDesign : System.Web.UI.Page
             Session["url"] = "/Production/WorkOrdrForDesign.aspx";
             Response.Redirect("/Alerts.aspx");
         }
-        if (e.CommandName == "ViewWorkOrder")
-        {
-            BindPopupGrid(e.CommandArgument.ToString());
-            ToolkitScriptManager.RegisterStartupScript(this, this.GetType(),
-        "Popup",
-        "var myModal = new bootstrap.Modal(document.getElementById('detailsModal')); myModal.show();",
-        true);
-        }
         if (e.CommandName == "RowPO")
         {
             string ID = e.CommandArgument.ToString();
@@ -99,7 +91,25 @@ public partial class WorkOrdrForDesign : System.Web.UI.Page
 
     protected void Gvdetails_RowDataBound(object sender, GridViewRowEventArgs e)
     {
+        if (e.Row.RowType == DataControlRowType.DataRow)
+        {
+            int headerId = Convert.ToInt32(Gvdetails.DataKeys[e.Row.RowIndex].Value);
 
+            GridView gvCompany = e.Row.FindControl("GVCompany") as GridView;
+
+            SqlCommand cmd = new SqlCommand(@"SELECT Id, HeaderID, ProductId, ProductName,
+                      PartNo, Description,Size, Unit, Qty, SqFeet, UploadedImage FROM tbl_WorkOrderDetails
+                    WHERE HeaderID = @HeaderID", con);
+
+            cmd.Parameters.AddWithValue("@HeaderID", headerId);
+
+            SqlDataAdapter da = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+
+            gvCompany.DataSource = dt;
+            gvCompany.DataBind();
+        }
     }
 
     private void FillGrid()
@@ -169,23 +179,4 @@ public partial class WorkOrdrForDesign : System.Web.UI.Page
         FillGrid();
     }
 
-    private void BindPopupGrid(string headerId)
-    {
-     
-        SqlCommand cmd = new SqlCommand(@"
-        SELECT Id, HeaderID, ProductId, ProductName, PartNo, Description,
-               Size, Unit, Qty
-                
-        FROM tbl_WorkOrderDetails
-        WHERE HeaderID = @HeaderID", con);
-
-        cmd.Parameters.AddWithValue("@HeaderID", headerId);
-
-        SqlDataAdapter da = new SqlDataAdapter(cmd);
-        DataTable dt = new DataTable();
-        da.Fill(dt);
-
-        GvPopup.DataSource = dt;
-        GvPopup.DataBind();
-    }
 }
