@@ -26,7 +26,6 @@ public partial class WorkOrderMaster : System.Web.UI.Page
         {
             if (!IsPostBack)
             {
-                txtworkorderdate.Attributes["min"] = DateTime.Today.ToString("yyyy-MM-dd");
 
                 //Check if you has access to the page of not
                 {
@@ -47,12 +46,17 @@ public partial class WorkOrderMaster : System.Web.UI.Page
 
 
                 txtworkorderdate.Text = DateTime.Now.ToString("yyyy-MM-dd");
+                txtworkorderdate.Enabled = false;   
 
                 if (Request.QueryString["Id"] != null)
                 {
                     string ID = objcls.Decrypt(Request.QueryString["Id"].ToString());
                     hdnVal.Value = ID;
                     LoadData(ID);
+                }
+                else
+                {
+                   // txtworkorderdate.Attributes["min"] = DateTime.Today.ToString("yyyy-MM-dd");
                 }
             }
         }
@@ -75,6 +79,7 @@ public partial class WorkOrderMaster : System.Web.UI.Page
             RequiredFieldValidator6.Enabled = true;
 
             txttallyref.Text = dt.Rows[0]["TallyRefNo"].ToString();
+            txttallyref.ReadOnly = true;
 
             DateTime dt1 = Convert.ToDateTime(dt.Rows[0]["WorkOrderDate"]);
             txtworkorderdate.Text = dt1.ToString("yyyy-MM-dd");
@@ -136,7 +141,7 @@ public partial class WorkOrderMaster : System.Web.UI.Page
         try
         {
             // MASTER VALUES
-            string tallyref = txttallyref.Text.Trim();
+            string tallyref = txttallyref.Text.Trim().ToUpper();
             DateTime workorderdate = Convert.ToDateTime(txtworkorderdate.Text);
             string DealerName = txtDealerName.Text.Trim();
             string CustName = txtCustName.Text.Trim();
@@ -668,7 +673,7 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                 int count = Convert.ToInt32(checkCmd.ExecuteScalar());
                 if (count != 0)
                 {
-                    ScriptManager.RegisterStartupScript(this,this.GetType(),"alert","alert('Tally Referance Number is already exists..');",true);
+                    ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", "alert('Tally Referance Number is already exists..');", true);
                     txttallyref.Text = "";
                 }
             }

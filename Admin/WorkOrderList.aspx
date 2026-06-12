@@ -121,7 +121,7 @@
                             <Columns>
                                 <asp:TemplateField HeaderText=" " ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
-                                        <img alt="" style="cursor: pointer; width: 20px;" src="/Content/assets/images/add-black.png" />
+                                        <img alt="" style="cursor: pointer; width: 26px;" src="/Content/assets/images/add-black.png" />
                                         <asp:Panel ID="pnlOrders" runat="server" Style="display: none">
                                             <asp:GridView ID="gvDetails" runat="server" HeaderStyle-HorizontalAlign="Center" CssClass="display table table-striped table-hover" AutoGenerateColumns="false">
                                                 <HeaderStyle BackColor="#7f9abb" />
