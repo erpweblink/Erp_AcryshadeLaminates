@@ -67,12 +67,12 @@
         /*END*/
     </style>
     <script type="text/javascript">
-        $("[src*=plus]").live("click", function () {
-            $(this).closest("tr").after("<tr><td></td><td colspan = '999'>" + $(this).next().html() + "</td></tr>")
-            $(this).attr("src", "/Content/assets/images/delete.png");
+        $("[src*=add-black]").live("click", function () {
+            $(this).closest("tr").after("<tr><td colspan = '999'>" + $(this).next().html() + "</td></tr>")
+            $(this).attr("src", "/Content/assets/images/newminus.png");
         });
-        $("[src*=delete]").live("click", function () {
-            $(this).attr("src", "/Content/assets/images/plus.png");
+        $("[src*=newminus]").live("click", function () {
+            $(this).attr("src", "/Content/assets/images/add-black.png");
             $(this).closest("tr").next().remove();
         });
     </script>
@@ -121,7 +121,7 @@
                             <Columns>
                                 <asp:TemplateField HeaderText=" " ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
-                                        <img alt="" style="cursor: pointer; width: 20px;" src="/Content/assets/images/plus.png" />
+                                        <img alt="" style="cursor: pointer; width: 20px;" src="/Content/assets/images/add-black.png" />
                                         <asp:Panel ID="pnlOrders" runat="server" Style="display: none">
                                             <asp:GridView ID="gvDetails" runat="server" HeaderStyle-HorizontalAlign="Center" CssClass="display table table-striped table-hover" AutoGenerateColumns="false">
                                                 <HeaderStyle BackColor="#7f9abb" />
@@ -168,7 +168,7 @@
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Tally Ref No." ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
-                                        <asp:Label ID="lblTallyRefNo" runat="server" ForeColor="#0d6ef9" Font-Bold="true" Text='<%#Eval("TallyRefNo")%>'></asp:Label>
+                                        <asp:Label ID="lblTallyRefNo" runat="server" ForeColor="Red" Font-Bold="true" Text='<%#Eval("TallyRefNo")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Dealer" ItemStyle-HorizontalAlign="Center">

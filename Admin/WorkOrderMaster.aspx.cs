@@ -26,6 +26,8 @@ public partial class WorkOrderMaster : System.Web.UI.Page
         {
             if (!IsPostBack)
             {
+                txtworkorderdate.Attributes["min"] = DateTime.Today.ToString("yyyy-MM-dd");
+
                 //Check if you has access to the page of not
                 {
                     string username = Session["ID"].ToString();
@@ -337,7 +339,7 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                     }
                     else
                     {
-                        if (!string.IsNullOrWhiteSpace(ProdImageName[i]) && ProdImageName[i] !="null")
+                        if (!string.IsNullOrWhiteSpace(ProdImageName[i]) && ProdImageName[i] != "null")
                         {
                             cmd.Parameters.AddWithValue("@UploadedImage", ProdImageName[i]);
                         }
@@ -607,7 +609,6 @@ public partial class WorkOrderMaster : System.Web.UI.Page
         return list;
     }
 
-
     [WebMethod]
     public static object SaveProductMaster(string ProductName, string ItemCode, string Size)
     {
@@ -652,5 +653,27 @@ public partial class WorkOrderMaster : System.Web.UI.Page
         }
     }
 
+    protected void txttallyref_TextChanged(object sender, EventArgs e)
+    {
+        if (!string.IsNullOrWhiteSpace(txttallyref.Text.Trim()))
+        {
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
+            {
+                con.Open();
+
+                SqlCommand checkCmd = new SqlCommand(@"SELECT COUNT(*) FROM tbl_WorkOrderHdr
+                  WHERE IsDeleted = 0 AND UPPER(REPLACE(LTRIM(RTRIM(TallyRefNo)), ' ', '')) = UPPER(REPLACE(LTRIM(RTRIM(@TallyRef)), ' ', ''))", con);
+                checkCmd.Parameters.AddWithValue("@TallyRef", txttallyref.Text.Trim());
+
+                int count = Convert.ToInt32(checkCmd.ExecuteScalar());
+                if (count != 0)
+                {
+                    ScriptManager.RegisterStartupScript(this,this.GetType(),"alert","alert('Tally Referance Number is already exists..');",true);
+                    txttallyref.Text = "";
+                }
+            }
+        }
+
+    }
 }
 
