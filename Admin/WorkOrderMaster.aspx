@@ -704,7 +704,7 @@
                     <div class="row">
                         <div class="col-md-4 col-12">
                             <asp:Label ID="lbltallyref" runat="server" Font-Bold="true" CssClass="form-label"><span class="spncls">*</span>Tally Ref No:</asp:Label>
-                            <asp:TextBox ID="txttallyref" runat="server" AutoComplete="off" ValidationGroup="001" CssClass="form-control" ForeColor="Red" Font-Bold="true"></asp:TextBox>
+                            <asp:TextBox ID="txttallyref" runat="server" AutoComplete="off" ValidationGroup="001" CssClass="form-control" ForeColor="Red" Font-Bold="true" OnTextChanged="txttallyref_TextChanged" AutoPostBack="true"></asp:TextBox>
                             <asp:RequiredFieldValidator ID="RequiredFieldValidator5" runat="server" ErrorMessage="Please Enter Tally Ref. Number"
                                 ControlToValidate="txttallyref" ForeColor="Red" SetFocusOnError="true" ValidationGroup="001"></asp:RequiredFieldValidator>
                         </div>
