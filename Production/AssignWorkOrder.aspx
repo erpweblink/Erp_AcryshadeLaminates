@@ -1,4 +1,4 @@
-<%@ Page Title="" Language="C#" MasterPageFile="~/MasterPage.master" EnableEventValidation="false" AutoEventWireup="true" Async="true" CodeFile="AssignWorkOrder.aspx.cs" Inherits="AssignWorkOrder" %>
+﻿<%@ Page Title="" Language="C#" MasterPageFile="~/MasterPage.master" EnableEventValidation="false" AutoEventWireup="true" Async="true" CodeFile="AssignWorkOrder.aspx.cs" Inherits="AssignWorkOrder" %>
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
@@ -334,7 +334,85 @@
 
             return true; // Allow postback
         }
-</script>
+
+        function CalculateRowSqFt(row) {
+
+
+            var lblSqFt = row.querySelector("[id*='lblSqFeet']");
+            if (lblSqFt) {
+                return parseFloat(lblSqFt.innerText) || 0;
+            }
+
+
+            var qty = row.querySelector("[id*='lblQty']");
+            var size = row.querySelector("[id*='lblSize']"); // if you have size column
+
+            var q = qty ? parseFloat(qty.innerText) || 0 : 0;
+            var s = size ? parseFloat(size.innerText) || 0 : 0;
+
+            return q * s;
+        }
+
+        function validateAdjustQty(txt) {
+
+            var row = txt.closest("tr");
+
+            var lblQty = row.querySelector("[id*='lblQty']");
+            var maxQty = parseFloat(lblQty.innerText) || 0;
+
+            var val = parseFloat(txt.value) || 0;
+
+            // limit per row
+            if (val > maxQty) {
+                txt.value = maxQty;
+                val = maxQty;
+            }
+
+            // balance update
+            var lblBalance = row.querySelector(".balanceQty");
+            if (lblBalance) {
+                lblBalance.innerText = maxQty - val;
+            }
+
+            UpdateCapacityStatus();
+        }
+
+        function updateBalanceQty(txt) {
+
+            var row = txt.closest("tr");
+
+            if (!row) return;
+
+            // IMPORTANT: safer selector for GridView label
+            var lblQty = row.querySelector("[id*='lblQty']");
+            var lblBalance = row.querySelector("[id*='lblBalanceQty']");
+
+            if (!lblQty || !lblBalance) return;
+
+            var totalQty = parseFloat(lblQty.innerText || lblQty.textContent || 0);
+            var adjustQty = parseFloat(txt.value || 0);
+
+            // prevent invalid values
+            if (isNaN(adjustQty)) adjustQty = 0;
+
+            // limit check
+            if (adjustQty > totalQty) {
+                adjustQty = totalQty;
+                txt.value = totalQty;
+            }
+
+            var balance = totalQty - adjustQty;
+
+            lblBalance.innerHTML = balance;
+
+            UpdateCapacityStatus();
+        }
+
+    </script>
+
+
+   
+
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <asp:ToolkitScriptManager ID="ToolkitScriptManager1" runat="server"></asp:ToolkitScriptManager>
@@ -389,19 +467,15 @@
                         <asp:Button ID="btnCreate" CssClass="btn btn-outline-primary" Font-Bold="true" Text="Multiple Send" CausesValidation="false" runat="server" OnClick="btnCreate_Click" />
                     </div>
                     <div class="row table-responsive">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <asp:TextBox ID="txtdate" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox>
+                            </div>
+                        </div>
+                        <br />
                         <asp:GridView ID="GVCompany" ClientIDMode="Static" runat="server" DataKeyNames="ID" OnRowDataBound="GVCompany_RowDataBound" CssClass="table table-bordered table-striped" HeaderStyle-BackColor="#5b78b1"
                             HeaderStyle-Font-Bold="true" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" AutoGenerateColumns="false">
                             <Columns>
-                                <asp:TemplateField HeaderText="Priority" ItemStyle-HorizontalAlign="Center" HeaderStyle-Width="155">
-                                    <ItemTemplate>
-                                        <asp:DropDownList ID="ddlPriority" runat="server" Font-Bold="true" CssClass="form-control priority-ddl" onchange='<%# "PriorityChanged(this," + Eval("ID") + ")" %>'>
-                                            <asp:ListItem Value="">--Set Priority--</asp:ListItem>
-                                            <asp:ListItem Value="Slow">Slow</asp:ListItem>
-                                            <asp:ListItem Value="Fast">Fast</asp:ListItem>
-                                            <asp:ListItem Value="Urgent">Urgent</asp:ListItem>
-                                        </asp:DropDownList>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
                                 <asp:TemplateField HeaderText="#" ItemStyle-HorizontalAlign="Center" HeaderStyle-Width="20">
                                     <ItemTemplate>
                                         <asp:CheckBox ID="chkSend" runat="server" onclick="return ValidateCapacity(this);" Enabled='<%#Eval("WOStatus").ToString() != "Pending" ? false : true %>' />
@@ -423,9 +497,9 @@
                                         <asp:Label ID="lblWorkOrderDate" runat="server" Text='<%#Eval("WorkOrderDate")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Product Count" ItemStyle-HorizontalAlign="Center">
+                                <asp:TemplateField HeaderText="SqFeet" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
-                                        <asp:Label ID="lblProductCount" runat="server" Text='<%#Eval("ProductCount")%>'></asp:Label>
+                                        <asp:Label ID="lblSqFeet" runat="server" Text='<%#Eval("SqFeet")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Total Qty" ItemStyle-HorizontalAlign="Center">
@@ -433,6 +507,24 @@
                                         <asp:Label ID="lblQty" runat="server" Text='<%#Eval("Qty")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Size" ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblSize" runat="server" Text='<%#Eval("Size")%>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Adjust Qty" ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <asp:TextBox ID="txtqty" runat="server" CssClass="form-control" onkeyup="validateAdjustQty(this); updateBalanceQty(this);" onblur="validateAdjustQty(this); updateBalanceQty(this);"></asp:TextBox>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Balance Qty" ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblBalanceQty" runat="server"
+                                            CssClass="balanceQty"
+                                            Text="0"></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
                                 <asp:TemplateField HeaderText="WO Status" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
                                         <asp:Label ID="lblWOStatus" runat="server" Text='<%#Eval("WOStatus")%>'

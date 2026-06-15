@@ -71,10 +71,34 @@ public partial class AssignWorkOrder : System.Web.UI.Page
     {
         if (e.Row.RowType == DataControlRowType.DataRow)
         {
+            // Row attribute
             e.Row.Attributes["data-id"] =
                 DataBinder.Eval(e.Row.DataItem, "ID").ToString();
 
             e.Row.CssClass += " drag-row";
+
+            // Get Header ID safely
+            int headerId = Convert.ToInt32(DataBinder.Eval(e.Row.DataItem, "ID"));
+
+            GridView gvDetails = e.Row.FindControl("gvDetails") as GridView;
+
+            if (gvDetails != null)
+            {
+                SqlCommand cmd = new SqlCommand(@"
+                SELECT Id, HeaderID, ProductId, ProductName,
+                       PartNo, Description, Size, Unit, Qty, SqFeet, UploadedImage
+                FROM tbl_WorkOrderDetails
+                WHERE HeaderID = @HeaderID", con);
+
+                cmd.Parameters.AddWithValue("@HeaderID", headerId);
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                gvDetails.DataSource = dt;
+                gvDetails.DataBind();
+            }
         }
     }
 
@@ -128,6 +152,7 @@ public partial class AssignWorkOrder : System.Web.UI.Page
                                 cmd.Parameters.AddWithValue("@PartNo", dr["PartNo"].ToString());
                                 cmd.Parameters.AddWithValue("@Size", dr["Size"].ToString());
                                 cmd.Parameters.AddWithValue("@ReceivedQty", dr["Qty"].ToString());
+                                cmd.Parameters.AddWithValue("@sheduledate", txtdate.Text.Trim());
                                 cmd.Parameters.AddWithValue("@SP_Action", "InsertWOToProd");
 
                                 con.Open();
