@@ -2,417 +2,206 @@
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <script type="text/javascript">
+        var selectedMachineCapacity = 0;
 
-        window.onload = function () {
-            UpdateCapacityStatus();
-            document.querySelectorAll(".priority-ddl").forEach(function (ddl) {
-                setPriorityColor(ddl);
-            });
-        };
+        // ─── expand / collapse ───────────────────────────────────────────
+        $(document).on("click", "[src*='add-black']", function () {
+            $(this).closest("tr").after(
+                "<tr class='detail-row'><td colspan='999'>" +
+                $(this).next().html() +
+                "</td></tr>"
+            );
+            $(this).attr("src", "/Content/assets/images/newminus.png");
+        });
 
-        function PriorityChanged(ddl, id) {
+        $(document).on("click", "[src*='newminus']", function () {
+            $(this).attr("src", "/Content/assets/images/add-black.png");
+            $(this).closest("tr").next(".detail-row").remove();
+        });
 
-            setPriorityColor(ddl);
-
-            var priority = ddl.value;
-
-            // Call AJAX to update database
-            UpdatePriority(id, priority);
-        }
-
-        function UpdatePriority(id, priority) {
-
-            $.ajax({
-                type: "POST",
-                url: "AssignWorkOrder.aspx/UpdatePriority",
-                data: JSON.stringify({
-                    id: id,
-                    priority: priority
-                }),
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
-                success: function (response) {
-                    console.log("Priority updated");
-                },
-                error: function (xhr) {
-                    alert("Error updating priority");
-                }
-            });
-        }
-
-        function setPriorityColor(ddl) {
-
-            ddl.style.color = "black";
-
-            switch (ddl.value) {
-                case "Urgent":
-                    ddl.style.backgroundColor = "#dc3545"; // Red
-                    ddl.style.color = "white";
-                    break;
-
-                case "Fast":
-                    ddl.style.backgroundColor = "#198754"; // Green
-                    ddl.style.color = "white";
-                    break;
-
-                case "Slow":
-                    ddl.style.backgroundColor = "#ffc107"; // Yellow
-                    ddl.style.color = "black";
-                    break;
-
-                default:
-                    ddl.style.backgroundColor = "";
-                    ddl.style.color = "";
-                    break;
-            }
-        }
-
+        // ─── machine selection (radio-style) ─────────────────────────────
         function SelectSingleMachine(chk) {
+            $("#gvStageCapacity input[type='checkbox']")
+                .not(chk).prop("checked", false);
 
-            var grid = document.getElementById("gvStageCapacity");
-
-            var checkboxes = grid.querySelectorAll("input[type='checkbox']");
-
-            // Allow only one machine selection
-            for (var i = 0; i < checkboxes.length; i++) {
-
-                if (checkboxes[i] != chk)
-                    checkboxes[i].checked = false;
+            if ($(chk).prop("checked")) {
+                var row = $(chk).closest("tr");
+                selectedMachineCapacity =
+                    parseFloat($(row).find("td:eq(3)").text().trim()) || 0;
+            } else {
+                selectedMachineCapacity = 0;
             }
 
-            var availableCapacity = GetStage1Capacity();
-            var selectedQty = GetSelectedQty();
-
-            if (selectedQty > availableCapacity) {
-
-                alert(
-                    "Selected WorkOrder Qty (" + selectedQty +
-                    ") exceeds the newly selected machine capacity (" +
-                    availableCapacity +
-                    "). All selected rows will be unchecked."
-                );
-
-                UncheckAllWorkOrders();
-            }
-
-            UpdateCapacityStatus();
+            RecalculateAllAllocations();
         }
 
-        function UncheckAllWorkOrders() {
-
-            var companyGrid = document.getElementById("GVCompany");
-
-            for (var i = 1; i < companyGrid.rows.length; i++) {
-
-                var row = companyGrid.rows[i];
-
-                var chk = row.cells[0].getElementsByTagName("input")[0];
-
-                if (chk)
-                    chk.checked = false;
-            }
-        }
-
+        // ─── validate before allowing WO checkbox ────────────────────────
         function ValidateCapacity(chk) {
-
-            var availableCapacity = GetStage1Capacity();
-
-            if (availableCapacity == 0) {
-
+            if (selectedMachineCapacity <= 0) {
                 alert("Please select a machine first.");
-
                 chk.checked = false;
                 return false;
             }
-
-            var totalQty = GetSelectedQty();
-
-            if (totalQty > availableCapacity) {
-
-                alert("Selected Qty (" + totalQty +
-                    ") exceeds available machine capacity (" +
-                    availableCapacity + ").");
-
-                chk.checked = false;
-
-                UpdateCapacityStatus();
-
-                return false;
-            }
-
-            UpdateCapacityStatus();
+            setTimeout(RecalculateAllAllocations, 0);
             return true;
         }
 
-        function GetStage1Capacity() {
+        // ─── helper: get only data rows (no header) from a detail table ──
+        function getDetailRows(woRow) {
+            // First check inside the row itself (hidden panel, not yet expanded)
+            var inRow = woRow.find("table[id*='Gvdetails'] tr");
+            // Then check the next .detail-row sibling (after expand/clone)
+            var inSibling = woRow.next(".detail-row").find("table tr");
 
-            var stageGrid = document.getElementById("gvStageCapacity");
+            var rows = inRow.length ? inRow : inSibling;
 
-            for (var i = 1; i < stageGrid.rows.length; i++) {
-
-                var chk = stageGrid.rows[i]
-                    .cells[0]
-                    .getElementsByTagName("input")[0];
-
-                if (chk.checked) {
-
-                    return parseFloat(stageGrid.rows[i].cells[5].innerText) || 0;
-                    // Column 5 = Available Capacity
-                }
-            }
-
-            return 0;
+            // Return only rows that have <td> direct children (skip header <th> rows)
+            return rows.filter(function () {
+                return $(this).children("td").length > 0;
+            });
         }
 
-        function GetSelectedQty() {
-
-            var totalQty = 0;
-
-            var companyGrid = document.getElementById("GVCompany");
-
-            for (var i = 1; i < companyGrid.rows.length; i++) {
-
-                var row = companyGrid.rows[i];
-
-                var checkbox = row.querySelector("input[id*='chkSend']");
-                var btnSend = row.querySelector("a[id*='btnSend']");
-
-                // Total Qty column
-                var qty = parseFloat(row.cells[5].innerText) || 0;
-
-                // Send Qty textbox
-                var txtSendQty = row.querySelector("input[id*='txtSendQty']");
-                var sendQty = parseFloat(txtSendQty.value) || 0;
-
-                // If checkbox selected use full qty
-                if (checkbox.checked) {
-                    totalQty += qty;
-                    btnSend.style.display = "none";
-                }
-                // Otherwise use entered send qty
-                else if (sendQty > 0) {
-                    totalQty += sendQty;
-
-                } else {
-                    btnSend.style.display = "inline-block";
-                }
-            }
-
-            return totalQty;
+        // ─── read a numeric value safely from a cell ─────────────────────
+        function cellNum(cells, idx) {
+            var cell = cells.eq(idx);
+            // Try direct text first, then any child element text
+            var txt = cell.children("span,label").text().trim();
+            if (!txt) txt = cell.text().trim();
+            return parseFloat(txt) || 0;
         }
 
-        function UpdateCapacityStatus() {
+        // ─── core recalculation ──────────────────────────────────────────
+        function RecalculateAllAllocations() {
+            $(".UsedQty").text("0");
+            $(".UsedSqFeet").text("0");
+            $(".balanceQty").text("0");
 
-            var availableCapacity = GetStage1Capacity();
+            var remainingCapacity = selectedMachineCapacity;
 
-            var totalQty = GetSelectedQty();
+            $("#GVCompany tr").each(function () {
+                var woRow = $(this);
+                var chk = woRow.find("input[type='checkbox'][id*='chkSend']");
 
-            var span = document.getElementById("spnCapacityStatus");
+                if (!chk.length || !chk.prop("checked")) return;
 
-            span.innerHTML = totalQty + " / " + availableCapacity;
+                var detailRows = getDetailRows(woRow);
+                if (!detailRows.length) return;
 
-            var percentage = 0;
+                var totalQty = 0;
+                var totalUsedQty = 0;
 
-            if (availableCapacity > 0)
-                percentage = (totalQty / availableCapacity) * 100;
+                detailRows.each(function () {
+                    var cells = $(this).children("td");
+                    if (cells.length === 0) return;
 
-            if (percentage >= 100) {
-                span.style.color = "red";
-            }
-            else if (percentage >= 80) {
-                span.style.color = "orange";
-            }
-            else {
-                span.style.color = "green";
-            }
+                    var itemSqFt = cellNum(cells, 5);
+                    var itemQty = cellNum(cells, 6);
+                    totalQty += itemQty;
+
+                    var allocated = 0;
+                    if (remainingCapacity > 0 && itemSqFt > 0) {
+                        allocated = Math.min(itemSqFt, remainingCapacity);
+                        remainingCapacity -= allocated;
+                    }
+
+                    var usedQty = 0;
+                    if (itemSqFt > 0) {
+                        usedQty = Math.floor((allocated / itemSqFt) * itemQty);
+                    }
+
+                    $(this).find(".UsedQty").text(usedQty);
+                    $(this).find(".UsedSqFeet").text(allocated);
+                    totalUsedQty += usedQty;
+                });
+
+                woRow.find(".balanceQty").text(totalQty - totalUsedQty);
+            });
+
+            var usedCapacity = selectedMachineCapacity - remainingCapacity;
+            $("#spnCapacityStatus").text(usedCapacity + " / " + selectedMachineCapacity);
         }
 
-        function GetRemainingCapacity() {
+        // ─── manual +/- qty adjustment ───────────────────────────────────
+        function changeQty(btn, change) {
+            var row = $(btn).closest("tr");
+            var cells = row.children("td");      // direct children ONLY
 
-            var totalCapacity = GetStage1Capacity(); // 192
+            if (cells.length === 0) return false;
 
-            var usedCapacity = GetSelectedQty();     // 100
+            var qtyCell = row.find(".UsedQty");
+            var sqFeetCell = row.find(".UsedSqFeet");
 
-            return totalCapacity - usedCapacity;     // 92
-        }
+            // Use the safe cellNum helper to read SqFeet and Qty
+            var totalItemSqFt = cellNum(cells, 5);
+            var totalItemQty = cellNum(cells, 6);
 
-        function validateQty(txt) {
+            // Debug fallback: log to console so you can verify
+            // console.log("SqFt:", totalItemSqFt, "Qty:", totalItemQty);
 
-            var row = txt.closest("tr");
+            var currentQty = parseFloat(qtyCell.text().trim()) || 0;
+            var newQty = currentQty + change;
 
-            var totalQty = parseFloat(
-                row.querySelector("[id*='lblQty']").innerText
-            ) || 0;
-
-            var sendQty = parseFloat(txt.value) || 0;
-
-            if (sendQty > totalQty) {
-
-                alert("Send Qty cannot be greater than Total Qty (" + totalQty + ")");
-
-                txt.value = "";
-
-                UpdateCapacityStatus();
-
+            // Boundary checks
+            if (newQty < 0) {
+                return false;
+            }
+            if (totalItemQty > 0 && newQty > totalItemQty) {
+                alert("Cannot exceed total quantity of " + totalItemQty);
                 return false;
             }
 
-            var availableCapacity = GetStage1Capacity();
+            var sqFtPerQty = totalItemQty > 0 ? totalItemSqFt / totalItemQty : 0;
+            var newUsedSqFt = Math.round(newQty * sqFtPerQty * 100) / 100;
 
-            var usedQty = GetSelectedQty();
+            // Total capacity check
+            var currentCapacityUsed = 0;
+            $(".UsedSqFeet").each(function () {
+                currentCapacityUsed += parseFloat($(this).text()) || 0;
+            });
 
-            if (usedQty > availableCapacity) {
+            var revisedCapacity = currentCapacityUsed
+                - (parseFloat(sqFeetCell.text()) || 0)
+                + newUsedSqFt;
 
-                alert("Selected Qty (" + usedQty +
-                    ") exceeds machine capacity (" +
-                    availableCapacity + ").");
-
-                txt.value = "";
-
-                UpdateCapacityStatus();
-
+            if (change > 0 && revisedCapacity > selectedMachineCapacity) {
+                alert("Machine capacity exceeded. Available: " +
+                    (selectedMachineCapacity - currentCapacityUsed +
+                        (parseFloat(sqFeetCell.text()) || 0)).toFixed(2) + " sq ft");
                 return false;
             }
 
-            UpdateCapacityStatus();
+            qtyCell.text(newQty);
+            sqFeetCell.text(newUsedSqFt);
+            updateBalanceQty();
+
+            $("#spnCapacityStatus").text(
+                revisedCapacity.toFixed(2) + " / " + selectedMachineCapacity
+            );
 
             return true;
         }
 
-        function IsMachineSelected() {
+        // ─── recalculate balance qty column only ─────────────────────────
+        function updateBalanceQty() {
+            $("#GVCompany tr").each(function () {
+                var woRow = $(this);
+                var detailRows = getDetailRows(woRow);
+                if (!detailRows.length) return;
 
-            var stageGrid = document.getElementById("gvStageCapacity");
+                var totalQty = 0, usedQty = 0;
+                detailRows.each(function () {
+                    var cells = $(this).children("td");
+                    if (!cells.length) return;
+                    totalQty += cellNum(cells, 6);
+                    usedQty += parseFloat($(this).find(".UsedQty").text()) || 0;
+                });
 
-            for (var i = 1; i < stageGrid.rows.length; i++) {
-
-                var chk = stageGrid.rows[i]
-                    .cells[0]
-                    .getElementsByTagName("input")[0];
-
-                if (chk.checked)
-                    return true;
-            }
-
-            return false;
+                woRow.find(".balanceQty").text(totalQty - usedQty);
+            });
         }
-
-        function CheckMachineSelected(txt) {
-
-            if (!IsMachineSelected()) {
-
-                alert("Please select a machine first.");
-
-                txt.value = "";
-                txt.blur();
-
-                return false;
-            }
-
-            return true;
-        }
-
-        function ValidateSendQty(btn) {
-            var row = btn.closest("tr"); // Get the row of the clicked button
-            var txtSendQty = row.querySelector("input[id*='txtSendQty']");
-            var qty = parseFloat(txtSendQty.value) || 0;
-
-            if (qty <= 0) {
-                alert("Please enter a valid Send Qty greater than 0.");
-                txtSendQty.focus();
-                return false; // Cancel postback
-            }
-
-            // Optional: also check machine capacity
-            var availableCapacity = GetStage1Capacity();
-            var totalQty = GetSelectedQty(); // includes Send Qty
-
-            if (totalQty > availableCapacity) {
-                alert("Selected Qty exceeds available machine capacity (" + availableCapacity + ").");
-                return false; // Cancel postback
-            }
-
-            return true; // Allow postback
-        }
-
-        function CalculateRowSqFt(row) {
-
-
-            var lblSqFt = row.querySelector("[id*='lblSqFeet']");
-            if (lblSqFt) {
-                return parseFloat(lblSqFt.innerText) || 0;
-            }
-
-
-            var qty = row.querySelector("[id*='lblQty']");
-            var size = row.querySelector("[id*='lblSize']"); // if you have size column
-
-            var q = qty ? parseFloat(qty.innerText) || 0 : 0;
-            var s = size ? parseFloat(size.innerText) || 0 : 0;
-
-            return q * s;
-        }
-
-        function validateAdjustQty(txt) {
-
-            var row = txt.closest("tr");
-
-            var lblQty = row.querySelector("[id*='lblQty']");
-            var maxQty = parseFloat(lblQty.innerText) || 0;
-
-            var val = parseFloat(txt.value) || 0;
-
-            // limit per row
-            if (val > maxQty) {
-                txt.value = maxQty;
-                val = maxQty;
-            }
-
-            // balance update
-            var lblBalance = row.querySelector(".balanceQty");
-            if (lblBalance) {
-                lblBalance.innerText = maxQty - val;
-            }
-
-            UpdateCapacityStatus();
-        }
-
-        function updateBalanceQty(txt) {
-
-            var row = txt.closest("tr");
-
-            if (!row) return;
-
-            // IMPORTANT: safer selector for GridView label
-            var lblQty = row.querySelector("[id*='lblQty']");
-            var lblBalance = row.querySelector("[id*='lblBalanceQty']");
-
-            if (!lblQty || !lblBalance) return;
-
-            var totalQty = parseFloat(lblQty.innerText || lblQty.textContent || 0);
-            var adjustQty = parseFloat(txt.value || 0);
-
-            // prevent invalid values
-            if (isNaN(adjustQty)) adjustQty = 0;
-
-            // limit check
-            if (adjustQty > totalQty) {
-                adjustQty = totalQty;
-                txt.value = totalQty;
-            }
-
-            var balance = totalQty - adjustQty;
-
-            lblBalance.innerHTML = balance;
-
-            UpdateCapacityStatus();
-        }
-
     </script>
-
-
-   
-
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <asp:ToolkitScriptManager ID="ToolkitScriptManager1" runat="server"></asp:ToolkitScriptManager>
@@ -445,9 +234,9 @@
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:BoundField DataField="MachineName" HeaderText="Machine Name" />
-                                <asp:BoundField DataField="MachineCapacity" HeaderText="Capacity" />
+                                <asp:BoundField DataField="MachineCapacity" HeaderText="Sq Feet" />
                                 <asp:BoundField DataField="MachineLoad" HeaderText="Active Load" />
-                                <asp:BoundField DataField="MachineAvailable" HeaderText="Available Capacity" />
+                                <asp:BoundField DataField="MachineAvailable" HeaderText="Available Sq Feet" />
                                 <asp:TemplateField HeaderText="Load %">
                                     <ItemTemplate>
                                         <span class="badge 
@@ -481,6 +270,44 @@
                                         <asp:CheckBox ID="chkSend" runat="server" onclick="return ValidateCapacity(this);" Enabled='<%#Eval("WOStatus").ToString() != "Pending" ? false : true %>' />
                                     </ItemTemplate>
                                 </asp:TemplateField>
+                                <asp:TemplateField HeaderText=" " ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <img alt="" style="cursor: pointer; width: 26px;" src="/Content/assets/images/add-black.png" />
+                                        <asp:Panel ID="pnlOrders" runat="server" Style="display: none">
+                                            <asp:GridView ID="Gvdetails" runat="server" HeaderStyle-HorizontalAlign="Center" CssClass="display table table-striped table-hover" AutoGenerateColumns="false">
+                                                <HeaderStyle BackColor="#7f9abb" />
+                                                <Columns>
+                                                    <asp:TemplateField HeaderText="Sr.No." ItemStyle-HorizontalAlign="Center">
+                                                        <ItemTemplate>
+                                                            <asp:Label ID="lblsnos" runat="server" Text='<%# Container.DataItemIndex+1 %>'></asp:Label>
+                                                        </ItemTemplate>
+                                                    </asp:TemplateField>
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="ProductName" HeaderText="Product Name" />
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="PartNo" HeaderText="Item Code" />
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="Description" HeaderText="Description" />
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="Size" HeaderText="Size" />
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="SqFeet" HeaderText="Sq Feet" />
+                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="Qty" HeaderText="Qty" />
+                                                    <asp:TemplateField HeaderText="Used Qty" ItemStyle-HorizontalAlign="Center">
+                                                        <ItemTemplate>
+                                                            <button type="button" class="btnMinus" onclick="changeQty(this,-1)">-</button>
+
+                                                            <asp:Label ID="lblUsedQty" runat="server"
+                                                                CssClass="UsedQty" Text="0"></asp:Label>
+
+                                                            <button type="button" class="btnPlus" onclick="changeQty(this,1)">+</button>
+                                                        </ItemTemplate>
+                                                    </asp:TemplateField>
+                                                    <asp:TemplateField HeaderText="Used Sq Feet" ItemStyle-HorizontalAlign="Center">
+                                                        <ItemTemplate>
+                                                            <asp:Label ID="lblUsedSqFeet" runat="server" CssClass="UsedSqFeet" Text="0"></asp:Label>
+                                                        </ItemTemplate>
+                                                    </asp:TemplateField>
+                                                </Columns>
+                                            </asp:GridView>
+                                        </asp:Panel>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Sr.No." ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
                                         <asp:Label ID="lblsno" runat="server" Text='<%# Container.DataItemIndex+1 %>'></asp:Label>
@@ -507,24 +334,11 @@
                                         <asp:Label ID="lblQty" runat="server" Text='<%#Eval("Qty")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Size" ItemStyle-HorizontalAlign="Center">
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblSize" runat="server" Text='<%#Eval("Size")%>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Adjust Qty" ItemStyle-HorizontalAlign="Center">
-                                    <ItemTemplate>
-                                        <asp:TextBox ID="txtqty" runat="server" CssClass="form-control" onkeyup="validateAdjustQty(this); updateBalanceQty(this);" onblur="validateAdjustQty(this); updateBalanceQty(this);"></asp:TextBox>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Balance Qty" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
-                                        <asp:Label ID="lblBalanceQty" runat="server"
-                                            CssClass="balanceQty"
-                                            Text="0"></asp:Label>
+                                        <asp:Label ID="lblBalanceQty" runat="server" CssClass="balanceQty" Text="0"></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-
                                 <asp:TemplateField HeaderText="WO Status" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
                                         <asp:Label ID="lblWOStatus" runat="server" Text='<%#Eval("WOStatus")%>'
