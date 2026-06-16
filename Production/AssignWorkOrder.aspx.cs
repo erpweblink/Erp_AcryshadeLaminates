@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Web.UI;
-using System.Web.UI.WebControls;
+using System.Net;
+using System.Web.Services;
 
 
 public partial class AssignWorkOrder : System.Web.UI.Page
@@ -36,163 +38,128 @@ public partial class AssignWorkOrder : System.Web.UI.Page
                         }
                     }
                 }
-                LoadStageCapacity();
-                FillGrid();
+
+                lblDate.InnerText = DateTime.Now.Date.ToString("dd-MM-yyyy");
             }
         }
     }
 
-    private void LoadStageCapacity()
+
+    [WebMethod]
+    public static string GetMachineDetails()
     {
+        DataTable dt = new DataTable();
+
+        SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString);
         using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
         {
             cmd.CommandType = CommandType.StoredProcedure;
             cmd.Parameters.AddWithValue("@SP_Action", "GetCapacity");
             SqlDataAdapter da = new SqlDataAdapter(cmd);
-            DataTable dt = new DataTable();
             da.Fill(dt);
-            gvStageCapacity.DataSource = dt;
-            gvStageCapacity.DataBind();
         }
+
+        return JsonConvert.SerializeObject(dt);
     }
 
-    private void FillGrid()
+    [WebMethod]
+    public static string GetWorkOrders()
     {
         DataTable dt = new DataTable();
-        SqlDataAdapter cmd = new SqlDataAdapter("SP_ProductionsPlanning", con);
-        cmd.SelectCommand.CommandType = CommandType.StoredProcedure;
-        cmd.SelectCommand.Parameters.AddWithValue("@SP_Action", "ScheduledWorkOrder");
-        cmd.Fill(dt);
-        GVCompany.DataSource = dt;
-        GVCompany.DataBind();
-    }
 
-    protected void GVCompany_RowDataBound(object sender, GridViewRowEventArgs e)
-    {
-        if (e.Row.RowType == DataControlRowType.DataRow)
+        SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString);
+        using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
         {
-            int headerId = Convert.ToInt32(GVCompany.DataKeys[e.Row.RowIndex].Value);
-
-            GridView gvCompany = e.Row.FindControl("Gvdetails") as GridView;
-
-            SqlCommand cmd = new SqlCommand(@"SELECT Id, HeaderID, ProductId, ProductName,
-                      PartNo, Description,Size, Unit, Qty, SqFeet, UploadedImage FROM tbl_WorkOrderDetails
-                    WHERE HeaderID = @HeaderID", con);
-
-            cmd.Parameters.AddWithValue("@HeaderID", headerId);
-
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@SP_Action", "GetWorkOrder");
             SqlDataAdapter da = new SqlDataAdapter(cmd);
-            DataTable dt = new DataTable();
             da.Fill(dt);
-
-            gvCompany.DataSource = dt;
-            gvCompany.DataBind();
-        }
-    }
-
-    protected void btnCreate_Click(object sender, EventArgs e)
-    {
-        Save_Data("Multiple");
-    }
-
-    protected void btnSend_Click(object sender, EventArgs e)
-    {
-        Save_Data("Single");
-    }
-
-    protected void Save_Data(string Frombtn)
-    {
-        string MachineID = "";
-        foreach (GridViewRow g1 in gvStageCapacity.Rows)
-        {
-            CheckBox chkSelect = g1.FindControl("chkMachine") as CheckBox;
-            if (chkSelect.Checked)
-            {
-                Label MachineId = (Label)g1.FindControl("lblMachineID");
-                MachineID = MachineId.Text;
-                break;
-            }
         }
 
-        if (Frombtn == "Multiple")
+        return JsonConvert.SerializeObject(dt);
+    }
+
+    [WebMethod]
+    public static decimal GetScheduledQtyByDate(string scheduleDate)
+    {
+        decimal totalSqFt = 0;
+
+        try
         {
-            if (!string.IsNullOrWhiteSpace(MachineID))
+            DateTime date = DateTime.Parse(scheduleDate);
+
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
             {
-                foreach (GridViewRow g2 in GVCompany.Rows)
+                con.Open();
+
+                string query = @"
+                SELECT SUM(CAST(ISNULL(dtls.SqFeet,0) as decimal)) as Sqfeet, hdr.ScheduledDate as ScheduledDate
+                 FROM tbl_WorkOrderDetails dtls  
+                 LEFT JOIN  tbl_WorkOrderHDR hdr ON hdr.ID = dtls.Headerid
+                 WHERE hdr.isdesignapproved = 1 AND hdr.IsDeleted = 0 AND ScheduledDate = @ScheduleDate
+                 GROUP BY  ScheduledDate ";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
                 {
-                    CheckBox chkSelect = g2.FindControl("chkSend") as CheckBox;
-                    if (chkSelect.Checked)
+                    cmd.Parameters.AddWithValue("@ScheduleDate", date.Date);
+
+                    object result = cmd.ExecuteScalar();
+
+                    if (result != null)
                     {
-                        Label lblWoID = (Label)g2.FindControl("lblWoID");
-
-                        DataTable Dt = new DataTable();
-                        SqlDataAdapter da = new SqlDataAdapter("SELECT ProductName,PartNo,Size,Qty FROM tbl_WorkOrderdetails WHERE HeaderID='" + lblWoID.Text + "'", con);
-                        da.Fill(Dt);
-                        foreach (DataRow dr in Dt.Rows)
-                        {
-                            using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
-                            {
-                                cmd.CommandType = CommandType.StoredProcedure;
-
-                                cmd.Parameters.AddWithValue("@MachineId", MachineID);
-                                cmd.Parameters.AddWithValue("@WOHeaderId", lblWoID.Text);
-                                cmd.Parameters.AddWithValue("@ProductName", dr["ProductName"].ToString());
-                                cmd.Parameters.AddWithValue("@PartNo", dr["PartNo"].ToString());
-                                cmd.Parameters.AddWithValue("@Size", dr["Size"].ToString());
-                                cmd.Parameters.AddWithValue("@ReceivedQty", dr["Qty"].ToString());
-                                cmd.Parameters.AddWithValue("@sheduledate", txtdate.Text.Trim());
-                                cmd.Parameters.AddWithValue("@SP_Action", "InsertWOToProd");
-
-                                con.Open();
-                                cmd.ExecuteNonQuery();
-                                con.Close();
-                            }
-                        }
+                        totalSqFt = Convert.ToDecimal(result);
                     }
                 }
-
-                Session["message"] = "Work Order Sent To Production.";
-                Session["icon"] = "success";
-                Session["time"] = "2000";
-                Session["url"] = "/Production/AssignWorkOrder.aspx";
-                Response.Redirect("/Alerts.aspx");
-            }
-            else
-            {
-                Session["message"] = "Please select atleast one work order and available machine.";
-                Session["icon"] = "warning";
-                Session["time"] = "2000";
-                Session["url"] = "/Production/AssignWorkOrder.aspx";
-                Response.Redirect("/Alerts.aspx");
             }
         }
-        else
+        catch (Exception ex)
         {
-            if (!string.IsNullOrWhiteSpace(MachineID))
-            {
-
-            }
-
+            // log error if needed
+            throw new Exception("Error fetching scheduled quantity: " + ex.Message);
         }
+
+        return totalSqFt;
     }
 
-    [System.Web.Services.WebMethod]
-    public static string UpdatePriority(int id, string priority)
+
+    [WebMethod]
+    public static string SetScheduledDates(object[] list)
     {
-        using (SqlConnection con = new SqlConnection(
-            ConfigurationManager.ConnectionStrings["con"].ConnectionString))
+        try
         {
-            SqlCommand cmd = new SqlCommand(
-                "UPDATE tbl_WorkOrderHdr SET SetPriority=@Priority WHERE ID=@ID", con);
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
+            {
+                con.Open();
 
-            cmd.Parameters.AddWithValue("@Priority", priority);
-            cmd.Parameters.AddWithValue("@ID", id);
+                foreach (var item in list)
+                {
+                    var dict = item as Dictionary<string, object>;
 
-            con.Open();
-            cmd.ExecuteNonQuery();
+                    int woId = Convert.ToInt32(dict["woId"]);
+                    string scheduleDate = dict["scheduleDate"].ToString();
+
+                    string query = @"
+                    UPDATE tbl_WorkOrderHDR
+                    SET ScheduledDate = @ScheduledDate
+                    WHERE ID = @WoId";
+
+                    using (SqlCommand cmd = new SqlCommand(query, con))
+                    {
+                        cmd.Parameters.AddWithValue("@ScheduledDate", scheduleDate);
+                        cmd.Parameters.AddWithValue("@WoId", woId);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+
+            return "Success";
         }
-
-        return "Success";
+        catch (Exception ex)
+        {
+            return "Error: " + ex.Message;
+        }
     }
 }
+
 
