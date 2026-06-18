@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.Net;
+using System.Web.Script.Serialization;
 using System.Web.Services;
 
 
@@ -40,6 +40,7 @@ public partial class AssignWorkOrder : System.Web.UI.Page
                 }
 
                 lblDate.InnerText = DateTime.Now.Date.ToString("dd-MM-yyyy");
+                txtdate.Attributes["min"] = DateTime.Today.ToString("yyyy-MM-dd");
             }
         }
     }
@@ -54,7 +55,8 @@ public partial class AssignWorkOrder : System.Web.UI.Page
         using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
         {
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@SP_Action", "GetCapacity");
+            cmd.Parameters.AddWithValue("@SP_Action", "GetMachineCapacity");
+            cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
             SqlDataAdapter da = new SqlDataAdapter(cmd);
             da.Fill(dt);
         }
@@ -72,6 +74,7 @@ public partial class AssignWorkOrder : System.Web.UI.Page
         {
             cmd.CommandType = CommandType.StoredProcedure;
             cmd.Parameters.AddWithValue("@SP_Action", "GetWorkOrder");
+            cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
             SqlDataAdapter da = new SqlDataAdapter(cmd);
             da.Fill(dt);
         }
@@ -121,7 +124,6 @@ public partial class AssignWorkOrder : System.Web.UI.Page
         return totalSqFt;
     }
 
-
     [WebMethod]
     public static string SetScheduledDates(object[] list)
     {
@@ -158,6 +160,127 @@ public partial class AssignWorkOrder : System.Web.UI.Page
         catch (Exception ex)
         {
             return "Error: " + ex.Message;
+        }
+    }
+
+    [WebMethod]
+    public static string SaveMachineAllocation(object[] allocations)
+    {
+        try
+        {
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
+            {
+                con.Open();
+
+                foreach (Dictionary<string, object> allocation in allocations)
+                {
+                    int woId = Convert.ToInt32(allocation["woId"]);
+                    string woNo = allocation["woNo"].ToString();
+
+                    int machineId = Convert.ToInt32(allocation["machineId"]);
+                    string machineName = allocation["machineName"].ToString();
+
+                    DateTime dt = Convert.ToDateTime(allocation["AssignedDate"].ToString());
+                    decimal totalQty = Convert.ToDecimal(allocation["totalQty"]);
+
+                    int Id = 0;
+                    using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        // MASTER DATA
+                        cmd.Parameters.AddWithValue("@WOHeaderId", woId);
+                        cmd.Parameters.AddWithValue("@WorkOrderNo", woNo);
+                        cmd.Parameters.AddWithValue("@sheduledate", dt);
+                        cmd.Parameters.AddWithValue("@SP_Action", "InsertToProductionHdr");
+                        cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
+                        cmd.ExecuteNonQuery();
+                        Id = Convert.ToInt32(cmd.Parameters["@Result"].Value);
+                    }
+
+                   // Get Details
+                    object[] details = allocation["details"] as object[];
+
+                    if (details != null)
+                    {
+                        foreach (Dictionary<string, object> detail in details)
+                        {
+                            int detailedId = Convert.ToInt32(detail["detailedId"]);
+                            string product = detail["product"].ToString();
+                            string partNo = detail["partNo"].ToString();
+                            string size = detail["size"].ToString();
+                            string sqFeet = detail["sqFeet"].ToString();
+
+                            decimal qty = Convert.ToDecimal(detail["qty"]);
+                            decimal usedQty = Convert.ToDecimal(detail["usedQty"]);
+                            decimal usedSqFt = Convert.ToDecimal(detail["usedSqFt"]);
+
+                            using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
+                            {
+                                cmd.CommandType = CommandType.StoredProcedure;
+
+                                // MASTER DATA
+                                cmd.Parameters.AddWithValue("@HeaderID", Id);
+                                cmd.Parameters.AddWithValue("@ProductName", product);
+                                cmd.Parameters.AddWithValue("@Size", size);
+                                cmd.Parameters.AddWithValue("@TotalQty", qty);
+                                cmd.Parameters.AddWithValue("@SqFeet", sqFeet);
+                                cmd.Parameters.AddWithValue("@AllocatedQty", usedQty);
+                                cmd.Parameters.AddWithValue("@AllocatedSqFeet", usedSqFt);
+                                cmd.Parameters.AddWithValue("@Stage1MachineID", machineId);
+                                cmd.Parameters.AddWithValue("@SP_Action", "InsertToProductionDtls");
+                                cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                    }
+                }
+            }
+            return "Success";
+        }
+        catch (Exception ex)
+        {
+            return ex.ToString();
+        }
+    }
+
+    [WebMethod]
+    public static void UpdateRank(object list)
+    {
+        JavaScriptSerializer js = new JavaScriptSerializer();
+        var data = js.Deserialize<List<Dictionary<string, object>>>(
+            js.Serialize(list)
+        );
+
+        string conStr = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
+
+        using (SqlConnection con = new SqlConnection(conStr))
+        {
+            con.Open();
+
+            foreach (var item in data)
+            {
+                int id = Convert.ToInt32(item["id"]);
+                int rank = Convert.ToInt32(item["rank"]);
+
+                SqlCommand cmd = new SqlCommand(@"
+                UPDATE tbl_MachineProductionHDR
+                SET RankSrNo = @Rank
+                WHERE WorkOrderID = @ID", con);
+
+                cmd.Parameters.AddWithValue("@Rank", rank);
+                cmd.Parameters.AddWithValue("@ID", id);
+                cmd.ExecuteNonQuery();
+
+                SqlCommand cmds = new SqlCommand(@"
+                UPDATE tbl_WorkOrderHdr
+                SET RankNo = @Rank
+                WHERE ID = @ID", con);
+
+                cmds.Parameters.AddWithValue("@Rank", rank);
+                cmds.Parameters.AddWithValue("@ID", id);
+                cmds.ExecuteNonQuery();
+            }
         }
     }
 }

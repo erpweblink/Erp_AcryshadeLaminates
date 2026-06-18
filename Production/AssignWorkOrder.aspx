@@ -3,6 +3,9 @@
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <style type="text/css">
         /* ================= TABLE BASE STYLE (MATCH GRIDVIEW) ================= */
         table {
@@ -100,6 +103,7 @@
     </style>
     <script type="text/javascript">
 
+        /*============== PROPERTIES ==========*/
         var stageCapacity = 0;
         var selectedMachine = null;
         var machineCapacity = 0;
@@ -113,6 +117,34 @@
             loadMachines();
             loadWorkOrder();
         });
+
+
+        function enableDragDrop() {
+            var $table = $("#todaystable");
+            $table.find("tbody").sortable({
+                items: "tr.drag-row",
+                cursor: "move",
+                axis: "y",
+                update: function () {
+                    var list = [];
+                    $table.find("tbody tr.drag-row").each(function (index) {
+                        list.push({
+                            id: parseInt($(this).attr("data-id")),
+                            rank: index + 1
+                        });
+                    });
+                    $.ajax({
+                        type: "POST",
+                        url: "AssignWorkOrder.aspx/UpdateRank",
+                        data: JSON.stringify({ list: list }),
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function () {
+                        }
+                    });
+                }
+            });
+        }
 
         function formatDate_ddMMyyyy(dateStr) {
 
@@ -138,12 +170,21 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function (response) {
+
                     machineData = JSON.parse(response.d);
                     $.each(machineData, function (i, m) {
                         stageCapacity += parseInt(m.MachineCapacity)
                     });
                     $("#stageCApacity").text(stageCapacity);
                     bindMachines();
+
+                    var ddl = $("#ddlMachineFilter");
+                    ddl.empty();
+                    ddl.append("<option value='all'>All Machines</option>");
+
+                    $.each(machineData, function (i, m) {
+                        ddl.append("<option value='" + m.MachineID + "'>" + m.MachineName + "</option>");
+                    });
                 },
                 error: function (xhr, status, error) {
                     console.log(error);
@@ -185,13 +226,14 @@
         function selectMachine(id) {
             selectedMachine = machineData.find(x => x.MachineID == id);
 
-            machineCapacity = selectedMachine.MachineCapacity;
+            machineCapacity = selectedMachine.MachineAvailable;
             usedCapacity = 0;
 
             updateHeader();
         }
 
         /* ================= WORK ORDERS ================= */
+        //Todays
         function loadWorkOrder() {
             $.ajax({
                 type: "POST",
@@ -205,6 +247,8 @@
                     var grouped = {};
                     var count = 1;
                     $.each(rows, function (i, row) {
+                        var MachineDtls = machineData.find(x => x.MachineID == row.MachineID);
+
                         if (!grouped[row.MainID]) {
                             grouped[row.MainID] = {
                                 SrNo: count++,
@@ -216,31 +260,50 @@
                                 totalSqFeet: 0,
                                 totalQty: 0,
                                 balanceQty: 0,
-                                status: "Pending",
-                                details: []
+                                status: row.Status || "Machine Not Allocated",
+                                machineName: MachineDtls?.MachineName || "Not Allocated",
+                                details: [],
+                                isCompleted: true
                             };
                         }
+
+                        var remainingQty = parseFloat(row.RemainingQty || 0);
+                        var remainingSqFeet = parseFloat(row.RemainingSqFeet || 0);
+
                         grouped[row.MainID].details.push({
                             detailedId: row.DetailedID,
                             product: row.ProductName,
                             partNo: row.PartNo,
                             size: row.Size,
-                            qty: parseFloat(row.Qty),
-                            sqFeet: parseFloat(row.SqFeet || 0),
+                            qty: remainingQty,
+                            sqFeet: remainingSqFeet,
+
+                            originalQty: parseFloat(row.Qty),
+                            originalsqFeet: parseFloat(row.SqFeet || 0),
+                            allocatedQty: parseFloat(row.AllocatedQty || 0),
+                            allocatedSqFeet: parseFloat(row.AllocatedSqFeet || 0),
+
                             usedQty: 0,
                             usedSqFt: 0
                         });
+
                         grouped[row.MainID].totalSqFeet += parseFloat(row.SqFeet || 0);
                         grouped[row.MainID].totalQty += parseFloat(row.Qty);
-                        grouped[row.MainID].balanceQty += parseFloat(row.Qty);
+                        grouped[row.MainID].balanceQty += remainingQty;
+
+                        if (parseFloat(row.RemainingQty || 0) > 0) {
+                            grouped[row.MainID].isCompleted = false;
+                        }
                     });
 
                     $.each(grouped, function (key, value) {
                         workOrders.push(value);
                     });
+
                     workOrders.sort(function (a, b) {
                         return a.rankNo - b.rankNo;
                     });
+
                     // Get today's date in yyyy-MM-dd format
                     var today = new Date();
                     today.setHours(0, 0, 0, 0);
@@ -278,7 +341,8 @@
 
         function bindTodaysWorkOrders() {
             var count = 1;
-            var html = "<table>";
+            var html = "<table id='todaystable'>";
+            html += "<thead>";
             html += "<tr>";
             html += "<th></th>";
             html += "<th>Sr.No.</th>";
@@ -289,12 +353,21 @@
             html += "<th>Total Sq Feet</th>";
             html += "<th>Total Qty</th>";
             html += "<th>Balance</th>";
+            html += "<th>Status</th>";
+            html += "<th>Machine Name</th>";
             html += "</tr>";
+            html += "</thead>";
 
+            html += "<tbody>";
             $.each(todaysWorkOrders, function (i, wo) {
 
-                html += "<tr>";
-                html += "<td><input type='checkbox' onchange='toggleWO(" + wo.woId + ",this)'></td>";
+                html += "<tr class='drag-row' data-id='" + wo.woId + "'>";
+                if (wo.isCompleted) {
+                    html += "<td><input type='checkbox' disabled></td>";
+                }
+                else {
+                    html += "<td><input type='checkbox' onchange='toggleWO(" + wo.woId + ",this)'></td>";
+                }
                 html += "<td>" + count++ + "</td>";
                 html += "<td><button type='button' onclick='toggleDetails(" + wo.woId + ")'>+</button></td>";
                 html += "<td style='font-weight:900;color:red;'>" + wo.woNo + "</td>";
@@ -303,16 +376,31 @@
                 html += "<td>" + wo.totalSqFeet + "</td>";
                 html += "<td>" + wo.totalQty + "</td>";
                 html += "<td id='bal_" + wo.woId + "'>" + wo.balanceQty + "</td>";
+
+                var statusColor = "black";
+
+                if (wo.status == "Machine Allocated")
+                    statusColor = "#00aaff";
+                else if (wo.status == "Completed")
+                    statusColor = "green";
+                else if (wo.status == "Machine Not Allocated")
+                    statusColor = "red";
+
+
+                html += "<td style='font-weight:bold;color:" + statusColor + "'>" +
+                    wo.status +
+                    "</td>";
+                html += "<td><span class='badge bg-success'>" + wo.machineName + "</span></td>";
                 html += "</tr>";
 
                 html += "<tr id='detailRow_" + wo.woId + "' style='display:none'>";
                 html += "<td colspan='2'></td>";
-                html += "<td colspan='7'>";
+                html += "<td colspan='9'>";
                 html += "<div id='details_" + wo.woId + "'></div>";
                 html += "</td>";
                 html += "</tr>";
             });
-
+            html += "</tbody>";
             html += "</table>";
 
             $("#woContainer").html(html);
@@ -332,7 +420,6 @@
         }
 
         function buildDetails(woId) {
-
             var wo = todaysWorkOrders.find(x => x.woId == woId);
 
             var html = "<table>";
@@ -341,8 +428,10 @@
             html += "<th>Product</th>";
             html += "<th>Part No</th>";
             html += "<th>Size</th>";
-            html += "<th>SqFt</th>";
-            html += "<th>Qty</th>";
+            html += "<th>Original SqFt</th>";
+            html += "<th>Original Qty</th>";
+            html += "<th>Remaining SqFt</th>";
+            html += "<th>Remaining Qty</th>";
             html += "<th>Used Qty</th>";
             html += "<th>Used SqFt</th>";
             html += "</tr>";
@@ -353,6 +442,8 @@
                 html += "<td>" + item.product + "</td>";
                 html += "<td>" + item.partNo + "</td>";
                 html += "<td>" + item.size + "</td>";
+                html += "<td>" + item.originalsqFeet + "</td>";
+                html += "<td>" + item.originalQty + "</td>";
                 html += "<td>" + item.sqFeet + "</td>";
                 html += "<td>" + item.qty + "</td>";
 
@@ -372,6 +463,93 @@
             $("#details_" + woId).html(html);
         }
 
+        function filterTodaysByMachine() {
+
+            var selectedId = $("#ddlMachineFilter").val();
+
+            var filtered = todaysWorkOrders;
+
+            if (selectedId !== "all") {
+                filtered = todaysWorkOrders.filter(x =>
+                    x.machineName !== "Not Allocated" &&
+                    machineData.find(m => m.MachineID == selectedId)?.MachineName === x.machineName
+                );
+            }
+
+            renderTodaysFiltered(filtered);
+        }
+
+        function renderTodaysFiltered(list) {
+
+            var count = 1;
+            var html = "<table id='todaystable'>";
+            html += "<thead>";
+            html += "<tr>";
+            html += "<th></th>";
+            html += "<th>Sr.No.</th>";
+            html += "<th></th>";
+            html += "<th>WO No</th>";
+            html += "<th>Scheduled Date</th>";
+            html += "<th>Customer</th>";
+            html += "<th>Total Sq Feet</th>";
+            html += "<th>Total Qty</th>";
+            html += "<th>Balance</th>";
+            html += "<th>Status</th>";
+            html += "<th>Machine Name</th>";
+            html += "</tr>";
+            html += "</thead>";
+
+            html += "<tbody>";
+            $.each(list, function (i, wo) {
+
+                html += "<tr class='drag-row' data-id='" + wo.woId + "'>";
+                if (wo.isCompleted) {
+                    html += "<td><input type='checkbox' disabled></td>";
+                }
+                else {
+                    html += "<td><input type='checkbox' onchange='toggleWO(" + wo.woId + ",this)'></td>";
+                }
+                html += "<td>" + count++ + "</td>";
+                html += "<td><button type='button' onclick='toggleDetails(" + wo.woId + ")'>+</button></td>";
+                html += "<td style='font-weight:900;color:red;'>" + wo.woNo + "</td>";
+                html += "<td>" + formatDate_ddMMyyyy(wo.scheduledDate) + "</td>";
+                html += "<td>" + wo.customer + "</td>";
+                html += "<td>" + wo.totalSqFeet + "</td>";
+                html += "<td>" + wo.totalQty + "</td>";
+                html += "<td id='bal_" + wo.woId + "'>" + wo.balanceQty + "</td>";
+
+                var statusColor = "black";
+
+                if (wo.status == "Machine Allocated")
+                    statusColor = "#00aaff";
+                else if (wo.status == "Completed")
+                    statusColor = "green";
+                else if (wo.status == "Machine Not Allocated")
+                    statusColor = "red";
+
+
+                html += "<td style='font-weight:bold;color:" + statusColor + "'>" +
+                    wo.status +
+                    "</td>";
+                html += "<td><span class='badge bg-success'>" + wo.machineName + "</span></td>";
+                html += "</tr>";
+
+                html += "<tr id='detailRow_" + wo.woId + "' style='display:none'>";
+                html += "<td colspan='2'></td>";
+                html += "<td colspan='9'>";
+                html += "<div id='details_" + wo.woId + "'></div>";
+                html += "</td>";
+                html += "</tr>";
+            });
+            html += "</tbody>";
+            html += "</table>";
+
+            $("#woContainer").html(html);
+            // re-enable sorting after re-render
+            enableDragDrop();
+        }
+
+        //All List 
         function bindWorkOrders() {
             var count = 1;
             var html = "<table>";
@@ -459,82 +637,138 @@
 
         /* ================= WORK ORDER SELECT ================= */
         var selectedWOs = [];
-
         function togglesWO(woId, chk) {
 
             var scheduleDate = $("#<%= txtdate.ClientID %>").val();
 
-           if (!scheduleDate) {
-               alert("Please select a Schedule Date first.");
-               chk.checked = false;
-               return;
-           }
+            if (!scheduleDate) {
+                alert("Please select a Schedule Date first.");
+                chk.checked = false;
+                return;
+            }
 
-           var wo = workOrders.find(x => x.woId == woId);
+            var wo = workOrders.find(x => x.woId == woId);
 
-           if (!wo) return;
+            if (!wo) return;
 
-           if (!chk.checked) {
-               selectedWOs = selectedWOs.filter(x => x.woId != woId);
-               return;
-           }
+            if (!chk.checked) {
+                selectedWOs = selectedWOs.filter(x => x.woId != woId);
 
-           $.ajax({
-               type: "POST",
-               url: "AssignWorkOrder.aspx/GetScheduledQtyByDate",
-               data: JSON.stringify({ scheduleDate: scheduleDate }),
-               contentType: "application/json; charset=utf-8",
-               dataType: "json",
-               success: function (response) {
+                var usedCapacity = 0; // or a global variable
 
-                   // Qty/SqFt already scheduled in DB for this date
-                   var scheduledSqFt = parseFloat(response.d || 0);
+                $.each(selectedWOs, function (i, item) {
+                    usedCapacity += parseFloat(item.totalSqFeet || 0);
+                });
 
-                   var stageCapacity = parseFloat($("#stageCApacity").text()) || 0;
+                $("#usedCapacity").text(usedCapacity || 0);
+                return;
+            }
 
-                   // Qty selected on screen
-                   var selectedSqFt = 0;
-                   $.each(selectedWOs, function (i, item) {
-                       selectedSqFt += parseFloat(item.totalSqFeet || 0);
-                   });
+            $.ajax({
+                type: "POST",
+                url: "AssignWorkOrder.aspx/GetScheduledQtyByDate",
+                data: JSON.stringify({ scheduleDate: scheduleDate }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
 
-                   var currentWoSqFt = parseFloat(wo.totalSqFeet || 0);
+                    // Qty/SqFt already scheduled in DB for this date
+                    var scheduledSqFt = parseFloat(response.d || 0);
 
-                   var availableSqFt =
-                       stageCapacity -
-                       scheduledSqFt -
-                       selectedSqFt;
+                    var stageCapacity = parseFloat($("#stageCApacity").text()) || 0;
 
-                   if (currentWoSqFt > availableSqFt) {
-
-                       alert(
-                           "Cannot select this Work Order.\n\n" +
-                           "Schedule Date : " + scheduleDate + "\n" +
-                           "Stage Capacity : " + stageCapacity + "\n" +
-                           "Already Scheduled : " + scheduledSqFt + "\n" +
-                           "Currently Selected : " + selectedSqFt + "\n" +
-                           "Available SqFt : " + availableSqFt + "\n" +
-                           "Current WO SqFt : " + currentWoSqFt
-                       );
-
-                       chk.checked = false;
-                       return;
-                   }
-
-                   selectedWOs.push({
-                       woId: woId,
-                       scheduleDate: scheduleDate,
-                       totalSqFeet: parseFloat(wo.totalSqFeet || 0)
-                   });
-               },
-               error: function () {
-                   alert("Error checking available capacity.");
-                   chk.checked = false;
-               }
-           });
-       }
+                    // Qty selected on screen
+                    var selectedSqFt = 0;
+                    $.each(selectedWOs, function (i, item) {
+                        selectedSqFt += parseFloat(item.totalSqFeet || 0);
+                    });
 
 
+                    var currentWoSqFt = parseFloat(wo.totalSqFeet || 0);
+
+
+                    var availableSqFt =
+                        stageCapacity -
+                        scheduledSqFt -
+                        selectedSqFt;
+
+                    if (currentWoSqFt > availableSqFt) {
+
+                        alert(
+                            "Cannot select this Work Order.\n\n" +
+                            "Schedule Date : " + scheduleDate + "\n" +
+                            "Stage Capacity : " + stageCapacity + "\n" +
+                            "Already Scheduled : " + scheduledSqFt + "\n" +
+                            "Currently Selected : " + selectedSqFt + "\n" +
+                            "Available SqFt : " + availableSqFt + "\n" +
+                            "Current WO SqFt : " + currentWoSqFt
+                        );
+
+                        chk.checked = false;
+                        return;
+                    }
+
+                    selectedWOs.push({
+                        woId: woId,
+                        scheduleDate: scheduleDate,
+                        totalSqFeet: parseFloat(wo.totalSqFeet || 0)
+                    });
+
+                    var usedCapacity = scheduledSqFt;
+                    $.each(selectedWOs, function (i, item) {
+                        usedCapacity += parseFloat(item.totalSqFeet || 0);
+                    });
+
+                    $("#usedCapacity").text(usedCapacity);
+                },
+                error: function () {
+                    alert("Error checking available capacity.");
+                    chk.checked = false;
+                }
+            });
+        }
+
+        var MachineAllocatedWOs = [];
+
+        function updateMachineAllocatedWO(wo) {
+
+            var existingIndex = MachineAllocatedWOs.findIndex(x => x.woId == wo.woId);
+
+            var allocation = {
+                woId: wo.woId,
+                woNo: wo.woNo,
+                machineId: selectedMachine.MachineID,
+                machineName: selectedMachine.MachineName,
+                totalQty: wo.totalQty,
+                AssignedDate: wo.scheduledDate,
+                totalSqFeet: wo.totalSqFeet,
+                balanceQty: wo.balanceQty,
+                allocatedQty: wo.totalQty - wo.balanceQty,
+                details: []
+            };
+
+            $.each(wo.details, function (i, item) {
+
+                allocation.details.push({
+                    detailedId: item.detailedId,
+                    product: item.product,
+                    partNo: item.partNo,
+                    size: item.size,
+                    qty: item.qty,
+                    sqFeet: item.sqFeet,
+                    usedQty: item.usedQty,
+                    usedSqFt: item.usedSqFt
+                });
+
+            });
+
+            if (existingIndex >= 0)
+                MachineAllocatedWOs[existingIndex] = allocation;
+            else
+                MachineAllocatedWOs.push(allocation);
+        }
+
+        var selectedTodayWOs = [];
         function toggleWO(woId, chk) {
             if (!selectedMachine) {
                 alert("Select Machine First");
@@ -543,17 +777,61 @@
             }
 
             var wo = todaysWorkOrders.find(x => x.woId == woId);
+            if (wo.machineName !== "Not Allocated") {
+                if (selectedMachine.MachineName !== wo.machineName) {
+                    alert(`Please send work order to ${wo.machineName}`);
+                    chk.checked = false;
+                    return;
+                }
+            }
 
             if (chk.checked) {
-
-                autoAllocateWO(wo);
-
-            } else {
-
+                selectedTodayWOs.push(wo);
+                var allocated = autoAllocateWO(wo);
+                if (!allocated) {
+                    selectedTodayWOs =
+                        selectedTodayWOs.filter(x => x.woId != wo.woId);
+                    chk.checked = false;
+                    return;
+                }
+            }
+            else {
+                selectedTodayWOs = selectedTodayWOs.filter(x => x.woId != wo.woId);
                 releaseWO(wo);
+                redistributeCapacity();
             }
 
             updateHeader();
+        }
+
+        function redistributeCapacity() {
+
+            usedCapacity = 0;
+
+            $.each(selectedTodayWOs, function (i, wo) {
+
+                $.each(wo.details, function (j, item) {
+
+                    item.usedQty = 0;
+                    item.usedSqFt = 0;
+
+                    $("#uq_" + wo.woId + "_" + j).text(0);
+                    $("#us_" + wo.woId + "_" + j).text(0);
+                });
+
+                wo.balanceQty = wo.totalQty;
+            });
+
+            MachineAllocatedWOs = [];
+
+            $.each(selectedTodayWOs, function (i, wo) {
+
+                autoAllocateWO(wo);
+
+                updateBalance(wo.woId);
+            });
+
+            // updateHeader();
         }
 
         /* ================= FIX 1: autoAllocateWO ================= */
@@ -563,12 +841,13 @@
 
             if (remainingCapacity <= 0) {
                 alert("No machine capacity available");
-                return;
+                return false;
             }
 
             $.each(wo.details, function (i, item) {
                 var sqFtPerQty = item.sqFeet / item.qty;
 
+                if (isNaN(sqFtPerQty)) sqFtPerQty = 0;
                 var possibleQty = Math.floor(remainingCapacity / sqFtPerQty);
 
                 item.usedQty = Math.min(possibleQty, item.qty);
@@ -581,17 +860,17 @@
                 $("#uq_" + wo.woId + "_" + i).text(item.usedQty);
                 $("#us_" + wo.woId + "_" + i).text(item.usedSqFt);
 
-                if (remainingCapacity <= 0) {
-                    return false;
-                }
             });
 
             updateBalance(wo.woId);
             updateHeader();
 
+            updateMachineAllocatedWO(wo);
+
             if ($("#detailRow_" + wo.woId).is(":visible")) {
                 buildDetails(wo.woId);
             }
+            return true;
         }
 
         /* ================= FIX 2: releaseWO ================= */
@@ -614,6 +893,9 @@
 
             updateBalance(wo.woId);
             updateHeader();
+
+            MachineAllocatedWOs =
+                MachineAllocatedWOs.filter(x => x.woId != wo.woId);
         }
 
         /* ================= FIX 3: changeQty ================= */
@@ -654,6 +936,8 @@
 
             updateBalance(woId);
             updateHeader();
+            wo.details[index].usedSqFt = usedSqFt;
+            updateMachineAllocatedWO(wo);
         }
 
         /* ================= BALANCE ================= */
@@ -693,13 +977,31 @@
         /* ================= SAVE ================= */
         function saveAllocation() {
 
-            console.log({
-                machine: selectedMachine,
-                usedCapacity: usedCapacity,
-                workOrders: workOrders
-            });
+            if (MachineAllocatedWOs.length == 0) {
+                alert("No Work Orders Allocated");
+                return;
+            }
 
-            alert("Saved (check console)");
+            $.ajax({
+                type: "POST",
+                url: "AssignWorkOrder.aspx/SaveMachineAllocation",
+                data: JSON.stringify({ allocations: MachineAllocatedWOs }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+
+                    alert("Allocation Saved Successfully");
+
+                    MachineAllocatedWOs = [];
+
+                    //window.location.reload();
+                    loadMachines();
+                    loadWorkOrder();
+                },
+                error: function (xhr) {
+                    alert("Error while saving allocation");
+                }
+            });
         }
 
         function SetScheduledDates() {
@@ -719,13 +1021,17 @@
                     alert("Work Orders scheduled successfully!");
 
                     selectedWOs = [];
+                    $("#<%= txtdate.ClientID %>").val('');
+                    $("#usedCapacity").text('0');
+
+                    //window.location.reload();
                     loadWorkOrder(); // reload grid
                 },
                 error: function () {
                     alert("Error while saving schedule.");
                 }
             });
-           
+
         }
     </script>
 </asp:Content>
@@ -746,6 +1052,9 @@
                         <hr>
                         <h4 class="m-0 font-weight-bold" style="color: #eb7025; font-weight: 900;">Todays Orders ( 
                                 <b style="color: green; font-size: medium;"><span id="lblDate" runat="server"></span></b>)
+                            <select id="ddlMachineFilter" onchange="filterTodaysByMachine()" class="form-control" style="width: 200px; display: inline-block;">
+                                <option value="all">All Machines</option>
+                            </select>
                             <span style="float: right">Capacity Used (SqFt):
                                     <span id="capacityInfo">0 / 0</span>
                             </span>
@@ -766,8 +1075,11 @@
                             </div>
 
                             <div class="col-md-6 text-center">
-                                <h4 style="color: #eb7025; font-weight: 900; font-size: 30px;">Stage Capacity - <span id="stageCApacity">0</span>
-                                </h4>
+                                <span style="color: #eb7025; font-weight: 900; font-size: 30px;">Stage Capacity - <span id="stageCApacity">0</span>
+                                </span>
+                                <br />
+                                <span style="color: #eb7025; font-weight: 900; font-size: 30px;">Used Capacity - <span id="usedCapacity">0</span>
+                                </span>
                             </div>
 
                             <div class="col-md-3 text-end">
