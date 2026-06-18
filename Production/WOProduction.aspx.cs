@@ -72,6 +72,7 @@ public partial class WOProduction : System.Web.UI.Page
         cmd.SelectCommand.CommandType = CommandType.StoredProcedure;
         cmd.SelectCommand.Parameters.AddWithValue("@Id", Convert.ToInt32(Session["ID"].ToString()));
         cmd.SelectCommand.Parameters.AddWithValue("@SP_Action", "GetOperatorDetails");
+        cmd.SelectCommand.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
         cmd.Fill(dt);
         if (dt.Rows.Count > 0)
         {
@@ -92,6 +93,7 @@ public partial class WOProduction : System.Web.UI.Page
         cmd.SelectCommand.CommandType = CommandType.StoredProcedure;
         cmd.SelectCommand.Parameters.AddWithValue("@SP_Action", "AssignWorkOrder");
         cmd.SelectCommand.Parameters.AddWithValue("@ShowRecords", ddlPageSize.SelectedValue);
+        cmd.SelectCommand.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
         cmd.Fill(dt);
         GVCompany.DataSource = dt;
         GVCompany.DataBind();
@@ -111,6 +113,7 @@ public partial class WOProduction : System.Web.UI.Page
         Cmd.CommandType = CommandType.StoredProcedure;
         Cmd.Parameters.AddWithValue("@Id", Convert.ToInt32(e.CommandArgument.ToString()));
         Cmd.Parameters.AddWithValue("@ReceivedQty", qty);
+        Cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
         if (e.CommandName == "AppQty")
         {
             Cmd.Parameters.AddWithValue("@SP_Action", "S1CompletedQty");

@@ -53,6 +53,7 @@ public partial class ReceivedWOList : System.Web.UI.Page
         cmd.SelectCommand.CommandType = CommandType.StoredProcedure;
         cmd.SelectCommand.Parameters.AddWithValue("@SP_Action", "ProductionSchedular");
         cmd.SelectCommand.Parameters.AddWithValue("@ShowRecords", ddlPageSize.SelectedValue);
+        cmd.SelectCommand.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
         cmd.Fill(dt);
         GVCompany.DataSource = dt;
         GVCompany.DataBind();

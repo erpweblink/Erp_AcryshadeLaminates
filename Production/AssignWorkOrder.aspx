@@ -1,340 +1,1039 @@
-<%@ Page Title="" Language="C#" MasterPageFile="~/MasterPage.master" EnableEventValidation="false" AutoEventWireup="true" Async="true" CodeFile="AssignWorkOrder.aspx.cs" Inherits="AssignWorkOrder" %>
+﻿<%@ Page Title="" Language="C#" MasterPageFile="~/MasterPage.master" EnableEventValidation="false" AutoEventWireup="true" Async="true" CodeFile="AssignWorkOrder.aspx.cs" Inherits="AssignWorkOrder" %>
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
-    <script type="text/javascript">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
 
-        window.onload = function () {
-            UpdateCapacityStatus();
-            document.querySelectorAll(".priority-ddl").forEach(function (ddl) {
-                setPriorityColor(ddl);
-            });
-        };
-
-        function PriorityChanged(ddl, id) {
-
-            setPriorityColor(ddl);
-
-            var priority = ddl.value;
-
-            // Call AJAX to update database
-            UpdatePriority(id, priority);
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <style type="text/css">
+        /* ================= TABLE BASE STYLE (MATCH GRIDVIEW) ================= */
+        table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
-        function UpdatePriority(id, priority) {
+            /* HEADER STYLE (same as HeaderStyle-BackColor="#5b78b1") */
+            table tr:first-child th {
+                background: #5b78b1;
+                color: black;
+                font-weight: bold;
+                text-align: center;
+                padding: 10px;
+                border: 1px solid #ddd;
+            }
 
+            /* CELL STYLE */
+            table td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: center;
+                vertical-align: middle;
+            }
+
+            /* HOVER LIKE Bootstrap table-hover */
+            table tr:hover {
+                background: #f5f5f5;
+            }
+
+        /* MACHINE BADGE STYLE */
+        .badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .bg-info {
+            background: #17a2b8;
+        }
+
+        .bg-danger {
+            background: #dc3545;
+        }
+
+        .bg-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .bg-success {
+            background: #28a745;
+        }
+
+        /* BUTTON STYLE LIKE bootstrap-outline-primary */
+        button {
+            padding: 3px 8px;
+            margin: 2px;
+            cursor: pointer;
+            border: 1px solid #007bff;
+            background: transparent;
+            color: #007bff;
+            border-radius: 3px;
+            font-size: 15px;
+        }
+
+            button:hover {
+                background: #007bff;
+                color: white;
+            }
+
+        /* REMOVE BUTTON BORDER FOR + / - SMALL */
+        .btnMinus, .btnPlus {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            line-height: 20px;
+        }
+
+        /* INPUT STYLE LIKE ASP.NET */
+        input[type="checkbox"], input[type="radio"] {
+            transform: scale(1.1);
+        }
+
+        /* CARD HEADER STYLE MATCH */
+        h3 {
+            font-weight: 700;
+        }
+
+        /* DETAIL ROW BACKGROUND */
+        .detail-row td {
+            background: #fafafa;
+        }
+    </style>
+    <script type="text/javascript">
+
+        /*============== PROPERTIES ==========*/
+        var stageCapacity = 0;
+        var selectedMachine = null;
+        var machineCapacity = 0;
+        var usedCapacity = 0;
+        var machineData = [];
+        var workOrders = [];
+        var todaysWorkOrders = [];
+
+        /* ================= INIT ================= */
+        $(function () {
+            loadMachines();
+            loadWorkOrder();
+        });
+
+
+        function enableDragDrop() {
+            var $table = $("#todaystable");
+            $table.find("tbody").sortable({
+                items: "tr.drag-row",
+                cursor: "move",
+                axis: "y",
+                update: function () {
+                    var list = [];
+                    $table.find("tbody tr.drag-row").each(function (index) {
+                        list.push({
+                            id: parseInt($(this).attr("data-id")),
+                            rank: index + 1
+                        });
+                    });
+                    $.ajax({
+                        type: "POST",
+                        url: "AssignWorkOrder.aspx/UpdateRank",
+                        data: JSON.stringify({ list: list }),
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function () {
+                        }
+                    });
+                }
+            });
+        }
+
+        function formatDate_ddMMyyyy(dateStr) {
+
+            if (!dateStr) return "";
+
+            var d = new Date(dateStr);
+
+            if (isNaN(d.getTime())) return dateStr;
+
+            var day = ("0" + d.getDate()).slice(-2);
+            var month = ("0" + (d.getMonth() + 1)).slice(-2);
+            var year = d.getFullYear();
+
+            return day + "-" + month + "-" + year;
+        }
+
+        /* ================= MACHINES ================= */
+        function loadMachines() {
             $.ajax({
                 type: "POST",
-                url: "AssignWorkOrder.aspx/UpdatePriority",
-                data: JSON.stringify({
-                    id: id,
-                    priority: priority
-                }),
+                url: "AssignWorkOrder.aspx/GetMachineDetails",
+                data: '{}',
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function (response) {
-                    console.log("Priority updated");
+
+                    machineData = JSON.parse(response.d);
+                    $.each(machineData, function (i, m) {
+                        stageCapacity += parseInt(m.MachineCapacity)
+                    });
+                    $("#stageCApacity").text(stageCapacity);
+                    bindMachines();
+
+                    var ddl = $("#ddlMachineFilter");
+                    ddl.empty();
+                    ddl.append("<option value='all'>All Machines</option>");
+
+                    $.each(machineData, function (i, m) {
+                        ddl.append("<option value='" + m.MachineID + "'>" + m.MachineName + "</option>");
+                    });
                 },
-                error: function (xhr) {
-                    alert("Error updating priority");
+                error: function (xhr, status, error) {
+                    console.log(error);
+                    alert("Error loading machine data");
                 }
             });
         }
 
-        function setPriorityColor(ddl) {
+        function bindMachines() {
+            var html = "<table>";
+            html += "<tr><th>Select</th><th>Stage</th><th>Name</th><th>Capacity</th><th>Load</th><th>Available</th><th>Load Per</th></tr>";
 
-            ddl.style.color = "black";
+            $.each(machineData, function (i, m) {
 
-            switch (ddl.value) {
-                case "Urgent":
-                    ddl.style.backgroundColor = "#dc3545"; // Red
-                    ddl.style.color = "white";
-                    break;
+                var load = parseFloat(m.LoadPercentage);
 
-                case "Fast":
-                    ddl.style.backgroundColor = "#198754"; // Green
-                    ddl.style.color = "white";
-                    break;
+                var badgeClass =
+                    load >= 100 ? "bg-danger" :
+                        load >= 70 ? "bg-warning" :
+                            "bg-success";
 
-                case "Slow":
-                    ddl.style.backgroundColor = "#ffc107"; // Yellow
-                    ddl.style.color = "black";
-                    break;
+                html += "<tr>";
+                html += "<td><input type='radio' name='machine' onclick='selectMachine(" + m.MachineID + ")'></td>";
+                html += "<td><span class='badge bg-info'>" + m.AllocatedStage + "</span></td>";
+                html += "<td>" + m.MachineName + "</td>";
+                html += "<td>" + m.MachineCapacity + "</td>";
+                html += "<td>" + m.MachineLoad + "</td>";
+                html += "<td>" + m.MachineAvailable + "</td>";
+                html += "<td><span class='badge " + badgeClass + "'>"
+                    + m.LoadPercentage + " %</span></td>";
+                html += "</tr>";
+            });
 
-                default:
-                    ddl.style.backgroundColor = "";
-                    ddl.style.color = "";
-                    break;
-            }
+            html += "</table>";
+
+            $("#machineContainer").html(html);
         }
 
-        function SelectSingleMachine(chk) {
+        function selectMachine(id) {
+            selectedMachine = machineData.find(x => x.MachineID == id);
 
-            var grid = document.getElementById("gvStageCapacity");
+            machineCapacity = selectedMachine.MachineAvailable;
+            usedCapacity = 0;
 
-            var checkboxes = grid.querySelectorAll("input[type='checkbox']");
+            updateHeader();
+        }
 
-            // Allow only one machine selection
-            for (var i = 0; i < checkboxes.length; i++) {
+        /* ================= WORK ORDERS ================= */
+        //Todays
+        function loadWorkOrder() {
+            $.ajax({
+                type: "POST",
+                url: "AssignWorkOrder.aspx/GetWorkOrders",
+                data: '{}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    var rows = JSON.parse(response.d);
+                    workOrders = [];
+                    var grouped = {};
+                    var count = 1;
+                    $.each(rows, function (i, row) {
+                        var MachineDtls = machineData.find(x => x.MachineID == row.MachineID);
 
-                if (checkboxes[i] != chk)
-                    checkboxes[i].checked = false;
+                        if (!grouped[row.MainID]) {
+                            grouped[row.MainID] = {
+                                SrNo: count++,
+                                woId: row.MainID,
+                                rankNo: parseInt(row.RankNo),
+                                woNo: row.TallyRefNo,
+                                scheduledDate: row.ScheduledDate || '',
+                                customer: row.CustomerName,
+                                totalSqFeet: 0,
+                                totalQty: 0,
+                                balanceQty: 0,
+                                status: row.Status || "Machine Not Allocated",
+                                machineName: MachineDtls?.MachineName || "Not Allocated",
+                                details: [],
+                                isCompleted: true
+                            };
+                        }
+
+                        var remainingQty = parseFloat(row.RemainingQty || 0);
+                        var remainingSqFeet = parseFloat(row.RemainingSqFeet || 0);
+
+                        grouped[row.MainID].details.push({
+                            detailedId: row.DetailedID,
+                            product: row.ProductName,
+                            partNo: row.PartNo,
+                            size: row.Size,
+                            qty: remainingQty,
+                            sqFeet: remainingSqFeet,
+
+                            originalQty: parseFloat(row.Qty),
+                            originalsqFeet: parseFloat(row.SqFeet || 0),
+                            allocatedQty: parseFloat(row.AllocatedQty || 0),
+                            allocatedSqFeet: parseFloat(row.AllocatedSqFeet || 0),
+
+                            usedQty: 0,
+                            usedSqFt: 0
+                        });
+
+                        grouped[row.MainID].totalSqFeet += parseFloat(row.SqFeet || 0);
+                        grouped[row.MainID].totalQty += parseFloat(row.Qty);
+                        grouped[row.MainID].balanceQty += remainingQty;
+
+                        if (parseFloat(row.RemainingQty || 0) > 0) {
+                            grouped[row.MainID].isCompleted = false;
+                        }
+                    });
+
+                    $.each(grouped, function (key, value) {
+                        workOrders.push(value);
+                    });
+
+                    workOrders.sort(function (a, b) {
+                        return a.rankNo - b.rankNo;
+                    });
+
+                    // Get today's date in yyyy-MM-dd format
+                    var today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    todaysWorkOrders = [];
+                    var otherWorkOrders = [];
+
+                    $.each(workOrders, function (i, wo) {
+                        if (wo.scheduledDate) {
+
+                            var schDate = new Date(wo.scheduledDate);
+                            schDate.setHours(0, 0, 0, 0);
+
+                            if (schDate.getTime() === today.getTime()) {
+                                todaysWorkOrders.push(wo);
+                            } else {
+                                otherWorkOrders.push(wo);
+                            }
+                        } else {
+                            otherWorkOrders.push(wo);
+                        }
+                    });
+
+                    workOrders = otherWorkOrders;
+
+                    bindTodaysWorkOrders();
+                    bindWorkOrders();
+                },
+                error: function (xhr, status, error) {
+                    console.log(error);
+                    alert("Error loading Work Orders data");
+                }
+            });
+        }
+
+        function bindTodaysWorkOrders() {
+            var count = 1;
+            var html = "<table id='todaystable'>";
+            html += "<thead>";
+            html += "<tr>";
+            html += "<th></th>";
+            html += "<th>Sr.No.</th>";
+            html += "<th></th>";
+            html += "<th>WO No</th>";
+            html += "<th>Scheduled Date</th>";
+            html += "<th>Customer</th>";
+            html += "<th>Total Sq Feet</th>";
+            html += "<th>Total Qty</th>";
+            html += "<th>Balance</th>";
+            html += "<th>Status</th>";
+            html += "<th>Machine Name</th>";
+            html += "</tr>";
+            html += "</thead>";
+
+            html += "<tbody>";
+            $.each(todaysWorkOrders, function (i, wo) {
+
+                html += "<tr class='drag-row' data-id='" + wo.woId + "'>";
+                if (wo.isCompleted) {
+                    html += "<td><input type='checkbox' disabled></td>";
+                }
+                else {
+                    html += "<td><input type='checkbox' onchange='toggleWO(" + wo.woId + ",this)'></td>";
+                }
+                html += "<td>" + count++ + "</td>";
+                html += "<td><button type='button' onclick='toggleDetails(" + wo.woId + ")'>+</button></td>";
+                html += "<td style='font-weight:900;color:red;'>" + wo.woNo + "</td>";
+                html += "<td>" + formatDate_ddMMyyyy(wo.scheduledDate) + "</td>";
+                html += "<td>" + wo.customer + "</td>";
+                html += "<td>" + wo.totalSqFeet + "</td>";
+                html += "<td>" + wo.totalQty + "</td>";
+                html += "<td id='bal_" + wo.woId + "'>" + wo.balanceQty + "</td>";
+
+                var statusColor = "black";
+
+                if (wo.status == "Machine Allocated")
+                    statusColor = "#00aaff";
+                else if (wo.status == "Completed")
+                    statusColor = "green";
+                else if (wo.status == "Machine Not Allocated")
+                    statusColor = "red";
+
+
+                html += "<td style='font-weight:bold;color:" + statusColor + "'>" +
+                    wo.status +
+                    "</td>";
+                html += "<td><span class='badge bg-success'>" + wo.machineName + "</span></td>";
+                html += "</tr>";
+
+                html += "<tr id='detailRow_" + wo.woId + "' style='display:none'>";
+                html += "<td colspan='2'></td>";
+                html += "<td colspan='9'>";
+                html += "<div id='details_" + wo.woId + "'></div>";
+                html += "</td>";
+                html += "</tr>";
+            });
+            html += "</tbody>";
+            html += "</table>";
+
+            $("#woContainer").html(html);
+        }
+
+        function toggleDetails(id) {
+
+            var row = $("#detailRow_" + id);
+
+            if (row.is(":visible")) {
+                row.hide();
+                return;
             }
 
-            var availableCapacity = GetStage1Capacity();
-            var selectedQty = GetSelectedQty();
+            buildDetails(id);
+            row.show();
+        }
 
-            if (selectedQty > availableCapacity) {
+        function buildDetails(woId) {
+            var wo = todaysWorkOrders.find(x => x.woId == woId);
 
-                alert(
-                    "Selected WorkOrder Qty (" + selectedQty +
-                    ") exceeds the newly selected machine capacity (" +
-                    availableCapacity +
-                    "). All selected rows will be unchecked."
+            var html = "<table>";
+
+            html += "<tr>";
+            html += "<th>Product</th>";
+            html += "<th>Part No</th>";
+            html += "<th>Size</th>";
+            html += "<th>Original SqFt</th>";
+            html += "<th>Original Qty</th>";
+            html += "<th>Remaining SqFt</th>";
+            html += "<th>Remaining Qty</th>";
+            html += "<th>Used Qty</th>";
+            html += "<th>Used SqFt</th>";
+            html += "</tr>";
+
+            $.each(wo.details, function (i, item) {
+                html += "<tr>";
+
+                html += "<td>" + item.product + "</td>";
+                html += "<td>" + item.partNo + "</td>";
+                html += "<td>" + item.size + "</td>";
+                html += "<td>" + item.originalsqFeet + "</td>";
+                html += "<td>" + item.originalQty + "</td>";
+                html += "<td>" + item.sqFeet + "</td>";
+                html += "<td>" + item.qty + "</td>";
+
+                html += "<td>";
+                html += "<button type='button' onclick='changeQty(" + woId + "," + i + ",-1)'>-</button>";
+                html += " <span id='uq_" + woId + "_" + i + "'>" + item.usedQty + "</span> ";
+                html += "<button type='button' onclick='changeQty(" + woId + "," + i + ",1)'>+</button>";
+                html += "</td>";
+
+                html += "<td id='us_" + woId + "_" + i + "'>" + item.usedSqFt + "</td>";
+
+                html += "</tr>";
+            });
+
+            html += "</table>";
+
+            $("#details_" + woId).html(html);
+        }
+
+        function filterTodaysByMachine() {
+
+            var selectedId = $("#ddlMachineFilter").val();
+
+            var filtered = todaysWorkOrders;
+
+            if (selectedId !== "all") {
+                filtered = todaysWorkOrders.filter(x =>
+                    x.machineName !== "Not Allocated" &&
+                    machineData.find(m => m.MachineID == selectedId)?.MachineName === x.machineName
                 );
-
-                UncheckAllWorkOrders();
             }
 
-            UpdateCapacityStatus();
+            renderTodaysFiltered(filtered);
         }
 
-        function UncheckAllWorkOrders() {
+        function renderTodaysFiltered(list) {
 
-            var companyGrid = document.getElementById("GVCompany");
+            var count = 1;
+            var html = "<table id='todaystable'>";
+            html += "<thead>";
+            html += "<tr>";
+            html += "<th></th>";
+            html += "<th>Sr.No.</th>";
+            html += "<th></th>";
+            html += "<th>WO No</th>";
+            html += "<th>Scheduled Date</th>";
+            html += "<th>Customer</th>";
+            html += "<th>Total Sq Feet</th>";
+            html += "<th>Total Qty</th>";
+            html += "<th>Balance</th>";
+            html += "<th>Status</th>";
+            html += "<th>Machine Name</th>";
+            html += "</tr>";
+            html += "</thead>";
 
-            for (var i = 1; i < companyGrid.rows.length; i++) {
+            html += "<tbody>";
+            $.each(list, function (i, wo) {
 
-                var row = companyGrid.rows[i];
+                html += "<tr class='drag-row' data-id='" + wo.woId + "'>";
+                if (wo.isCompleted) {
+                    html += "<td><input type='checkbox' disabled></td>";
+                }
+                else {
+                    html += "<td><input type='checkbox' onchange='toggleWO(" + wo.woId + ",this)'></td>";
+                }
+                html += "<td>" + count++ + "</td>";
+                html += "<td><button type='button' onclick='toggleDetails(" + wo.woId + ")'>+</button></td>";
+                html += "<td style='font-weight:900;color:red;'>" + wo.woNo + "</td>";
+                html += "<td>" + formatDate_ddMMyyyy(wo.scheduledDate) + "</td>";
+                html += "<td>" + wo.customer + "</td>";
+                html += "<td>" + wo.totalSqFeet + "</td>";
+                html += "<td>" + wo.totalQty + "</td>";
+                html += "<td id='bal_" + wo.woId + "'>" + wo.balanceQty + "</td>";
 
-                var chk = row.cells[0].getElementsByTagName("input")[0];
+                var statusColor = "black";
 
-                if (chk)
+                if (wo.status == "Machine Allocated")
+                    statusColor = "#00aaff";
+                else if (wo.status == "Completed")
+                    statusColor = "green";
+                else if (wo.status == "Machine Not Allocated")
+                    statusColor = "red";
+
+
+                html += "<td style='font-weight:bold;color:" + statusColor + "'>" +
+                    wo.status +
+                    "</td>";
+                html += "<td><span class='badge bg-success'>" + wo.machineName + "</span></td>";
+                html += "</tr>";
+
+                html += "<tr id='detailRow_" + wo.woId + "' style='display:none'>";
+                html += "<td colspan='2'></td>";
+                html += "<td colspan='9'>";
+                html += "<div id='details_" + wo.woId + "'></div>";
+                html += "</td>";
+                html += "</tr>";
+            });
+            html += "</tbody>";
+            html += "</table>";
+
+            $("#woContainer").html(html);
+            // re-enable sorting after re-render
+            enableDragDrop();
+        }
+
+        //All List 
+        function bindWorkOrders() {
+            var count = 1;
+            var html = "<table>";
+            html += "<tr>";
+            html += "<th></th>";
+            html += "<th>Sr.No.</th>";
+            html += "<th></th>";
+            html += "<th>WO No</th>";
+            html += "<th>Scheduled Date</th>";
+            html += "<th>Customer</th>";
+            html += "<th>Total Sq Feet</th>";
+            html += "<th>Total Qty</th>";
+            html += "<th>Balance</th>";
+            html += "</tr>";
+
+            $.each(workOrders, function (i, wo) {
+
+                html += "<tr>";
+                html += "<td><input type='checkbox' onchange='togglesWO(" + wo.woId + ",this)'></td>";
+                html += "<td>" + count++ + "</td>";
+                html += "<td><button type='button' onclick='togglesDetails(" + wo.woId + ")'>+</button></td>";
+                html += "<td style='font-weight:900;color:red;'>" + wo.woNo + "</td>";
+                html += "<td>" + formatDate_ddMMyyyy(wo.scheduledDate) + "</td>";
+                html += "<td>" + wo.customer + "</td>";
+                html += "<td>" + wo.totalSqFeet + "</td>";
+                html += "<td>" + wo.totalQty + "</td>";
+                html += "<td id='bal_" + wo.woId + "'>" + wo.balanceQty + "</td>";
+                html += "</tr>";
+
+                html += "<tr id='detailsRow_" + wo.woId + "' style='display:none'>";
+                html += "<td colspan='2'></td>";
+                html += "<td colspan='7'>";
+                html += "<div id='detailss_" + wo.woId + "'></div>";
+                html += "</td>";
+                html += "</tr>";
+            });
+
+            html += "</table>";
+
+            $("#woContainer1").html(html);
+        }
+
+        function togglesDetails(id) {
+
+            var row = $("#detailsRow_" + id);
+
+            if (row.is(":visible")) {
+                row.hide();
+                return;
+            }
+
+            buildsDetails(id);
+            row.show();
+        }
+
+        function buildsDetails(woId) {
+
+            var wo = workOrders.find(x => x.woId == woId);
+
+            var html = "<table>";
+
+            html += "<tr>";
+            html += "<th>Product</th>";
+            html += "<th>Part No</th>";
+            html += "<th>Size</th>";
+            html += "<th>SqFt</th>";
+            html += "<th>Qty</th>";
+            html += "</tr>";
+
+            $.each(wo.details, function (i, item) {
+                html += "<tr>";
+
+                html += "<td>" + item.product + "</td>";
+                html += "<td>" + item.partNo + "</td>";
+                html += "<td>" + item.size + "</td>";
+                html += "<td>" + item.sqFeet + "</td>";
+                html += "<td>" + item.qty + "</td>";
+                html += "</tr>";
+            });
+
+            html += "</table>";
+
+            $("#detailss_" + woId).html(html);
+        }
+
+        /* ================= WORK ORDER SELECT ================= */
+        var selectedWOs = [];
+        function togglesWO(woId, chk) {
+
+            var scheduleDate = $("#<%= txtdate.ClientID %>").val();
+
+            if (!scheduleDate) {
+                alert("Please select a Schedule Date first.");
+                chk.checked = false;
+                return;
+            }
+
+            var wo = workOrders.find(x => x.woId == woId);
+
+            if (!wo) return;
+
+            if (!chk.checked) {
+                selectedWOs = selectedWOs.filter(x => x.woId != woId);
+
+                var usedCapacity = 0; // or a global variable
+
+                $.each(selectedWOs, function (i, item) {
+                    usedCapacity += parseFloat(item.totalSqFeet || 0);
+                });
+
+                $("#usedCapacity").text(usedCapacity || 0);
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "AssignWorkOrder.aspx/GetScheduledQtyByDate",
+                data: JSON.stringify({ scheduleDate: scheduleDate }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+
+                    // Qty/SqFt already scheduled in DB for this date
+                    var scheduledSqFt = parseFloat(response.d || 0);
+
+                    var stageCapacity = parseFloat($("#stageCApacity").text()) || 0;
+
+                    // Qty selected on screen
+                    var selectedSqFt = 0;
+                    $.each(selectedWOs, function (i, item) {
+                        selectedSqFt += parseFloat(item.totalSqFeet || 0);
+                    });
+
+
+                    var currentWoSqFt = parseFloat(wo.totalSqFeet || 0);
+
+
+                    var availableSqFt =
+                        stageCapacity -
+                        scheduledSqFt -
+                        selectedSqFt;
+
+                    if (currentWoSqFt > availableSqFt) {
+
+                        alert(
+                            "Cannot select this Work Order.\n\n" +
+                            "Schedule Date : " + scheduleDate + "\n" +
+                            "Stage Capacity : " + stageCapacity + "\n" +
+                            "Already Scheduled : " + scheduledSqFt + "\n" +
+                            "Currently Selected : " + selectedSqFt + "\n" +
+                            "Available SqFt : " + availableSqFt + "\n" +
+                            "Current WO SqFt : " + currentWoSqFt
+                        );
+
+                        chk.checked = false;
+                        return;
+                    }
+
+                    selectedWOs.push({
+                        woId: woId,
+                        scheduleDate: scheduleDate,
+                        totalSqFeet: parseFloat(wo.totalSqFeet || 0)
+                    });
+
+                    var usedCapacity = scheduledSqFt;
+                    $.each(selectedWOs, function (i, item) {
+                        usedCapacity += parseFloat(item.totalSqFeet || 0);
+                    });
+
+                    $("#usedCapacity").text(usedCapacity);
+                },
+                error: function () {
+                    alert("Error checking available capacity.");
                     chk.checked = false;
-            }
+                }
+            });
         }
 
-        function ValidateCapacity(chk) {
+        var MachineAllocatedWOs = [];
 
-            var availableCapacity = GetStage1Capacity();
+        function updateMachineAllocatedWO(wo) {
 
-            if (availableCapacity == 0) {
+            var existingIndex = MachineAllocatedWOs.findIndex(x => x.woId == wo.woId);
 
-                alert("Please select a machine first.");
+            var allocation = {
+                woId: wo.woId,
+                woNo: wo.woNo,
+                machineId: selectedMachine.MachineID,
+                machineName: selectedMachine.MachineName,
+                totalQty: wo.totalQty,
+                AssignedDate: wo.scheduledDate,
+                totalSqFeet: wo.totalSqFeet,
+                balanceQty: wo.balanceQty,
+                allocatedQty: wo.totalQty - wo.balanceQty,
+                details: []
+            };
 
+            $.each(wo.details, function (i, item) {
+
+                allocation.details.push({
+                    detailedId: item.detailedId,
+                    product: item.product,
+                    partNo: item.partNo,
+                    size: item.size,
+                    qty: item.qty,
+                    sqFeet: item.sqFeet,
+                    usedQty: item.usedQty,
+                    usedSqFt: item.usedSqFt
+                });
+
+            });
+
+            if (existingIndex >= 0)
+                MachineAllocatedWOs[existingIndex] = allocation;
+            else
+                MachineAllocatedWOs.push(allocation);
+        }
+
+        var selectedTodayWOs = [];
+        function toggleWO(woId, chk) {
+            if (!selectedMachine) {
+                alert("Select Machine First");
                 chk.checked = false;
-                return false;
+                return;
             }
 
-            var totalQty = GetSelectedQty();
-
-            if (totalQty > availableCapacity) {
-
-                alert("Selected Qty (" + totalQty +
-                    ") exceeds available machine capacity (" +
-                    availableCapacity + ").");
-
-                chk.checked = false;
-
-                UpdateCapacityStatus();
-
-                return false;
-            }
-
-            UpdateCapacityStatus();
-            return true;
-        }
-
-        function GetStage1Capacity() {
-
-            var stageGrid = document.getElementById("gvStageCapacity");
-
-            for (var i = 1; i < stageGrid.rows.length; i++) {
-
-                var chk = stageGrid.rows[i]
-                    .cells[0]
-                    .getElementsByTagName("input")[0];
-
-                if (chk.checked) {
-
-                    return parseFloat(stageGrid.rows[i].cells[5].innerText) || 0;
-                    // Column 5 = Available Capacity
+            var wo = todaysWorkOrders.find(x => x.woId == woId);
+            if (wo.machineName !== "Not Allocated") {
+                if (selectedMachine.MachineName !== wo.machineName) {
+                    alert(`Please send work order to ${wo.machineName}`);
+                    chk.checked = false;
+                    return;
                 }
             }
 
-            return 0;
-        }
-
-        function GetSelectedQty() {
-
-            var totalQty = 0;
-
-            var companyGrid = document.getElementById("GVCompany");
-
-            for (var i = 1; i < companyGrid.rows.length; i++) {
-
-                var row = companyGrid.rows[i];
-
-                var checkbox = row.querySelector("input[id*='chkSend']");
-                var btnSend = row.querySelector("a[id*='btnSend']");
-
-                // Total Qty column
-                var qty = parseFloat(row.cells[5].innerText) || 0;
-
-                // Send Qty textbox
-                var txtSendQty = row.querySelector("input[id*='txtSendQty']");
-                var sendQty = parseFloat(txtSendQty.value) || 0;
-
-                // If checkbox selected use full qty
-                if (checkbox.checked) {
-                    totalQty += qty;
-                    btnSend.style.display = "none";
+            if (chk.checked) {
+                selectedTodayWOs.push(wo);
+                var allocated = autoAllocateWO(wo);
+                if (!allocated) {
+                    selectedTodayWOs =
+                        selectedTodayWOs.filter(x => x.woId != wo.woId);
+                    chk.checked = false;
+                    return;
                 }
-                // Otherwise use entered send qty
-                else if (sendQty > 0) {
-                    totalQty += sendQty;
-
-                } else {
-                    btnSend.style.display = "inline-block";
-                }
-            }
-
-            return totalQty;
-        }
-
-        function UpdateCapacityStatus() {
-
-            var availableCapacity = GetStage1Capacity();
-
-            var totalQty = GetSelectedQty();
-
-            var span = document.getElementById("spnCapacityStatus");
-
-            span.innerHTML = totalQty + " / " + availableCapacity;
-
-            var percentage = 0;
-
-            if (availableCapacity > 0)
-                percentage = (totalQty / availableCapacity) * 100;
-
-            if (percentage >= 100) {
-                span.style.color = "red";
-            }
-            else if (percentage >= 80) {
-                span.style.color = "orange";
             }
             else {
-                span.style.color = "green";
+                selectedTodayWOs = selectedTodayWOs.filter(x => x.woId != wo.woId);
+                releaseWO(wo);
+                redistributeCapacity();
             }
+
+            updateHeader();
         }
 
-        function GetRemainingCapacity() {
+        function redistributeCapacity() {
 
-            var totalCapacity = GetStage1Capacity(); // 192
+            usedCapacity = 0;
 
-            var usedCapacity = GetSelectedQty();     // 100
+            $.each(selectedTodayWOs, function (i, wo) {
 
-            return totalCapacity - usedCapacity;     // 92
+                $.each(wo.details, function (j, item) {
+
+                    item.usedQty = 0;
+                    item.usedSqFt = 0;
+
+                    $("#uq_" + wo.woId + "_" + j).text(0);
+                    $("#us_" + wo.woId + "_" + j).text(0);
+                });
+
+                wo.balanceQty = wo.totalQty;
+            });
+
+            MachineAllocatedWOs = [];
+
+            $.each(selectedTodayWOs, function (i, wo) {
+
+                autoAllocateWO(wo);
+
+                updateBalance(wo.woId);
+            });
+
+            // updateHeader();
         }
 
-        function validateQty(txt) {
+        /* ================= FIX 1: autoAllocateWO ================= */
+        function autoAllocateWO(wo) {
 
-            var row = txt.closest("tr");
+            var remainingCapacity = machineCapacity - usedCapacity;
 
-            var totalQty = parseFloat(
-                row.querySelector("[id*='lblQty']").innerText
-            ) || 0;
-
-            var sendQty = parseFloat(txt.value) || 0;
-
-            if (sendQty > totalQty) {
-
-                alert("Send Qty cannot be greater than Total Qty (" + totalQty + ")");
-
-                txt.value = "";
-
-                UpdateCapacityStatus();
-
+            if (remainingCapacity <= 0) {
+                alert("No machine capacity available");
                 return false;
             }
 
-            var availableCapacity = GetStage1Capacity();
+            $.each(wo.details, function (i, item) {
+                var sqFtPerQty = item.sqFeet / item.qty;
 
-            var usedQty = GetSelectedQty();
+                if (isNaN(sqFtPerQty)) sqFtPerQty = 0;
+                var possibleQty = Math.floor(remainingCapacity / sqFtPerQty);
 
-            if (usedQty > availableCapacity) {
+                item.usedQty = Math.min(possibleQty, item.qty);
 
-                alert("Selected Qty (" + usedQty +
-                    ") exceeds machine capacity (" +
-                    availableCapacity + ").");
+                item.usedSqFt = item.usedQty * sqFtPerQty;
 
-                txt.value = "";
+                usedCapacity += item.usedSqFt;
+                remainingCapacity -= item.usedSqFt;
 
-                UpdateCapacityStatus();
+                $("#uq_" + wo.woId + "_" + i).text(item.usedQty);
+                $("#us_" + wo.woId + "_" + i).text(item.usedSqFt);
 
-                return false;
+            });
+
+            updateBalance(wo.woId);
+            updateHeader();
+
+            updateMachineAllocatedWO(wo);
+
+            if ($("#detailRow_" + wo.woId).is(":visible")) {
+                buildDetails(wo.woId);
             }
-
-            UpdateCapacityStatus();
-
             return true;
         }
 
-        function IsMachineSelected() {
+        /* ================= FIX 2: releaseWO ================= */
+        function releaseWO(wo) {
 
-            var stageGrid = document.getElementById("gvStageCapacity");
+            $.each(wo.details, function (i, item) {
 
-            for (var i = 1; i < stageGrid.rows.length; i++) {
+                var sqFtPerQty = item.sqFeet / item.qty;
 
-                var chk = stageGrid.rows[i]
-                    .cells[0]
-                    .getElementsByTagName("input")[0];
+                usedCapacity -= (item.usedQty * sqFtPerQty);
 
-                if (chk.checked)
-                    return true;
-            }
+                item.usedQty = 0;
 
-            return false;
+                $("#uq_" + wo.woId + "_" + i).text(0);
+                $("#us_" + wo.woId + "_" + i).text("0");
+            });
+
+            if (usedCapacity < 0)
+                usedCapacity = 0;
+
+            updateBalance(wo.woId);
+            updateHeader();
+
+            MachineAllocatedWOs =
+                MachineAllocatedWOs.filter(x => x.woId != wo.woId);
         }
 
-        function CheckMachineSelected(txt) {
+        /* ================= FIX 3: changeQty ================= */
+        function changeQty(woId, index, action) {
 
-            if (!IsMachineSelected()) {
+            var wo = todaysWorkOrders.find(x => x.woId == woId);
+            var item = wo.details[index];
 
-                alert("Please select a machine first.");
+            var sqFtPerQty = item.sqFeet / item.qty;
 
-                txt.value = "";
-                txt.blur();
+            if (action == 1) {
 
-                return false;
+                if (item.usedQty >= item.qty) {
+                    return;
+                }
+
+                if ((usedCapacity + sqFtPerQty) > machineCapacity) {
+                    alert("Machine capacity exceeded.");
+                    return;
+                }
+
+                item.usedQty++;
+                usedCapacity += sqFtPerQty;
+            }
+            else {
+
+                if (item.usedQty <= 0)
+                    return;
+
+                item.usedQty--;
+                usedCapacity -= sqFtPerQty;
             }
 
-            return true;
+            var usedSqFt = item.usedQty * sqFtPerQty;
+
+            $("#uq_" + woId + "_" + index).text(item.usedQty);
+            $("#us_" + woId + "_" + index).text(usedSqFt);
+
+            updateBalance(woId);
+            updateHeader();
+            wo.details[index].usedSqFt = usedSqFt;
+            updateMachineAllocatedWO(wo);
         }
 
-        function ValidateSendQty(btn) {
-            var row = btn.closest("tr"); // Get the row of the clicked button
-            var txtSendQty = row.querySelector("input[id*='txtSendQty']");
-            var qty = parseFloat(txtSendQty.value) || 0;
+        /* ================= BALANCE ================= */
+        function updateBalance(woId) {
 
-            if (qty <= 0) {
-                alert("Please enter a valid Send Qty greater than 0.");
-                txtSendQty.focus();
-                return false; // Cancel postback
-            }
+            var wo = todaysWorkOrders.find(x => x.woId == woId);
 
-            // Optional: also check machine capacity
-            var availableCapacity = GetStage1Capacity();
-            var totalQty = GetSelectedQty(); // includes Send Qty
+            var allocatedQty = 0;
 
-            if (totalQty > availableCapacity) {
-                alert("Selected Qty exceeds available machine capacity (" + availableCapacity + ").");
-                return false; // Cancel postback
-            }
+            $.each(wo.details, function (i, item) {
+                allocatedQty += item.usedQty;
+            });
 
-            return true; // Allow postback
+            wo.balanceQty = wo.totalQty - allocatedQty;
+
+            $("#bal_" + woId).text(wo.balanceQty);
         }
-</script>
+
+        /* ================= HEADER ================= */
+        function updateHeader() {
+
+            var remaining = machineCapacity - usedCapacity;
+
+            if (remaining < 0)
+                remaining = 0;
+
+            $("#capacityInfo").text(
+                usedCapacity +
+                " / " +
+                machineCapacity +
+                " (Remaining: " +
+                remaining +
+                ")"
+            );
+        }
+
+        /* ================= SAVE ================= */
+        function saveAllocation() {
+
+            if (MachineAllocatedWOs.length == 0) {
+                alert("No Work Orders Allocated");
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "AssignWorkOrder.aspx/SaveMachineAllocation",
+                data: JSON.stringify({ allocations: MachineAllocatedWOs }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+
+                    alert("Allocation Saved Successfully");
+
+                    MachineAllocatedWOs = [];
+
+                    //window.location.reload();
+                    loadMachines();
+                    loadWorkOrder();
+                },
+                error: function (xhr) {
+                    alert("Error while saving allocation");
+                }
+            });
+        }
+
+        function SetScheduledDates() {
+            if (selectedWOs.length === 0) {
+                alert("Please select at least one Work Order.");
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "AssignWorkOrder.aspx/SetScheduledDates",
+                data: JSON.stringify({ list: selectedWOs }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+
+                    alert("Work Orders scheduled successfully!");
+
+                    selectedWOs = [];
+                    $("#<%= txtdate.ClientID %>").val('');
+                    $("#usedCapacity").text('0');
+
+                    //window.location.reload();
+                    loadWorkOrder(); // reload grid
+                },
+                error: function () {
+                    alert("Error while saving schedule.");
+                }
+            });
+
+        }
+    </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <asp:ToolkitScriptManager ID="ToolkitScriptManager1" runat="server"></asp:ToolkitScriptManager>
@@ -345,112 +1044,53 @@
                     <h3 class="m-0 font-weight-bold"><b>Start Production</b></h3>
                 </div>
                 <div class="card-body">
-                    <div class="row table-responsive">
+                    <div class="box">
                         <center>
-                            <h3 style="color: #eb7025; font-weight: 900;">Machine Capacity</h3>
+                            <h4 style="color: #eb7025; font-weight: 900;">Machine Capacity</h4>
                         </center>
-                        <asp:GridView ID="gvStageCapacity" ClientIDMode="Static" runat="server" HeaderStyle-BackColor="#5b78b1"
-                            CssClass="table table-bordered table-sm table-hover text-center"
-                            AutoGenerateColumns="False">
-                            <Columns>
-                                <asp:TemplateField HeaderText="#" ItemStyle-HorizontalAlign="Center" HeaderStyle-Width="20">
-                                    <ItemTemplate>
-                                        <asp:CheckBox ID="chkMachine" runat="server" onclick="SelectSingleMachine(this);" />
-                                        <asp:Label ID="lblMachineID" runat="server" CssClass="d-none" Text='<%# Eval("MachineID")%>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Stage">
-                                    <ItemTemplate>
-                                        <span class="badge bg-info">
-                                            <%# Eval("AllocatedStage") %>
-                                        </span>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:BoundField DataField="MachineName" HeaderText="Machine Name" />
-                                <asp:BoundField DataField="MachineCapacity" HeaderText="Capacity" />
-                                <asp:BoundField DataField="MachineLoad" HeaderText="Active Load" />
-                                <asp:BoundField DataField="MachineAvailable" HeaderText="Available Capacity" />
-                                <asp:TemplateField HeaderText="Load %">
-                                    <ItemTemplate>
-                                        <span class="badge 
-                                      <%# Convert.ToDecimal(Eval("LoadPercentage")) >= 100 ? "bg-danger" :
-                                          Convert.ToDecimal(Eval("LoadPercentage")) >= 70 ? "bg-warning" : "bg-success" %>">
-                                            <%# Eval("LoadPercentage") %> %
-                                        </span>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                            </Columns>
-                        </asp:GridView>
+                        <div id="machineContainer"></div>
+                        <hr>
+                        <h4 class="m-0 font-weight-bold" style="color: #eb7025; font-weight: 900;">Todays Orders ( 
+                                <b style="color: green; font-size: medium;"><span id="lblDate" runat="server"></span></b>)
+                            <select id="ddlMachineFilter" onchange="filterTodaysByMachine()" class="form-control" style="width: 200px; display: inline-block;">
+                                <option value="all">All Machines</option>
+                            </select>
+                            <span style="float: right">Capacity Used (SqFt):
+                                    <span id="capacityInfo">0 / 0</span>
+                            </span>
+                        </h4>
+                        <div id="woContainer"></div>
+                        <button type="button" class="mt-2" onclick="saveAllocation()">Multiple Send</button>
                     </div>
-                    <hr />
-                    <div class="py-3 d-flex flex-row align-items-center justify-content-between">
-                        <h3 class="m-0 font-weight-bold" style="color: #eb7025; font-weight: 900;">Allocate Machine</h3>
-                        <span style="font-weight: 900;">Total Capacity : <span id="spnCapacityStatus" style="font-weight: bold; font-size: 16px; color: green;">0 / 0</span></span>
-                        <asp:Button ID="btnCreate" CssClass="btn btn-outline-primary" Font-Bold="true" Text="Multiple Send" CausesValidation="false" runat="server" OnClick="btnCreate_Click" />
-                    </div>
-                    <div class="row table-responsive">
-                        <asp:GridView ID="GVCompany" ClientIDMode="Static" runat="server" DataKeyNames="ID" OnRowDataBound="GVCompany_RowDataBound" CssClass="table table-bordered table-striped" HeaderStyle-BackColor="#5b78b1"
-                            HeaderStyle-Font-Bold="true" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" AutoGenerateColumns="false">
-                            <Columns>
-                                <asp:TemplateField HeaderText="Priority" ItemStyle-HorizontalAlign="Center" HeaderStyle-Width="155">
-                                    <ItemTemplate>
-                                        <asp:DropDownList ID="ddlPriority" runat="server" Font-Bold="true" CssClass="form-control priority-ddl" onchange='<%# "PriorityChanged(this," + Eval("ID") + ")" %>'>
-                                            <asp:ListItem Value="">--Set Priority--</asp:ListItem>
-                                            <asp:ListItem Value="Slow">Slow</asp:ListItem>
-                                            <asp:ListItem Value="Fast">Fast</asp:ListItem>
-                                            <asp:ListItem Value="Urgent">Urgent</asp:ListItem>
-                                        </asp:DropDownList>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="#" ItemStyle-HorizontalAlign="Center" HeaderStyle-Width="20">
-                                    <ItemTemplate>
-                                        <asp:CheckBox ID="chkSend" runat="server" onclick="return ValidateCapacity(this);" Enabled='<%#Eval("WOStatus").ToString() != "Pending" ? false : true %>' />
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Sr.No." ItemStyle-HorizontalAlign="Center">
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblsno" runat="server" Text='<%# Container.DataItemIndex+1 %>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="WorkOrder No" ItemStyle-HorizontalAlign="Center" HeaderStyle-Width="180">
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblDealer" runat="server" Text='<%#Eval("WorkOrderNo")%>'></asp:Label>
-                                        <asp:Label ID="lblWoID" CssClass="d-none" runat="server" Text='<%#Eval("ID")%>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="WorkOrder Date" ItemStyle-HorizontalAlign="Center">
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblWorkOrderDate" runat="server" Text='<%#Eval("WorkOrderDate")%>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Product Count" ItemStyle-HorizontalAlign="Center">
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblProductCount" runat="server" Text='<%#Eval("ProductCount")%>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Total Qty" ItemStyle-HorizontalAlign="Center">
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblQty" runat="server" Text='<%#Eval("Qty")%>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="WO Status" ItemStyle-HorizontalAlign="Center">
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblWOStatus" runat="server" Text='<%#Eval("WOStatus")%>'
-                                            ForeColor='<%#Eval("WOStatus").ToString() =="Pending"? System.Drawing.Color.Red : System.Drawing.Color.Green %>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Send Qty" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="d-none" ItemStyle-CssClass="d-none" HeaderStyle-Width="60">
-                                    <ItemTemplate>
-                                        <asp:TextBox ID="txtSendQty" runat="server" CssClass="form-control" onfocus="CheckMachineSelected(this)" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onkeyup="UpdateCapacityStatus()" onblur="validateQty(this)"></asp:TextBox>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Action" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="d-none" ItemStyle-CssClass="d-none">
-                                    <ItemTemplate>
-                                        <asp:LinkButton ID="btnSend" runat="server" CssClass="btn btn-outline-primary" Text="Send" OnClientClick="return ValidateSendQty(this);" OnClick="btnSend_Click"></asp:LinkButton>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                            </Columns>
-                        </asp:GridView>
+                    <br />
+                    <br />
+                    <div class="box">
+                        <div class="row align-items-center">
+
+                            <div class="col-md-3">
+                                <h4 class="m-0 font-weight-bold" style="color: #eb7025; font-weight: 900;">Work Orders List</h4>
+                                <asp:TextBox ID="txtdate" runat="server"
+                                    CssClass="form-control"
+                                    TextMode="Date"></asp:TextBox>
+                            </div>
+
+                            <div class="col-md-6 text-center">
+                                <span style="color: #eb7025; font-weight: 900; font-size: 30px;">Stage Capacity - <span id="stageCApacity">0</span>
+                                </span>
+                                <br />
+                                <span style="color: #eb7025; font-weight: 900; font-size: 30px;">Used Capacity - <span id="usedCapacity">0</span>
+                                </span>
+                            </div>
+
+                            <div class="col-md-3 text-end">
+                                <button type="button"
+                                    class="btn btn-outline-success btn-sm"
+                                    onclick="SetScheduledDates()">
+                                    Schedule W/O
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-1" id="woContainer1"></div>
                     </div>
                 </div>
             </div>
