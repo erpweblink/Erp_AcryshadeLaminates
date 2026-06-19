@@ -92,6 +92,45 @@
                 padding: 6px;
             }
         }
+
+        /*CSS fro Image Pop UP*/
+        .product-image-preview {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .image-hover-container {
+            display: inline-block;
+        }
+
+        .image-popup {
+            display: none;
+            position: fixed; /* important */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 99999;
+            background: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 25px rgba(0,0,0,.4);
+        }
+
+            .image-popup img {
+                max-width: 600px;
+                max-height: 500px;
+                width: auto;
+                height: auto;
+            }
+
+        .image-hover-container:hover .image-popup {
+            display: block;
+        }
+        /*END*/
     </style>
     <script type="text/javascript">
         function updateStatus(element) {
@@ -133,7 +172,7 @@
                         <div class="col-md-3">
                             <asp:Label ID="Label1" runat="server" Font-Bold="true" CssClass="form-label">Search:</asp:Label>
                             <asp:TextBox ID="txtcompanyname" CssClass="form-control" runat="server" Width="100%" OnTextChanged="txtCustomerName_TextChanged" AutoPostBack="true"></asp:TextBox>
-                           <%-- <asp:AutoCompleteExtender ID="AutoCompleteExtender1" runat="server" CompletionListCssClass="completionList"
+                            <%-- <asp:AutoCompleteExtender ID="AutoCompleteExtender1" runat="server" CompletionListCssClass="completionList"
                                 CompletionListHighlightedItemCssClass="itemHighlighted" CompletionListItemCssClass="listItem"
                                 CompletionInterval="10" MinimumPrefixLength="1" ServiceMethod="GetCompanyList"
                                 TargetControlID="txtcompanyname" Enabled="true">
@@ -218,9 +257,20 @@
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Image" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
-                                        <asp:Image ID="imgMachine" runat="server"
-                                            ImageUrl='<%# "data:image/jpeg;base64," + Convert.ToBase64String((byte[])Eval("MachineImage")) %>'
-                                            Width="100px" />
+                                        <div class="image-hover-container">
+                                            <asp:Image ID="imG" runat="server"
+                                                ImageUrl='<%# !string.IsNullOrEmpty(Convert.ToString(Eval("MachineImageName"))) 
+                ? Convert.ToString(Eval("MachineImageName")).Replace("~/", "/Content/") 
+                : "https://placehold.co/100x100?text=Image" %>'
+                                                CssClass="product-image-preview" />
+
+                                            <div class="image-popup">
+                                                <asp:Image ID="imgLarge" runat="server"
+                                                    ImageUrl='<%# !string.IsNullOrEmpty(Convert.ToString(Eval("MachineImageName"))) 
+                    ? Convert.ToString(Eval("MachineImageName")).Replace("~/", "/Content/") 
+                    : "https://placehold.co/400x400?text=Image" %>' />
+                                            </div>
+                                        </div>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="ACTION" ItemStyle-HorizontalAlign="Center">

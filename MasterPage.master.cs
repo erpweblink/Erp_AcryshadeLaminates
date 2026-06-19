@@ -11,7 +11,7 @@ public partial class MasterPage : System.Web.UI.MasterPage
         if (!IsPostBack)
         {
             UserNameShow();
-            PageAuthorization();
+            //PageAuthorization();
         }
     }
 
@@ -152,7 +152,7 @@ public partial class MasterPage : System.Web.UI.MasterPage
                     if (MenuName == "ReceivedWOList.aspx")
                     {
                         string PageAccess = row["PageAccess"].ToString();
-                        SchedTab.Visible = PageAccess == "True" ? true : false;
+                        //SchedTab.Visible = PageAccess == "True" ? true : false;
                     }
                 }
                 /*End*/
@@ -231,7 +231,7 @@ public partial class MasterPage : System.Web.UI.MasterPage
             ProductTab.Visible = false;
             TransTab.Visible = false;
             WOrdTab.Visible = false;
-            SchedTab.Visible = false;
+           // SchedTab.Visible = false;
             ProductionTab.Visible = false;
             RecWOTab.Visible = false;
             UserAuthorTab.Visible = false;
