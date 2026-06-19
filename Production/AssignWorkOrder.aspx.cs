@@ -163,12 +163,94 @@ public partial class AssignWorkOrder : System.Web.UI.Page
         }
     }
 
+    //[WebMethod]
+    //public static string SaveMachineAllocation(object[] allocations)
+    //{
+    //    try
+    //    {
+    //        using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
+    //        {
+    //            con.Open();
+
+    //            foreach (Dictionary<string, object> allocation in allocations)
+    //            {
+    //                int woId = Convert.ToInt32(allocation["woId"]);
+    //                string woNo = allocation["woNo"].ToString();
+
+    //                int machineId = Convert.ToInt32(allocation["machineId"]);
+    //                string machineName = allocation["machineName"].ToString();
+
+    //                DateTime dt = Convert.ToDateTime(allocation["AssignedDate"].ToString());
+    //                decimal totalQty = Convert.ToDecimal(allocation["totalQty"]);
+
+    //                int Id = 0;
+    //                using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
+    //                {
+    //                    cmd.CommandType = CommandType.StoredProcedure;
+
+    //                    // MASTER DATA
+    //                    cmd.Parameters.AddWithValue("@WOHeaderId", woId);
+    //                    cmd.Parameters.AddWithValue("@WorkOrderNo", woNo);
+    //                    cmd.Parameters.AddWithValue("@sheduledate", dt);
+    //                    cmd.Parameters.AddWithValue("@SP_Action", "InsertToProductionHdr");
+    //                    cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
+    //                    cmd.ExecuteNonQuery();
+    //                    Id = Convert.ToInt32(cmd.Parameters["@Result"].Value);
+    //                }
+
+    //               // Get Details
+    //                object[] details = allocation["details"] as object[];
+
+    //                if (details != null)
+    //                {
+    //                    foreach (Dictionary<string, object> detail in details)
+    //                    {
+    //                        int detailedId = Convert.ToInt32(detail["detailedId"]);
+    //                        string product = detail["product"].ToString();
+    //                        string partNo = detail["partNo"].ToString();
+    //                        string size = detail["size"].ToString();
+    //                        string sqFeet = detail["sqFeet"].ToString();
+
+    //                        decimal qty = Convert.ToDecimal(detail["qty"]);
+    //                        decimal usedQty = Convert.ToDecimal(detail["usedQty"]);
+    //                        decimal usedSqFt = Convert.ToDecimal(detail["usedSqFt"]);
+
+    //                        using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
+    //                        {
+    //                            cmd.CommandType = CommandType.StoredProcedure;
+
+    //                            // MASTER DATA
+    //                            cmd.Parameters.AddWithValue("@HeaderID", Id);
+    //                            cmd.Parameters.AddWithValue("@ProductName", product);
+    //                            cmd.Parameters.AddWithValue("@Size", size);
+    //                            cmd.Parameters.AddWithValue("@TotalQty", qty);
+    //                            cmd.Parameters.AddWithValue("@SqFeet", sqFeet);
+    //                            cmd.Parameters.AddWithValue("@AllocatedQty", usedQty);
+    //                            cmd.Parameters.AddWithValue("@AllocatedSqFeet", usedSqFt);
+    //                            cmd.Parameters.AddWithValue("@Stage1MachineID", machineId);
+    //                            cmd.Parameters.AddWithValue("@SP_Action", "InsertToProductionDtls");
+    //                            cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
+    //                            cmd.ExecuteNonQuery();
+    //                        }
+    //                    }
+    //                }
+    //            }
+    //        }
+    //        return "Success";
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        return ex.ToString();
+    //    }
+    //}
+
     [WebMethod]
     public static string SaveMachineAllocation(object[] allocations)
     {
         try
         {
-            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
+            using (SqlConnection con = new SqlConnection(
+                ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
             {
                 con.Open();
 
@@ -178,69 +260,207 @@ public partial class AssignWorkOrder : System.Web.UI.Page
                     string woNo = allocation["woNo"].ToString();
 
                     int machineId = Convert.ToInt32(allocation["machineId"]);
-                    string machineName = allocation["machineName"].ToString();
+                    DateTime assignedDate =
+                        Convert.ToDateTime(allocation["AssignedDate"]);
 
-                    DateTime dt = Convert.ToDateTime(allocation["AssignedDate"].ToString());
-                    decimal totalQty = Convert.ToDecimal(allocation["totalQty"]);
+                    int productionHeaderId = 0;
 
-                    int Id = 0;
-                    using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
+                    #region CHECK EXISTING HEADER
+
+                    string checkHeaderQuery = @"
+                SELECT TOP 1 ID
+                FROM tbl_MachineProductionHDR
+                WHERE WorkOrderID = @WorkOrderID
+                  AND Status <> 'Completed'
+                ORDER BY ID DESC";
+
+                    using (SqlCommand cmd = new SqlCommand(checkHeaderQuery, con))
                     {
-                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("@WorkOrderID", woId);
 
-                        // MASTER DATA
-                        cmd.Parameters.AddWithValue("@WOHeaderId", woId);
-                        cmd.Parameters.AddWithValue("@WorkOrderNo", woNo);
-                        cmd.Parameters.AddWithValue("@sheduledate", dt);
-                        cmd.Parameters.AddWithValue("@SP_Action", "InsertToProductionHdr");
-                        cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
-                        cmd.ExecuteNonQuery();
-                        Id = Convert.ToInt32(cmd.Parameters["@Result"].Value);
+                        object obj = cmd.ExecuteScalar();
+
+                        if (obj != null)
+                            productionHeaderId = Convert.ToInt32(obj);
                     }
 
-                   // Get Details
+                    #endregion
+
+                    #region CREATE HEADER IF NOT EXISTS
+
+                    if (productionHeaderId == 0)
+                    {
+                        using (SqlCommand cmd =
+                            new SqlCommand("SP_ProductionsPlanning", con))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+
+                            cmd.Parameters.AddWithValue("@WOHeaderId", woId);
+                            cmd.Parameters.AddWithValue("@WorkOrderNo", woNo);
+                            cmd.Parameters.AddWithValue("@sheduledate", assignedDate);
+                            cmd.Parameters.AddWithValue("@SP_Action",
+                                "InsertToProductionHdr");
+
+                            cmd.Parameters.Add("@Result", SqlDbType.Int)
+                                .Direction = ParameterDirection.Output;
+
+                            cmd.ExecuteNonQuery();
+
+                            productionHeaderId =
+                                Convert.ToInt32(cmd.Parameters["@Result"].Value);
+                        }
+                    }
+
+                    #endregion
+
                     object[] details = allocation["details"] as object[];
 
-                    if (details != null)
+                    if (details == null)
+                        continue;
+
+                    foreach (Dictionary<string, object> detail in details)
                     {
-                        foreach (Dictionary<string, object> detail in details)
+                        decimal usedQty =
+                            Convert.ToDecimal(detail["usedQty"]);
+
+                        decimal usedSqFt =
+                            Convert.ToDecimal(detail["usedSqFt"]);
+
+                        // skip rows with no allocation
+                        if (usedQty <= 0)
+                            continue;
+
+                        string product =
+                            Convert.ToString(detail["product"]);
+
+                        string size =
+                            Convert.ToString(detail["size"]);
+
+                        decimal qty =
+                            Convert.ToDecimal(detail["qty"]);
+
+                        decimal sqFeet =
+                            Convert.ToDecimal(detail["sqFeet"]);
+
+                        int existingDetailId = 0;
+
+                        #region CHECK EXISTING DETAIL
+
+                        string checkDetailQuery = @"
+                    SELECT TOP 1 ID
+                    FROM tbl_MachineProductionDTLS
+                    WHERE HeaderID = @HeaderID
+                      AND ProductName = @ProductName
+                      AND Size = @Size";
+
+                        using (SqlCommand cmd =
+                            new SqlCommand(checkDetailQuery, con))
                         {
-                            int detailedId = Convert.ToInt32(detail["detailedId"]);
-                            string product = detail["product"].ToString();
-                            string partNo = detail["partNo"].ToString();
-                            string size = detail["size"].ToString();
-                            string sqFeet = detail["sqFeet"].ToString();
+                            cmd.Parameters.AddWithValue("@HeaderID",
+                                productionHeaderId);
 
-                            decimal qty = Convert.ToDecimal(detail["qty"]);
-                            decimal usedQty = Convert.ToDecimal(detail["usedQty"]);
-                            decimal usedSqFt = Convert.ToDecimal(detail["usedSqFt"]);
+                            cmd.Parameters.AddWithValue("@ProductName",
+                                product);
 
-                            using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
+                            cmd.Parameters.AddWithValue("@Size",
+                                size);
+
+                            object obj = cmd.ExecuteScalar();
+
+                            if (obj != null)
+                                existingDetailId =
+                                    Convert.ToInt32(obj);
+                        }
+
+                        #endregion
+
+                        #region UPDATE EXISTING DETAIL
+
+                        if (existingDetailId > 0)
+                        {
+                            string updateQuery = @"
+                        UPDATE tbl_MachineProductionDTLS
+                        SET
+                            AllocatedQty =
+                                ISNULL(CAST(AllocatedQty as decimal),0) + @AllocatedQty,
+
+                            AllocatedSqFeet =
+                                ISNULL(CAST(AllocatedSqFeet as decimal),0) + @AllocatedSqFeet
+                        WHERE ID = @ID";
+
+                            using (SqlCommand cmd =
+                                new SqlCommand(updateQuery, con))
                             {
-                                cmd.CommandType = CommandType.StoredProcedure;
+                                cmd.Parameters.AddWithValue("@ID",
+                                    existingDetailId);
 
-                                // MASTER DATA
-                                cmd.Parameters.AddWithValue("@HeaderID", Id);
-                                cmd.Parameters.AddWithValue("@ProductName", product);
-                                cmd.Parameters.AddWithValue("@Size", size);
-                                cmd.Parameters.AddWithValue("@TotalQty", qty);
-                                cmd.Parameters.AddWithValue("@SqFeet", sqFeet);
-                                cmd.Parameters.AddWithValue("@AllocatedQty", usedQty);
-                                cmd.Parameters.AddWithValue("@AllocatedSqFeet", usedSqFt);
-                                cmd.Parameters.AddWithValue("@Stage1MachineID", machineId);
-                                cmd.Parameters.AddWithValue("@SP_Action", "InsertToProductionDtls");
-                                cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
+                                cmd.Parameters.AddWithValue("@AllocatedQty",
+                                    usedQty);
+
+                                cmd.Parameters.AddWithValue("@AllocatedSqFeet",
+                                    usedSqFt);
+
                                 cmd.ExecuteNonQuery();
                             }
                         }
+
+                        #endregion
+
+                        #region INSERT NEW DETAIL
+
+                        else
+                        {
+                            using (SqlCommand cmd =
+                                new SqlCommand("SP_ProductionsPlanning", con))
+                            {
+                                cmd.CommandType =
+                                    CommandType.StoredProcedure;
+
+                                cmd.Parameters.AddWithValue("@HeaderID",
+                                    productionHeaderId);
+
+                                cmd.Parameters.AddWithValue("@ProductName",
+                                    product);
+
+                                cmd.Parameters.AddWithValue("@Size",
+                                    size);
+
+                                cmd.Parameters.AddWithValue("@TotalQty",
+                                    qty);
+
+                                cmd.Parameters.AddWithValue("@SqFeet",
+                                    sqFeet);
+
+                                cmd.Parameters.AddWithValue("@AllocatedQty",
+                                    usedQty);
+
+                                cmd.Parameters.AddWithValue("@AllocatedSqFeet",
+                                    usedSqFt);
+
+                                cmd.Parameters.AddWithValue("@Stage1MachineID",
+                                    machineId);
+
+                                cmd.Parameters.AddWithValue("@SP_Action",
+                                    "InsertToProductionDtlsS1");
+
+                                cmd.Parameters.Add("@Result", SqlDbType.Int)
+                                    .Direction =
+                                    ParameterDirection.Output;
+
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        #endregion
                     }
                 }
             }
+
             return "Success";
         }
         catch (Exception ex)
         {
-            return ex.ToString();
+            return ex.Message;
         }
     }
 

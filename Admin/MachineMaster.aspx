@@ -99,11 +99,6 @@
                             <asp:Label ID="lblMCImage" runat="server" Font-Bold="true" CssClass="form-label">Attach Image:</asp:Label>
                             <asp:FileUpload ID="FileMCImage" runat="server" CssClass="form-control" accept=".jpg,.jpeg,.png,.gif" onchange="validateFileSize(this)" />
                             <small class="text-danger d-block mt-1">Maximum file size: 5 MB</small>
-                            <div class="mt-3 text-center">
-                                <asp:Image ID="imgPreview" runat="server" Width="150px" Height="150px" Visible="false" CssClass="img-thumbnail" />
-                                <br />
-                                <asp:Label ID="lblUploadedName" runat="server" Font-Bold="true" Visible="false" CssClass="d-block mt-2 text-break"></asp:Label>
-                            </div>
                         </div>
                     </div>
                     <hr />

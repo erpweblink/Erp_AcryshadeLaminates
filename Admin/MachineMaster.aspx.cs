@@ -83,20 +83,6 @@ public partial class MachineMaster : System.Web.UI.Page
             txtMCPerHrQty.Text = dt.Rows[0]["MachinePerHRQty"].ToString();
             txtRunHr.Text = dt.Rows[0]["MachineRunningHR"].ToString();
 
-            if (dt.Rows[0]["MachineImage"] != DBNull.Value)
-            {
-                lblUploadedName.Text = dt.Rows[0]["MachineImageName"].ToString();
-
-                byte[] bytes = (byte[])dt.Rows[0]["MachineImage"];
-
-                string base64String = Convert.ToBase64String(bytes);
-
-                imgPreview.ImageUrl = "data:image/png;base64," + base64String;
-
-                imgPreview.Visible = true;
-                lblUploadedName.Visible = true;
-            }
-
             ddlStage.SelectedValue = dt.Rows[0]["AllocatedStage"].ToString();
             btnsave.Text = "Update";
         }
@@ -118,18 +104,29 @@ public partial class MachineMaster : System.Web.UI.Page
             // IMAGE SAVE
             if (FileMCImage.HasFile)
             {
-                byte[] imageBytes = FileMCImage.FileBytes;
-                string fileName = Path.GetFileName(FileMCImage.FileName);
+                string Filenamenew = FileMCImage.FileName;
+                string codenew = Guid.NewGuid().ToString();
 
-                cmd.Parameters.Add("@MachineImage", SqlDbType.VarBinary).Value = imageBytes;
-                cmd.Parameters.Add("@MachineImageName", SqlDbType.VarChar).Value = fileName;
+                string folderPath = Server.MapPath("~/Content/MachineImages/");
+
+                if (!Directory.Exists(folderPath))
+                {
+                    Directory.CreateDirectory(folderPath);
+                }
+
+                string fileName = codenew + "_" + Filenamenew;
+                string fullPath = Path.Combine(folderPath, fileName);
+
+                FileMCImage.SaveAs(fullPath);
+
+                cmd.Parameters.AddWithValue("@MachineImageName", "~/MachineImages/" + fileName);
             }
             else
             {
                 DataTable dtImage = new DataTable();
 
                 SqlDataAdapter da = new SqlDataAdapter(
-                    "SELECT MachineImage, MachineImageName FROM tbl_MachineMaster WHERE Id=@Id",
+                    "SELECT MachineImageName FROM tbl_MachineMaster WHERE Id=@Id",
                     con);
 
                 da.SelectCommand.Parameters.AddWithValue("@Id", Convert.ToInt32(String.IsNullOrWhiteSpace(hdnVal.Value)?"0": hdnVal.Value));
@@ -138,15 +135,11 @@ public partial class MachineMaster : System.Web.UI.Page
 
                 if (dtImage.Rows.Count > 0)
                 {
-                    cmd.Parameters.Add("@MachineImage", SqlDbType.VarBinary)
-                        .Value = dtImage.Rows[0]["MachineImage"];
-
                     cmd.Parameters.Add("@MachineImageName", SqlDbType.VarChar)
                         .Value = dtImage.Rows[0]["MachineImageName"].ToString();
                 }
                 else
                 {
-                    cmd.Parameters.Add("@MachineImage", SqlDbType.VarBinary).Value = DBNull.Value;
                     cmd.Parameters.Add("@MachineImageName", SqlDbType.VarChar).Value = DBNull.Value;
                 }
             }
