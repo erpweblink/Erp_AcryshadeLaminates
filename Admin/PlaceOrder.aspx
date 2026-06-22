@@ -364,7 +364,7 @@
 
                     <input id="qty_${p.ID}" autocomplete="off" placeholder="Quantity" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
 
-                    <div style="display:flex; gap:8px; justify-content:center; margin-top:10px;">
+                  
                     <button
                         class="btnCart"
                         onclick="addToCart(${p.ID})">
@@ -372,15 +372,6 @@
                         Add To Cart
 
                     </button>
-
-                    <button
-                        class="btnCart"
-                        style="background:#ff9800; flex:1; margin-top:5px"
-                         onclick="openCustomizeModal(${p.ID}, '${p.ProductName.replace(/'/g, "\\'")}','${p.Size}','${p.ImagenamePath}'); return false;">
-
-                        Customize
-                    </button>
-                    </div>
                 </div>
                 `;
                 });
@@ -456,119 +447,6 @@
                 document.getElementById("imgModal")
                     .style.display = "none";
             }
-
-            function openCustomizeModal(id, name, size, prodImageName) {
-
-                document.getElementById("customModal").style.display = "flex";
-
-                document.getElementById("custProductId").value = id;
-
-                document.getElementById("prodImageName").value = prodImageName;
-
-                document.getElementById("custProductName").innerText = name;
-
-                document.getElementById("custFile").value = "";
-
-                document.getElementById("custNote").value = "";
-
-                let ddl = document.getElementById("custSize");
-
-
-                ddl.innerHTML = "";
-
-                ddl.innerHTML += `<option value="">Select Size</option>`;
-
-                let is8x2Regular = size === "8x2";
-                let is8x4Regular = size === "8x4";
-
-                ddl.innerHTML += `
-                    <option value="8x2">
-                        ${is8x2Regular ? "8x2 (Regular)" : "8x2 (Custom)"}
-                    </option>
-                `;
-
-                ddl.innerHTML += `
-                    <option value="8x4">
-                        ${is8x4Regular ? "8x4 (Regular)" : "8x4 (Custom)"}
-                    </option>
-                `;
-
-                // auto-select
-                ddl.value = size || "";
-            }
-
-            function closeCustomizeMod() {
-                document.getElementById("customModal").style.display = "none";
-                window.location.href = window.location.href;
-            }
-
-            function submitCustomize() {
-                let id = document.getElementById("custProductId").value;
-                let size = document.getElementById("custSize").value;
-                let cutqty = document.getElementById("cutqty").value.trim();
-                let note = document.getElementById("custNote").value;
-                let prodImageName = document.getElementById("prodImageName").value;
-                let file = document.getElementById("custFile").files[0];
-
-                if (size === "") {
-                    alert("Please select size");
-                    window.location.href = window.location.href;
-                    return;
-                }
-                if (cutqty === "") {
-                    alert("Please Enter Qty");
-                    window.location.href = window.location.href;
-                    return;
-                }
-             
-
-                // ✅ If file selected, convert to Base64 then send
-                if (file) {
-                    let reader = new FileReader();
-                    reader.onload = function (e) {
-                        let base64 = e.target.result; 
-                        sendCustomization(id, size, cutqty, note, prodImageName, base64, file.name);
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    sendCustomization(id, size, cutqty, note, prodImageName, null, null);
-                }
-            }
-
-            function sendCustomization(id, size, cutqty, note, prodImageName, base64File, fileName) {
-                fetch("PlaceOrder.aspx/SaveCustomization", {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        productId: id,
-                        size: size,
-                        qty: cutqty,
-                        note: note,
-                        prodImagName: prodImageName,
-                        fileBase64: base64File,   // ✅ Base64 string
-                        fileName: fileName         // ✅ original file name
-                    })
-                })
-                    .then(r => {
-                        // ✅ Check if response is actually JSON before parsing
-                        const contentType = r.headers.get("content-type");
-                        if (!contentType || !contentType.includes("application/json")) {
-                            throw new Error("Server returned HTML instead of JSON. Check your WebMethod.");
-                        }
-                        return r.json();
-                    })
-                    .then(() => {
-                        alert("Customization submitted");
-                        closeCustomizeMod();
-                    })
-                    .catch(err => {
-                        console.error("Error:", err.message);
-                        alert("Something went wrong: " + err.message);
-                    });
-            }
     </script>
     </asp:Content>
     <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
@@ -586,9 +464,9 @@
                             placeholder="Search Product..." />
 
                         <div style="position: relative; display: inline-block; flex-shrink: 0;">
-                            <button type="button" class="btn" onclick="toggleCartDropdown()">
+                            <asp:LinkButton type="button" class="btn" ID="lnkBtn" runat="server" OnClick="lnkBtn_Click">
                                 <i class="bi bi-cart" style="font-size: 20px;"></i>
-                            </button>
+                            </asp:LinkButton>
                             <span id="cartCount" style="display: none; position: absolute; top: -6px; right: -6px; background: #e53935; color: #fff; font-size: 11px; font-weight: 600; min-width: 18px; height: 18px; border-radius: 50%; align-items: center; justify-content: center; padding: 0 3px;">0</span>
                         </div>
                     </div>
@@ -630,47 +508,6 @@
                     onclick="closeModal()">
 
                     <img id="modalImg">
-                </div>
-
-                <div id="customModal"
-                    class="img-modal"
-                    style="display: none; flex-direction: column; padding: 20px;">
-
-                    <div style="background: #7b8eaf; border: 2px solid #9aa4b766; padding: 20px; border-radius: 10px; min-width: 300px;">
-
-                        <h3 id="custProductName" style="color: whitesmoke;"></h3>
-
-                        <input type="hidden" id="custProductId">
-                        <input type="hidden" id="prodImageName">
-
-                        <select id="custSize" style="width: 100%; margin-top: 10px; background: whitesmoke;">
-                        </select>
-
-
-                        <input id="cutqty" placeholder="Qty" style="width: 100%; margin-top: 10px; background: whitesmoke;"  onkeypress="return event.charCode >= 48 && event.charCode <= 57"/>
-
-                        <input type="file"
-                            id="custFile"
-                            accept=".jpg,.jpeg,.png"
-                            style="margin-top: 10px; background: whitesmoke;">
-
-                        <textarea id="custNote"
-                            placeholder="Write your customization note..."
-                            style="width: 100%; margin-top: 10px; height: 80px;"></textarea>
-
-                        <div style="margin-top: 15px; text-align: right">
-
-                            <button onclick="closeCustomizeMod()" style="background: red; color: white">Close</button>
-
-                            <button onclick="submitCustomize()"
-                                style="background: green; color: white">
-                                Add To Cart
-                            </button>
-
-                        </div>
-
-                    </div>
-
                 </div>
             </ContentTemplate>
         </asp:UpdatePanel>

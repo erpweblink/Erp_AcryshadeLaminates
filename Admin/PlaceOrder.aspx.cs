@@ -98,52 +98,9 @@ public partial class PlaceOrder : System.Web.UI.Page
     }
 
 
-    [System.Web.Services.WebMethod]
-    public static string SaveCustomization()
+    protected void lnkBtn_Click(object sender, EventArgs e)
     {
-        HttpContext context = HttpContext.Current;
-
-        int productId = Convert.ToInt32(context.Request.Form["productId"]);
-        string size = context.Request.Form["size"];
-        string note = context.Request.Form["note"];
-        string prodImaName = context.Request.Form["prodImaName"];
-
-        HttpPostedFile file = context.Request.Files["file"];
-
-        string filePath = "";
-
-        if (file != null && file.ContentLength > 0)
-        {
-            string fileName = Guid.NewGuid() + System.IO.Path.GetExtension(file.FileName);
-            filePath = "~/CustomizationImages/" + fileName;
-
-            string physicalPath = context.Server.MapPath(filePath);
-            file.SaveAs(physicalPath);
-        }
-        else
-        {
-            filePath = prodImaName.Replace("/Content/", "~/");
-        }
-
-        string cs = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
-
-        using (SqlConnection con = new SqlConnection(cs))
-        {
-            //SqlCommand cmd = new SqlCommand(@"
-            //INSERT INTO tbl_Customization
-            //(ProductId, Size, Note, ImagePath)
-            //VALUES (@ProductId, @Size, @Note, @ImagePath)", con);
-
-            //cmd.Parameters.AddWithValue("@ProductId", productId);
-            //cmd.Parameters.AddWithValue("@Size", size);
-            //cmd.Parameters.AddWithValue("@Note", note);
-            //cmd.Parameters.AddWithValue("@ImagePath", filePath);
-
-            //con.Open();
-            //cmd.ExecuteNonQuery();
-        }
-
-        return "success";
+        Response.Redirect("OrderList.aspx");
     }
 }
 

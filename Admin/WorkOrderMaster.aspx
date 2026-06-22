@@ -192,10 +192,9 @@
                      <select name="Size[]"
                          class="form-control size"
                          style="border-radius: 8px; height: 42px; min-width: 120px;" onchange="GetSQFeet(this)">
-                         <option value="">-- Select Size --</option>
-                         <option value="2x4">2 x 4</option>
-                         <option value="2x8">2 x 8</option>
-                         <option value="4x8">4 x 8</option>
+                         <option value="">-Select Size-</option>
+                         <option value="8x2">8x2</option>
+                         <option value="8x4">8x4</option>
                      </select>
                      <div class="error-msg size-error text-danger" style="font-size: 12px;"></div>
                  </td>
@@ -559,10 +558,9 @@
                 row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">';
                 row += '<select name="Size[]" class="form-control size" ' +
                     'style="border-radius: 8px; height: 42px; min-width: 120px;"  onchange="GetSQFeet(this)">';
-                row += '<option value="">-- Select Size --</option>';
-                row += ' <option value="2x4"' + (item.Size == '2x4' ? ' selected' : '') + '>2 x 4</option>';
-                row += ' <option value="2x8"' + (item.Size == '2x8' ? ' selected' : '') + '>2 x 8</option>';
-                row += '  <option value="4x8"' + (item.Size == '4x8' ? ' selected' : '') + '>4 x 8</option>';
+                row += '<option value="">-Select Size-</option>';
+                row += ' <option value="8x2"' + (item.Size == '8x2' ? ' selected' : '') + '>8x2</option>';
+                row += '  <option value="8x4"' + (item.Size == '8x4' ? ' selected' : '') + '>8x4</option>';
                 row += '</select>';
                 row += ' <div class="error-msg size-error text-danger" style="font-size: 12px;"></div>';
                 row += '</td>';
@@ -878,10 +876,9 @@
                                         <select name="Size[]"
                                             class="form-control size"
                                             style="border-radius: 8px; height: 42px; min-width: 120px;" onchange="GetSQFeet(this)">
-                                            <option value="">-- Select Size --</option>
-                                            <option value="2x4">2 x 4</option>
-                                            <option value="2x8">2 x 8</option>
-                                            <option value="4x8">4 x 8</option>
+                                            <option value="">-Select Size-</option>
+                                            <option value="8x2">8x2</option>
+                                            <option value="8x4">8x4</option>
                                         </select>
                                         <div class="error-msg size-error text-danger" style="font-size: 12px;"></div>
                                     </td>
