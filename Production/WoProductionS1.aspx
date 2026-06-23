@@ -149,9 +149,9 @@
                     operatorData = JSON.parse(response.d.Data);
 
                     $("#ddlMachine").empty();
-                    if (role === "Operator") {   
-                      
-                        if (operatorData.length > 0) {           
+                    if (role === "Operator") {
+
+                        if (operatorData.length > 0) {
                             currentMachineId = operatorData[0].MachineID;
 
                             $("#ddlMachine").append(
@@ -162,7 +162,7 @@
 
                             $("#ddlMachine").prop("disabled", true);
 
-                           
+
                             machineChanged(currentMachineId);
                         }
 
@@ -179,7 +179,7 @@
             machineId = machineId || $("#ddlMachine").val();
 
             if (!machineId) {
-                window.location.href = window.location.href; 
+                window.location.href = window.location.href;
                 return;
             }
 
@@ -261,8 +261,10 @@
                             allocatedQty: parseFloat(row.AllocatedQty || 0),
                             allocatedSqFeet: parseFloat(row.AllocatedSqFeet || 0),
 
+                            s2ComQty: parseFloat(row.Stage2CompletedQty || 0),
                             usedQty: parseFloat(row.Stage1CompletedQty || 0),
-                            usedSqFt: parseFloat(row.Stage1CompetedSqFeet || 0)
+                            usedSqFt: parseFloat(row.Stage1CompetedSqFeet || 0),
+                            stage1compDate: row.Stage1CompletedDate
 
                         });
 
@@ -275,7 +277,18 @@
                     });
 
                     $.each(grouped, function (key, value) {
-                        AssignWorkOrders.push(value);
+                        // check if ALL items are stage2 completed
+                        var allStage1Done = value.details.length > 0 &&
+                            value.details.every(function (d) {
+                                return d.stage1compDate !== null &&
+                                    d.stage1compDate !== "" &&
+                                    d.stage1compDate !== undefined;
+                            });
+
+                        // ❌ skip fully completed work orders
+                        if (!allStage1Done) {
+                            AssignWorkOrders.push(value);
+                        }
                     });
 
                     AssignWorkOrders.sort(function (a, b) {
@@ -424,7 +437,7 @@
         }
 
         function changeQty(woId, index, delta) {
-
+            debugger;
             var key = woId + "_" + index;
 
             // 🚫 prevent multiple fast clicks
@@ -436,6 +449,15 @@
             var item = wo.details[index];
 
             var newQty = item.usedQty + delta;
+
+            var s2CompQty = item.s2ComQty || 0;
+
+            // Prevent minus when S2 completed qty is null or 0
+            if (delta < 0 && s2CompQty != 0) {
+                alert("You cannot reduce quantity because Stage 2 already started working.");
+                qtyUpdating[key] = false;
+                return;
+            }
 
             if (item.usedQty >= item.allocatedQty && delta < 0) {
                 alert("This item is already completed. You cannot reduce quantity.");

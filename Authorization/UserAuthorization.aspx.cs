@@ -49,7 +49,7 @@ public partial class UserAuthorization : System.Web.UI.Page
         {
             DataTable Dt = new DataTable();
 
-            SqlDataAdapter Da = new SqlDataAdapter("SELECT ID,Roles FROM tbl_RoleMaster WHERE Roles != 'Admin' AND IsDeleted = 0",con);
+            SqlDataAdapter Da = new SqlDataAdapter("SELECT ID,Roles FROM tbl_RoleMaster --WHERE Roles != 'Admin' AND IsDeleted = 0",con);
             Da.Fill(Dt);
 
             ddlUserRole.DataTextField = "Roles";

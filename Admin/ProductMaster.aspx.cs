@@ -3,7 +3,11 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
+using System.Web;
 using System.Web.Script.Services;
 using System.Web.Services;
 
@@ -80,6 +84,7 @@ public partial class Admin_ProductMaster : System.Web.UI.Page
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.Add("@Productcode", SqlDbType.VarChar).Value = txtproductcode.Text.Trim();
                 cmd.Parameters.Add("@Productname", SqlDbType.VarChar).Value = txtproductname.Text.Trim();
+                cmd.Parameters.Add("@ProductCategory", SqlDbType.VarChar).Value = txtType.Text.Trim();
                 cmd.Parameters.Add("@Thickness", SqlDbType.VarChar).Value = txtThickness.Text.Trim();
                 cmd.Parameters.Add("@Size", SqlDbType.VarChar).Value = ddlSize.SelectedValue.Trim();
                 cmd.Parameters.Add("@PartName", SqlDbType.VarChar).Value = txtpartname.Text.Trim();
@@ -91,6 +96,9 @@ public partial class Admin_ProductMaster : System.Web.UI.Page
                     string Filenamenew = FileMCImage.FileName;
                     string codenew = Guid.NewGuid().ToString();
 
+                    int maxWidth = 800;
+                    int quality = 60;
+
                     string folderPath = Server.MapPath("~/Content/MyProducts/");
 
                     if (!Directory.Exists(folderPath))
@@ -98,10 +106,47 @@ public partial class Admin_ProductMaster : System.Web.UI.Page
                         Directory.CreateDirectory(folderPath);
                     }
 
-                    string fileName = codenew + "_" + Filenamenew;
+                    string fileName = codenew + "_" + Path.GetFileName(Filenamenew);
                     string fullPath = Path.Combine(folderPath, fileName);
 
-                    FileMCImage.SaveAs(fullPath);
+                    HttpPostedFile file = FileMCImage.PostedFile;
+
+                    using (var ms = new MemoryStream())
+                    {
+                        file.InputStream.CopyTo(ms);
+                        ms.Position = 0;
+
+                        using (var image = Image.FromStream(ms))
+                        {
+                            int newWidth = image.Width;
+                            int newHeight = image.Height;
+
+                            if (image.Width > maxWidth)
+                            {
+                                newWidth = maxWidth;
+                                newHeight = (image.Height * maxWidth) / image.Width;
+                            }
+
+                            using (var bitmap = new Bitmap(image, new Size(newWidth, newHeight)))
+                            {
+                                ImageFormat format = ImageFormat.Jpeg;
+
+                                if (file.ContentType.ToLower().Contains("png"))
+                                    format = ImageFormat.Png;
+
+                                var codec = ImageCodecInfo.GetImageDecoders()
+                                            .FirstOrDefault(c => c.FormatID == format.Guid);
+
+                                var encParams = new EncoderParameters(1);
+                                encParams.Param[0] = new EncoderParameter(
+                                    System.Drawing.Imaging.Encoder.Quality,
+                                    quality
+                                );
+
+                                bitmap.Save(fullPath, codec, encParams);
+                            }
+                        }
+                    }
 
                     cmd.Parameters.AddWithValue("@ImagenamePath",
                         "~/MyProducts/" + fileName);
@@ -169,6 +214,7 @@ public partial class Admin_ProductMaster : System.Web.UI.Page
         {
             txtproductcode.Text = dt.Rows[0]["Productcode"].ToString();
             txtproductname.Text = dt.Rows[0]["Productname"].ToString();
+            txtType.Text = dt.Rows[0]["ProductCategory"].ToString();
             txtThickness.Text = dt.Rows[0]["Thickness"].ToString();
             ddlSize.SelectedValue = dt.Rows[0]["Size"].ToString();
             txtpartname.Text = dt.Rows[0]["PartName"].ToString();
@@ -178,7 +224,43 @@ public partial class Admin_ProductMaster : System.Web.UI.Page
         }
     }
 
-    [ScriptMethod()]
+
+    [WebMethod]
+    public static List<string> GetProductCategoryList(string prefixText, int count)
+    {
+        return AutoFillGetProductCategoryList(prefixText);
+    }
+
+    public static List<string> AutoFillGetProductCategoryList(string prefixText)
+    {
+        using (SqlConnection con = new SqlConnection())
+        {
+            con.ConnectionString = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
+
+            using (SqlCommand cmd = new SqlCommand(@"
+            SELECT DISTINCT 
+                ProductCategory
+            FROM tbl_ProdcutMaster
+            WHERE ProductCategory LIKE '%'+ @Search + '%'
+            AND isdeleted = 0 ", con))
+            {
+                cmd.Parameters.AddWithValue("@Search", prefixText);
+
+                con.Open();
+                List<string> countryNames = new List<string>();
+                using (SqlDataReader sdr = cmd.ExecuteReader())
+                {
+                    while (sdr.Read())
+                    {
+                        countryNames.Add(sdr["ProductCategory"].ToString());
+                    }
+                }
+                con.Close();
+                return countryNames;
+            }
+        }
+    }
+
     [WebMethod]
     public static List<string> GetProductnameList(string prefixText, int count)
     {

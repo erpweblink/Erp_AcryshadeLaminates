@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -80,6 +81,56 @@ public partial class ProductList : System.Web.UI.Page
             Session["time"] = "2000";
             Session["url"] = "/Admin/ProductList.aspx";
             Response.Redirect("/Alerts.aspx");
+        }
+        if (e.CommandName == "ToggleFavorite")
+        {
+            int id = Convert.ToInt32(e.CommandArgument);
+
+            con.Open();
+
+            // 1. Get current Favorite status
+            SqlCommand checkCmd = new SqlCommand(
+                "SELECT ISNULL(FavoriteProduct,0) FROM tbl_ProdcutMaster WHERE ID=@ID", con);
+            checkCmd.Parameters.AddWithValue("@ID", id);
+
+            int isFavorite = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+            int newRank = 0;
+
+            if (isFavorite == 0)
+            {
+                // 2. Get max rank
+                SqlCommand rankCmd = new SqlCommand(
+                    "SELECT ISNULL(MAX(CAST(FavoriteProductRank AS INT)),0) FROM tbl_ProdcutMaster WHERE isdeleted=0",
+                    con);
+
+                int maxRank = Convert.ToInt32(rankCmd.ExecuteScalar());
+
+                newRank = maxRank + 1;
+            }
+
+            // 3. Update both fields
+            SqlCommand cmd = new SqlCommand(@"
+        UPDATE tbl_ProdcutMaster
+        SET 
+            FavoriteProduct = CASE 
+                                WHEN ISNULL(FavoriteProduct,0) = 1 THEN 0
+                                ELSE 1
+                              END,
+            FavoriteProductRank = CASE 
+                                    WHEN ISNULL(FavoriteProduct,0) = 1 THEN 0
+                                    ELSE @Rank
+                                  END
+        WHERE ID = @ID", con);
+
+            cmd.Parameters.AddWithValue("@ID", id);
+            cmd.Parameters.AddWithValue("@Rank", newRank);
+
+            cmd.ExecuteNonQuery();
+
+            con.Close();
+
+            FillGrid();
         }
     }
 
