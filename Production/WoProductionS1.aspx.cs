@@ -3,6 +3,7 @@ using System;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Runtime.Remoting.Messaging;
 using System.Web;
 using System.Web.Services;
 
@@ -72,7 +73,7 @@ public partial class WoProductionS1 : System.Web.UI.Page
             SqlDataAdapter da = new SqlDataAdapter(cmd);
             da.Fill(dt);
         }
-     
+
         return new
         {
             Role = HttpContext.Current.Session["Role"].ToString(),
@@ -99,148 +100,6 @@ public partial class WoProductionS1 : System.Web.UI.Page
 
         return JsonConvert.SerializeObject(dt);
     }
-
-    // [WebMethod]
-    //public static object SaveCompletedQty(int detailedId, decimal completedQty, decimal completedSqFt)
-    //{
-    //    try
-    //    {
-    //        using (SqlConnection con = new SqlConnection(
-    //            ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
-    //        {
-    //            con.Open();
-
-    //            int headerId = 0;
-    //            decimal allocatedQty = 0;
-
-    //            // 1. Get HeaderID + AllocatedQty
-    //            string getQuery = @"
-    //            SELECT HeaderID, AllocatedQty
-    //            FROM tbl_MachineProductionDTLS
-    //            WHERE ID = @DetailedID";
-
-    //            using (SqlCommand cmd = new SqlCommand(getQuery, con))
-    //            {
-    //                cmd.Parameters.AddWithValue("@DetailedID", detailedId);
-
-    //                using (SqlDataReader dr = cmd.ExecuteReader())
-    //                {
-    //                    if (dr.Read())
-    //                    {
-    //                        headerId = Convert.ToInt32(dr["HeaderID"]);
-    //                        allocatedQty = Convert.ToDecimal(dr["AllocatedQty"]);
-    //                    }
-    //                }
-    //            }
-
-    //            // 2. Validation
-    //            if (completedQty > allocatedQty)
-    //            {
-    //                return new
-    //                {
-    //                    Status = "Error",
-    //                    Message = "Completed Qty cannot exceed Allocated Qty.",
-    //                    IsCompleted = false
-    //                };
-    //            }
-
-    //            bool isCompleted = (completedQty == allocatedQty);
-
-    //            // 3. Update Detail
-    //            string updateQuery = @"
-    //            UPDATE tbl_MachineProductionDTLS
-    //            SET
-    //                Stage1CompletedQty = @Stage1CompletedQty,
-    //                Stage1CompetedSqFeet = @Stage1CompetedSqFeet,
-    //                Stage1CompletedDate =
-    //                    CASE
-    //                        WHEN @Stage1CompletedQty =
-    //                             TRY_CONVERT(decimal(18,2), AllocatedQty)
-    //                             AND Stage1CompletedDate IS NULL
-    //                        THEN GETDATE()
-    //                        ELSE Stage1CompletedDate
-    //                    END
-    //            WHERE ID = @DetailedID";
-
-    //            using (SqlCommand cmd = new SqlCommand(updateQuery, con))
-    //            {
-    //                cmd.Parameters.AddWithValue("@DetailedID", detailedId);
-    //                cmd.Parameters.AddWithValue("@Stage1CompletedQty", completedQty);
-    //                cmd.Parameters.AddWithValue("@Stage1CompetedSqFeet", completedSqFt);
-
-    //                cmd.ExecuteNonQuery();
-    //            }
-
-    //            // 4. HEADER STATUS LOGIC
-    //            string headerStatus = "Machine Allocated";
-
-    //            // Check if ANY work started
-    //            string startedQuery = @"
-    //            SELECT COUNT(*)
-    //            FROM tbl_MachineProductionDTLS
-    //            WHERE HeaderID = @HeaderID
-    //            AND Stage1CompletedQty > 0";
-
-    //            using (SqlCommand cmd = new SqlCommand(startedQuery, con))
-    //            {
-    //                cmd.Parameters.AddWithValue("@HeaderID", headerId);
-
-    //                int startedCount = (int)cmd.ExecuteScalar();
-
-    //                if (startedCount > 0)
-    //                    headerStatus = "Work Started";
-    //            }
-
-    //            // Check if ALL completed
-    //            string completedQuery = @"
-    //            SELECT COUNT(*)
-    //            FROM tbl_MachineProductionDTLS
-    //            WHERE HeaderID = @HeaderID
-    //            AND Stage1CompletedDate IS NULL";
-
-    //            using (SqlCommand cmd = new SqlCommand(completedQuery, con))
-    //            {
-    //                cmd.Parameters.AddWithValue("@HeaderID", headerId);
-
-    //                int pendingCount = (int)cmd.ExecuteScalar();
-
-    //                if (pendingCount == 0)
-    //                    headerStatus = "Completed";
-    //            }
-
-    //            // 5. UPDATE HEADER
-    //            string updateHeader = @"
-    //            UPDATE tbl_MachineProductionHDR
-    //            SET Status = @Status
-    //            WHERE ID = @HeaderID";
-
-    //            using (SqlCommand cmd = new SqlCommand(updateHeader, con))
-    //            {
-    //                cmd.Parameters.AddWithValue("@Status", headerStatus);
-    //                cmd.Parameters.AddWithValue("@HeaderID", headerId);
-
-    //                cmd.ExecuteNonQuery();
-    //            }
-
-    //            return new
-    //            {
-    //                Status = "Success",
-    //                Message = "Saved Successfully",
-    //                IsCompleted = isCompleted,
-    //                HeaderStatus = headerStatus
-    //            };
-    //        }
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        return new
-    //        {
-    //            Status = "Error",
-    //            Message = ex.Message,
-    //            IsCompleted = false
-    //        };
-    //    }
-    //}
 
 
     [WebMethod]
@@ -349,7 +208,9 @@ public partial class WoProductionS1 : System.Web.UI.Page
                     int startedCount = Convert.ToInt32(cmd.ExecuteScalar());
 
                     if (startedCount > 0)
+                    {
                         headerStatus = "Work Started";
+                    }
                 }
 
                 #endregion
@@ -417,13 +278,27 @@ public partial class WoProductionS1 : System.Web.UI.Page
 
                 #endregion
 
-                #region STAGE 2 MACHINE ALLOCATION (NEW LOGIC)
+                #region Update Header Status
 
-                if (headerStatus == "Completed")
+                string updateHeader = @"
+                UPDATE tbl_MachineProductionHDR
+                SET S1Status = @Status
+                WHERE ID = @HeaderID";
+
+                using (SqlCommand cmd = new SqlCommand(updateHeader, con))
                 {
-                    decimal requiredQty = allocatedQty;
+                    cmd.Parameters.AddWithValue("@Status", headerStatus);
+                    cmd.Parameters.AddWithValue("@HeaderID", headerId);
 
-                    string machineQuery = @"
+                    cmd.ExecuteNonQuery();
+                }
+
+                #endregion
+
+                // To Set Machin ID
+                decimal requiredQty = allocatedQty;
+
+                string machineQuery = @"
                     SELECT TOP 1
                         M.ID as MachineID,
                         ((TRY_CAST(M.MachinePerHRQty AS FLOAT) * TRY_CAST(M.MachineRunningHR AS FLOAT))
@@ -444,53 +319,68 @@ public partial class WoProductionS1 : System.Web.UI.Page
                         ) >= @RequiredQty
                     ORDER BY MachineAvailable DESC";
 
-                    using (SqlCommand cmd = new SqlCommand(machineQuery, con))
-                    {
-                        cmd.Parameters.AddWithValue("@RequiredQty", requiredQty);
-
-                        object result = cmd.ExecuteScalar();
-
-                        if (result != null && result != DBNull.Value)
-                        {
-                            stage2MachineId = Convert.ToInt32(result);
-                        }
-                    }
-
-                    if (stage2MachineId > 0)
-                    {
-                        string assignQuery = @"
-                        UPDATE tbl_MachineProductionDTLS
-                        SET Stage2MachineID = @MachineID,Stage2CompletedQty = '0',Stage2CompetedSqFeet ='0'
-                        WHERE HeaderID = @DetailedID";
-
-                        using (SqlCommand cmd = new SqlCommand(assignQuery, con))
-                        {
-                            cmd.Parameters.AddWithValue("@MachineID", stage2MachineId);
-                            cmd.Parameters.AddWithValue("@DetailedID", headerId);
-
-                            cmd.ExecuteNonQuery();
-                        }
-                    }
-                }
-
-                #endregion
-
-                #region Update Header Status
-
-                string updateHeader = @"
-                UPDATE tbl_MachineProductionHDR
-                SET Status = @Status
-                WHERE ID = @HeaderID";
-
-                using (SqlCommand cmd = new SqlCommand(updateHeader, con))
+                using (SqlCommand cmds = new SqlCommand(machineQuery, con))
                 {
-                    cmd.Parameters.AddWithValue("@Status", headerStatus);
-                    cmd.Parameters.AddWithValue("@HeaderID", headerId);
+                    cmds.Parameters.AddWithValue("@RequiredQty", requiredQty);
 
-                    cmd.ExecuteNonQuery();
+                    object result = cmds.ExecuteScalar();
+
+                    if (result != null && result != DBNull.Value)
+                    {
+                        stage2MachineId = Convert.ToInt32(result);
+                    }
                 }
 
-                #endregion
+                if (stage2MachineId > 0)
+                {
+                    string GETMCQuery = @"Select TOP 1 Stage2MachineID FROM tbl_MachineProductionDTLS WHERE HeaderID = @DetailedID";
+                    using (SqlCommand cmdsss = new SqlCommand(GETMCQuery, con))
+                    {
+                        cmdsss.Parameters.AddWithValue("@DetailedID", headerId);
+
+                        object res = cmdsss.ExecuteScalar();
+                        if (res == null || res == DBNull.Value)
+                        {
+                            string assignQuery = @"
+                                    UPDATE tbl_MachineProductionDTLS
+                                    SET Stage2MachineID = @MachineID
+                                    WHERE HeaderID = @DetailedID";
+
+                            using (SqlCommand cmdss = new SqlCommand(assignQuery, con))
+                            {
+                                cmdss.Parameters.AddWithValue("@MachineID", stage2MachineId);
+                                cmdss.Parameters.AddWithValue("@DetailedID", headerId);
+
+                                cmdss.ExecuteNonQuery();
+                            }
+                        }
+                    }
+                }
+
+                string assignQueryss = @"
+                                    UPDATE tbl_MachineProductionHDR
+                                    SET S2Status = @MachineID
+                                    WHERE ID = @DetailedID";
+
+                using (SqlCommand cmdssss = new SqlCommand(assignQueryss, con))
+                {
+                    if (headerStatus == "Work Started" || headerStatus == "Partially Completed")
+                    {
+                        cmdssss.Parameters.AddWithValue("@MachineID", "Partially Active");
+                    }
+                    else if (headerStatus == "Machine Allocated")
+                    {
+                        cmdssss.Parameters.AddWithValue("@MachineID", "Not Active");
+                    }
+                    else
+                    {
+                        cmdssss.Parameters.AddWithValue("@MachineID", "Active");
+                    }
+                    cmdssss.Parameters.AddWithValue("@DetailedID", headerId);
+
+                    cmdssss.ExecuteNonQuery();
+                }
+
 
                 return new
                 {

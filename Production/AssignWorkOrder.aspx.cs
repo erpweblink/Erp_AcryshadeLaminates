@@ -271,7 +271,7 @@ public partial class AssignWorkOrder : System.Web.UI.Page
                 SELECT TOP 1 ID
                 FROM tbl_MachineProductionHDR
                 WHERE WorkOrderID = @WorkOrderID
-                  AND Status <> 'Completed'
+                  AND S1Status <> 'Completed'
                 ORDER BY ID DESC";
 
                     using (SqlCommand cmd = new SqlCommand(checkHeaderQuery, con))

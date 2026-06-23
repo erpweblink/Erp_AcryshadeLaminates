@@ -100,10 +100,9 @@
                             </asp:Label>
 
                             <asp:DropDownList ID="ddlSize" runat="server" CssClass="form-control" ValidationGroup="001">
-                                <asp:ListItem Value="">-- Select Part Name --</asp:ListItem>
-                                <asp:ListItem Value="2x4">2 x 4</asp:ListItem>
-                                <asp:ListItem Value="2x8">2 x 8</asp:ListItem>
-                                <asp:ListItem Value="4x8">4 x 8</asp:ListItem>
+                                <asp:ListItem Value="">-Select Size-</asp:ListItem>
+                                <asp:ListItem Value="8x2">8x2</asp:ListItem>
+                                <asp:ListItem Value="8x4">8x4</asp:ListItem>
                             </asp:DropDownList>
 
                             <asp:RequiredFieldValidator ID="RequiredFieldValidator4" runat="server"

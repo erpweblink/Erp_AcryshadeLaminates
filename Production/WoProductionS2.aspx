@@ -149,9 +149,9 @@
                     operatorData = JSON.parse(response.d.Data);
 
                     $("#ddlMachine").empty();
-                    if (role === "Operator") {   
-                      
-                        if (operatorData.length > 0) {           
+                    if (role === "Operator") {
+
+                        if (operatorData.length > 0) {
                             currentMachineId = operatorData[0].MachineID;
 
                             $("#ddlMachine").append(
@@ -162,7 +162,7 @@
 
                             $("#ddlMachine").prop("disabled", true);
 
-                           
+
                             machineChanged(currentMachineId);
                         }
 
@@ -179,7 +179,7 @@
             machineId = machineId || $("#ddlMachine").val();
 
             if (!machineId) {
-                window.location.href = window.location.href; 
+                window.location.href = window.location.href;
                 return;
             }
 
@@ -244,7 +244,7 @@
                                 totalQty: 0,
                                 AllocatedQty: 0,
                                 balanceQty: 0,
-                                status: row.Status === "Completed" ? "W/O Active" :"W/O not Active" || "W/O not Active",
+                                status: row.Status || "Not Active",
                                 details: [],
                                 isCompleted: true
                             };
@@ -261,9 +261,10 @@
                             allocatedQty: parseFloat(row.AllocatedQty || 0),
                             allocatedSqFeet: parseFloat(row.AllocatedSqFeet || 0),
 
-                            usedQty: parseFloat(row.Stage1CompletedQty || 0),
-                            usedSqFt: parseFloat(row.Stage1CompetedSqFeet || 0),
-                            stage2compDate: row.Stage2CompletedDate 
+                            compQty: parseFloat(row.Stage1CompletedQty || 0),
+                            usedQty: parseFloat(row.Stage2CompletedQty || 0),
+                            usedSqFt: parseFloat(row.Stage2CompetedSqFeet || 0),
+                            stage2compDate: row.Stage2CompletedDate
 
                         });
 
@@ -271,7 +272,7 @@
                         grouped[row.ProductionID].totalQty += parseFloat(row.totQty);
                         grouped[row.ProductionID].AllocatedQty += parseFloat(row.AllocatedQty);
 
-                        grouped[row.ProductionID].balanceQty += parseFloat(row.Stage1CompletedQty);
+                        grouped[row.ProductionID].balanceQty += parseFloat(row.Stage2CompletedQty);
 
                     });
 
@@ -350,17 +351,17 @@
                 html += "<td id='bal_" + wo.woId + "'>" + wo.balanceQty + "</td>";
 
                 var statusColor = "black";
-                if (wo.status == "W/O Active")
+                if (wo.status == "Partially Active" || wo.status == "Active")
                     statusColor = "green";
-                else if (wo.status == "W/O not Active")
-                    statusColor = "blue";
+                else if (wo.status == "Not Active")
+                    statusColor = "red";
 
 
                 html += "<td id='status_" + wo.woId + "' style='font-weight:bold;color:" + statusColor + "'>" +
                     wo.status +
                     "</td>";
                 html += "</tr>";
-                   
+
                 html += "<tr id='detailRow_" + wo.woId + "' style='display:none'>";
                 html += "<td colspan='2'></td>";
                 html += "<td colspan='9'>";
@@ -409,11 +410,11 @@
                 html += "<td>" + item.originalsqFeet + "</td>";
                 html += "<td>" + item.originalQty + "</td>";
                 html += "<td>" + item.allocatedSqFeet + "</td>";
-                html += "<td>" + item.allocatedQty + "</td>";
+                html += "<td>" + item.compQty + "/" + item.allocatedQty + "</td>";
 
                 html += "<td>";
 
-                var isActive = (wo.status === "W/O Active");
+                var isActive = (wo.status === "Partially Active" || wo.status == "Active");
 
                 var disableMinus = isActive ? "" : "disabled";
                 var disablePlus = isActive ? "" : "disabled";
@@ -444,6 +445,12 @@
             var item = wo.details[index];
 
             var newQty = item.usedQty + delta;
+
+            if (delta > 0 && newQty > item.compQty) {
+                alert("Completed Qty cannot exceed Stage 1 Completed Qty (" + item.compQty + ").");
+                qtyUpdating[key] = false;
+                return;
+            }
 
             if (item.usedQty >= item.allocatedQty && delta < 0) {
                 alert("This item is already completed. You cannot reduce quantity.");
@@ -488,23 +495,11 @@
 
                         $("#bal_" + woId).text(wo.balanceQty);
 
-
-                        wo.status = response.d.HeaderStatus;
-
-                        // update grid status text
-                        $("#status_" + woId).text(response.d.HeaderStatus);
-
-                        // update color
-                        var color = "black";
-                         if (response.d.HeaderStatus == "Work Started")
-                            color = "#00aaff";
-                        else if (response.d.HeaderStatus == "Completed")
-                            color = "green";
-
-                        $("#status_" + woId).css("color", color);
-
                         if (response.d.IsCompleted) {
                             alert("Allocated Qty Completed.");
+                        }
+                        if (response.d.HeaderStatus === "Completed") {
+                            window.location.href = window.location.href;
                         }
                     }
                     else {

@@ -654,12 +654,10 @@
 
             var sqftPerSheet = 0;
 
-            if (size === "2x4") {
-                sqftPerSheet = 2 * 4; // 8 sq ft
-            } else if (size === "2x8") {
-                sqftPerSheet = 2 * 8; // 16 sq ft
-            } else if (size === "4x8") {
-                sqftPerSheet = 4 * 8; // 32 sq ft
+            if (size === "8x2") {
+                sqftPerSheet = 8 * 2; // 16 sq ft
+            } else if (size === "8x4") {
+                sqftPerSheet = 8 * 4; // 32 sq ft
             }
 
             var totalSqFeet = sqftPerSheet * qty;

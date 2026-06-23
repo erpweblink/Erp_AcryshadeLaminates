@@ -113,6 +113,7 @@ public partial class WoProductionS2 : System.Web.UI.Page
 
                 int headerId = 0;
                 decimal allocatedQty = 0;
+                string headerStatus = "";
 
                 // 1. Get HeaderID + AllocatedQty
                 string getQuery = @"
@@ -172,13 +173,65 @@ public partial class WoProductionS2 : System.Web.UI.Page
                     cmd.ExecuteNonQuery();
                 }
 
-      
+                //.Check For Complettion 
+                #region Work Order Completion Check
+
+                decimal originalQty = 0;
+                decimal totalCompletedQty = 0;
+
+                string woQuery = @"
+                SELECT SUM(ISNULL(CAST(TotalQty as decimal),0))
+                FROM tbl_MachineProductionDTLS
+                WHERE HeaderID = @WorkOrderID";
+
+                using (SqlCommand cmd = new SqlCommand(woQuery, con))
+                {
+                    cmd.Parameters.AddWithValue("@WorkOrderID", headerId);
+
+                    object obj = cmd.ExecuteScalar();
+                    originalQty = obj == DBNull.Value ? 0 : Convert.ToDecimal(obj);
+                }
+
+                string completedQuery = @"
+                SELECT SUM(ISNULL(CAST(Stage2CompletedQty as decimal),0))
+                FROM tbl_MachineProductionDTLS 
+                WHERE HeaderID = @WorkOrderID";
+
+                using (SqlCommand cmd = new SqlCommand(completedQuery, con))
+                {
+                    cmd.Parameters.AddWithValue("@WorkOrderID", headerId);
+
+                    object obj = cmd.ExecuteScalar();
+                    totalCompletedQty = obj == DBNull.Value ? 0 : Convert.ToDecimal(obj);
+                }
+
+                if (totalCompletedQty >= originalQty && originalQty > 0)
+                {
+                    headerStatus = "Completed";
+                    string updateHeader = @"
+                        UPDATE tbl_MachineProductionHDR
+                        SET S2Status = @Status
+                        WHERE ID = @HeaderID";
+
+                    using (SqlCommand cmd = new SqlCommand(updateHeader, con))
+                    {
+                        cmd.Parameters.AddWithValue("@Status", headerStatus);
+                        cmd.Parameters.AddWithValue("@HeaderID", headerId);
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                }
+
+                #endregion
+
+
                 return new
                 {
                     Status = "Success",
                     Message = "Saved Successfully",
                     IsCompleted = isCompleted,
-                    HeaderStatus = "Work Started"
+                    HeaderStatus = headerStatus
                 };
             }
         }
