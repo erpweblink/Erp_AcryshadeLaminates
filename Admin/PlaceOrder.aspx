@@ -6,6 +6,56 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
 
     <style type="text/css">
+        .product-card {
+            transition: all 0.25s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+            /* Hover highlight */
+            .product-card:hover {
+                transform: translateY(-6px) scale(1.02);
+                background: #f4f9ff;
+                box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+                border: 4px solid #cfe3ff;
+            }
+
+            /* Image zoom effect */
+            .product-card img {
+                transition: transform 0.25s ease;
+            }
+
+            .product-card:hover img {
+                transform: scale(1.05);
+            }
+
+            /* Text highlight */
+            .product-card:hover .product-name {
+                color: #1976d2;
+            }
+
+
+        .product-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+            .product-card::before {
+                content: "";
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                width: 7px;
+                background: transparent;
+                transition: 0.25s;
+            }
+
+            .product-card:hover::before {
+                background: linear-gradient(180deg, #4f7cff, #7c4dff);
+            }
+
+
         /* ===== HEADER ===== */
 
         .title-line {
@@ -29,7 +79,7 @@
             gap: 12px;
             padding: 14px 18px;
             border-radius: 14px;
-            background: rgba(255,255,255,0.06);
+            background: rgb(255 255 255 / 70%);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.08);
             box-shadow: 0 10px 30px rgba(0,0,0,0.4);
@@ -51,7 +101,7 @@
             border-radius: 10px;
             border: 1px solid rgba(255,255,255,0.15);
             background: rgba(255,255,255,0.06);
-            color: white;
+            color: black;
             outline: none;
             transition: 0.25s;
         }
@@ -74,10 +124,10 @@
             position: relative;
             border-radius: 14px;
             padding: 12px;
-            background: rgba(255,255,255,0.06);
+            background: rgb(255 255 255);
             backdrop-filter: blur(14px);
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 25px rgb(0 0 0 / 72%);
             text-align: center;
             transition: transform 0.25s, box-shadow 0.25s;
         }
@@ -120,9 +170,9 @@
             margin-top: 10px;
             padding: 9px;
             border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.15);
-            background: rgba(0,0,0,0.25);
-            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgb(159 154 154 / 25%);
+            color: #000000;
             outline: none;
         }
 
@@ -275,7 +325,7 @@
             let regular =
                 allProducts.filter(x => !x.FavoriteProduct);
 
-           
+
             renderCards(
                 trending,
                 "trendingContainer"
@@ -474,7 +524,14 @@
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
             <div class="header-row">
-                <h2 class="fw-bold" style="margin: 0; white-space: nowrap;">Product List</h2>
+                <div>
+                    <h2 class="fw-bold" style="margin: 0; white-space: nowrap;">Product List</h2>
+                    <div style="margin-top: 15px;">
+                        <h6 style="margin: 0;">
+                            <a href="/Admin/OrderHistory.aspx">My Orders</a>
+                        </h6>
+                    </div>
+                </div>
 
                 <div class="header-right">
                     <input type="text"

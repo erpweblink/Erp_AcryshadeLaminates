@@ -1,0 +1,108 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data.SqlClient;
+using System.Web.Services;
+
+
+public partial class OrderHistory : System.Web.UI.Page
+{
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        if (Session["UserCode"] == null)
+        {
+            Response.Redirect("../Login.aspx");
+        }
+        else
+        {
+            if (!IsPostBack)
+            {
+                if (!IsPostBack)
+                {
+                    //Check if you has access to the page of not
+                    {
+                        string username = Session["ID"].ToString();
+                        using (SqlConnection cons = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
+                        {
+                            string query = @"SELECT PageAccess FROM tbl_UserRoleAuthorization WHERE UserID = @UserID AND PageName = 'CompanyList.aspx'";
+                            SqlCommand cmds = new SqlCommand(query, cons);
+                            cmds.Parameters.AddWithValue("@UserID", username);
+                            cons.Open();
+                            object result = cmds.ExecuteScalar();
+                            if (result == null || result.ToString() != "True")
+                            {
+                                Response.Redirect("/AccessDenied.aspx");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    [WebMethod]
+    public static List<Dictionary<string, object>> GetOrders()
+    {
+        string cs = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
+
+        Dictionary<int, Dictionary<string, object>> orders = new Dictionary<int, Dictionary<string, object>>();
+
+        using (SqlConnection con = new SqlConnection(cs))
+        {
+            con.Open();
+
+            string query = @"
+            SELECT 
+                h.ID,h.OrderID, h.DealerID, h.CreatedDate, h.OrderStatus,
+                h.EstimatedDeliveryDate,
+                d.ProductID, d.ProductName, d.ProductType, d.Size,
+                d.Qty, d.ImagePathName,d.ProductNote
+            FROM tbl_DealersOrderHDR h
+            INNER JOIN tbl_DealersOrderDTLs d ON h.ID = d.HeaderID
+            ORDER BY h.ID DESC";
+
+            SqlCommand cmd = new SqlCommand(query, con);
+            SqlDataReader dr = cmd.ExecuteReader();
+
+            while (dr.Read())
+            {
+                int id = Convert.ToInt32(dr["ID"]);
+
+                // CREATE HEADER OBJECT IF NOT EXISTS
+                if (!orders.ContainsKey(id))
+                {
+                    orders[id] = new Dictionary<string, object>();
+
+                    orders[id]["ID"] = id;
+                    orders[id]["OrderID"] = dr["OrderID"];
+                    orders[id]["DealerID"] = dr["DealerID"];
+                    orders[id]["CreatedDate"] = Convert.ToDateTime(dr["CreatedDate"]).ToString("dd MMM yyyy");
+                    orders[id]["OrderStatus"] = dr["OrderStatus"].ToString();
+                    orders[id]["EstimatedDeliveryDate"] =
+                        dr["EstimatedDeliveryDate"] == DBNull.Value
+                        ? null
+                        : Convert.ToDateTime(dr["EstimatedDeliveryDate"]).ToString("dd MMM yyyy");
+
+                    orders[id]["Products"] = new List<Dictionary<string, object>>();
+                }
+
+                // ADD PRODUCT
+                var product = new Dictionary<string, object>();
+                product["ProductID"] = dr["ProductID"];
+                product["ProductName"] = dr["ProductName"].ToString();
+                product["ProductNote"] = dr["ProductNote"].ToString();
+                product["ProductType"] = dr["ProductType"].ToString();
+                product["Size"] = dr["Size"].ToString();
+                product["Qty"] = dr["Qty"];
+                product["ImagePathName"] = dr["ImagePathName"].ToString().Replace("~", "");
+
+                ((List<Dictionary<string, object>>)orders[id]["Products"]).Add(product);
+            }
+        }
+
+        return new List<Dictionary<string, object>>(orders.Values);
+    }
+}
+
+

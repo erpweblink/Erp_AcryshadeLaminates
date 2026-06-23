@@ -134,7 +134,6 @@ public partial class OrderList : System.Web.UI.Page
             {
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@Dealer", Session["ID"].ToString());
-                cmd.Parameters.AddWithValue("@ActionBy", Session["ID"].ToString());
                 cmd.Parameters.AddWithValue("@SP_Action", "PlaceorderHDR");
                 cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
                 cmd.ExecuteNonQuery();
@@ -153,8 +152,7 @@ public partial class OrderList : System.Web.UI.Page
                     cmd.Parameters.AddWithValue("@SP_Action", "PlaceorderDtls");
                     cmd.Parameters.AddWithValue("@HeaderId", Id);
                     cmd.Parameters.AddWithValue("@ProductId", string.IsNullOrWhiteSpace(ProductId[i]) ? "" : ProductId[i]);
-                    cmd.Parameters.AddWithValue("@ProductName", string.IsNullOrWhiteSpace(ProductName[i]) ? "" : ProductName[i]);
-                    
+                    cmd.Parameters.AddWithValue("@ProductName", string.IsNullOrWhiteSpace(ProductName[i]) ? "" : ProductName[i]);                
                     cmd.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(Description[i]) ? "" : Description[i]);
                     cmd.Parameters.AddWithValue("@Size", string.IsNullOrWhiteSpace(Size[i]) ? "0" : Size[i]);
                     cmd.Parameters.AddWithValue("@Qty", string.IsNullOrWhiteSpace(Qty[i]) ? "0" : Qty[i]);
