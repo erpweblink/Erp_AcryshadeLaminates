@@ -71,7 +71,7 @@
 
                     `<img src="${imageUrl}" class="product-image-preview mb-2" />` +
 
-                    '<button type="button" class="btn btn-outline-primary btn-sm">' +
+                    '<button type="button" class="btn btn-outline-primary btn-sm  upload-btn">' +
                     '<i class="bi bi-camera-fill"></i> Upload' +
                     '</button>' +
 
@@ -226,14 +226,16 @@
                                 </h2>
 
                                 <p class="text-muted mb-0">
-                                    Review products, upload artwork and confirm your order.
+                                    Review products, upload custom products and confirm your order.
                                 </p>
+                                 <a href="/Admin/PlaceOrder.aspx">Back to Products </a>
                             </div>
 
                             <div>
                                 <span class="badge bg-primary fs-6 p-3">Total Products :
                                  <span id="productCount">0</span>
                                 </span>
+                               
                             </div>
                         </div>
                     </div>

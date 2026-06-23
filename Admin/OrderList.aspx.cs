@@ -117,6 +117,16 @@ public partial class OrderList : System.Web.UI.Page
 
             HttpFileCollection files = Request.Files;
 
+            if (ProductId == null || ProductId.Length == 0)
+            {
+                Session["message"] = "No products have been selected. Please add at least one product before placing your order.";
+                Session["icon"] = "warning";
+                Session["time"] = "4000";
+                Session["url"] = "/Admin/PlaceOrder.aspx";
+
+                Response.Redirect("/Alerts.aspx");
+                return;
+            }
 
             con.Open();
 
@@ -144,7 +154,7 @@ public partial class OrderList : System.Web.UI.Page
                     cmd.Parameters.AddWithValue("@HeaderId", Id);
                     cmd.Parameters.AddWithValue("@ProductId", string.IsNullOrWhiteSpace(ProductId[i]) ? "" : ProductId[i]);
                     cmd.Parameters.AddWithValue("@ProductName", string.IsNullOrWhiteSpace(ProductName[i]) ? "" : ProductName[i]);
-                    cmd.Parameters.AddWithValue("@Type", DBNull.Value);
+                    
                     cmd.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(Description[i]) ? "" : Description[i]);
                     cmd.Parameters.AddWithValue("@Size", string.IsNullOrWhiteSpace(Size[i]) ? "0" : Size[i]);
                     cmd.Parameters.AddWithValue("@Qty", string.IsNullOrWhiteSpace(Qty[i]) ? "0" : Qty[i]);
@@ -176,12 +186,14 @@ public partial class OrderList : System.Web.UI.Page
                             "@UploadedImage",
                             "~/WOCustomProducts/" + fileName
                         );
+                        cmd.Parameters.AddWithValue("@Type", "Custom");
                     }
                     else
                     {
                         if (!string.IsNullOrWhiteSpace(ProdImageName[i]) && ProdImageName[i] != "null")
                         {
                             cmd.Parameters.AddWithValue("@UploadedImage", ProdImageName[i]);
+                            cmd.Parameters.AddWithValue("@Type", "Regular");
                         }
                     }
 
@@ -208,6 +220,10 @@ public partial class OrderList : System.Web.UI.Page
         {
             con.Close();
             throw;
+        }
+        finally
+        {
+            con.Close();
         }
     }
 }

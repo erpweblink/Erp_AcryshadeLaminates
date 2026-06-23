@@ -2,217 +2,10 @@
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
+
     <style type="text/css">
-        /*.title-line {
-                display: flex;
-                align-items: center;
-                margin: 10px 0;
-            }
-
-                .title-line::after {
-                    content: "";
-                    flex: 1;
-                    height: 1px;
-                    background: #000;
-                    opacity: 0.4;
-                }
-
-            .header-row {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 10px;
-                padding: 10px 16px;
-                flex-wrap: wrap;*/ /* ✅ wraps on small screens */
-        /*margin-bottom: 16px;
-            }
-
-            .header-right {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-left: auto;
-                flex: 1;*/ /* ✅ takes remaining space */
-        /*justify-content: flex-end;
-            }
-
-            .search-box {
-                flex: 1;*/ /* ✅ stretches to fill available space */
-        /*min-width: 120px;*/ /* ✅ doesn't shrink too small */
-        /*max-width: 300px;
-                padding: 8px;
-                border-radius: 7px;
-                border: 2px solid black;
-            }
-
-            .product-container {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(242px, 1fr));
-                gap: 8px;
-                padding: 2px;
-            }
-
-            .product-card {
-                border: 1px solid #ddd;
-                border-radius: 7px;
-                padding: 9px;
-                box-shadow: 2px 4px 8px #1d4491c2;
-                text-align: center;
-                background: #9aa4b766;
-            }
-
-                .product-card img {
-                    width: 93%;
-                    height: 232px;
-                    object-fit: cover;
-                }
-
-            .product-name {
-                height: 48px;
-                overflow: hidden;
-                font-weight: 500;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-            }
-
-            .btnCart {
-                width: 50%;
-                background: #2d69ea8f;
-                color: #000000;
-                border: none;
-                padding: 3px;
-                border-radius: 7px;
-                margin-top: 1rem !important;
-                font-weight: 700;
-                margin-bottom: 1rem;
-            }
-
-            select {
-                width: 100%;
-                margin-top: 6px;
-                padding: 4px;
-                border-radius: 7px;
-                border: 2px solid black;
-                background-color: transparent;
-            }
-
-            input {
-                width: 100%;
-                margin-top: 13px;
-                padding: 4px;
-                border-radius: 7px;
-                border: 2px solid black;
-                background-color: transparent;
-            }*/
-
-        /* Image Popup */
-        /*.img-modal {
-                display: none;
-                position: fixed;
-                z-index: 99999;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.85);
-                justify-content: center;
-                align-items: center;
-            }
-
-                .img-modal img {
-                    max-width: 90%;
-                    max-height: 90%;
-                    border-radius: 10px;
-                    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-                    animation: zoomIn 0.2s ease-in-out;
-                }
-
-            @keyframes zoomIn {
-                from {
-                    transform: scale(0.7);
-                    opacity: 0;
-                }
-
-                to {
-                    transform: scale(1);
-                    opacity: 1;
-                }
-            }
-
-            #customModal {
-                display: none;
-                position: fixed;
-                z-index: 99999;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.85);
-                justify-content: center;
-                align-items: center;
-            }*/
-
-        /* ✅ Tablet */
-        /*@media (max-width: 768px) {
-                .product-container {
-                    grid-template-columns: repeat(2, 1fr);
-                }
-
-                .product-card img {
-                    height: 140px;
-                }
-
-                .search-box {
-                    max-width: 100%;
-                }
-            }*/
-
-        /* ✅ Mobile */
-        /*@media (max-width: 480px) {
-                .header-row {
-                    padding: 8px;
-                    gap: 8px;
-                }
-
-                    .header-row h2 {
-                        font-size: 18px;
-                    }
-
-                .header-right {
-                    width: 100%;*/ /* ✅ full width row on mobile */
-        /*margin-left: 0;
-                }
-
-                .search-box {
-                    max-width: 100%;
-                    flex: 1;
-                }
-
-                .product-container {
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 10px;
-                }
-
-                .product-card {
-                    padding: 8px;
-                }
-
-                    .product-card img {
-                        height: 120px;
-                    }
-
-                .product-name {
-                    font-size: 14px;
-                }
-
-                .btnCart {
-                    font-size: 12px;
-                    padding: 6px;
-                }
-            }*/
-
-
         /* ===== HEADER ===== */
 
         .title-line {
@@ -440,7 +233,8 @@
                         badge.innerText = count;
                         badge.style.display = "flex";
                     } else {
-                        badge.style.display = "none";
+                        badge.innerText = "0";
+                        badge.style.display = "flex";
                     }
 
                 });
@@ -481,6 +275,7 @@
             let regular =
                 allProducts.filter(x => !x.FavoriteProduct);
 
+           
             renderCards(
                 trending,
                 "trendingContainer"
@@ -490,6 +285,12 @@
                 regular,
                 "regularContainer"
             );
+
+            if (!trending || trending.length === 0) {
+                document.getElementById("divTrending").style.display = "none";
+            } else {
+                document.getElementById("divTrending").style.display = "block";
+            }
         }
 
         function searchProducts() {
@@ -645,6 +446,27 @@
             document.getElementById("imgModal")
                 .style.display = "none";
         }
+
+        function getconfirmation() {
+            Swal.fire({
+                title: 'Ready to Checkout?',
+                html: `
+            <div>
+                Are you sure you don't want any more products?<br>
+                You can continue shopping or proceed to your cart.
+            </div>
+        `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Go to Cart',
+                cancelButtonText: 'Keep Shopping',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/Admin/OrderList.aspx';
+                }
+            });
+        }
     </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
@@ -652,7 +474,7 @@
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
             <div class="header-row">
-                <h2 class="fw-bold" style="margin: 0; white-space: nowrap;">Place Order</h2>
+                <h2 class="fw-bold" style="margin: 0; white-space: nowrap;">Product List</h2>
 
                 <div class="header-right">
                     <input type="text"
@@ -662,9 +484,9 @@
                         placeholder="Search Product..." />
 
                     <div style="position: relative; display: inline-block; flex-shrink: 0;">
-                        <asp:LinkButton type="button" class="btn" ID="lnkBtn" runat="server" OnClick="lnkBtn_Click">
-                                <i class="bi bi-cart" style="font-size: 20px;"></i>
-                        </asp:LinkButton>
+                        <button type="button" class="btn" onclick="getconfirmation()">
+                            <i class="bi bi-cart" style="font-size: 20px;"></i>
+                        </button>
                         <span id="cartCount" style="display: none; position: absolute; top: -6px; right: -6px; background: #e53935; color: #fff; font-size: 11px; font-weight: 600; min-width: 18px; height: 18px; border-radius: 50%; align-items: center; justify-content: center; padding: 0 3px;">0</span>
                     </div>
                 </div>

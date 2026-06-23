@@ -130,6 +130,18 @@
             display: block;
         }
         /*END*/
+
+        .favorite-btn {
+            display: inline-block;
+            width: 20px;
+            padding: 0;
+            margin: 0;
+            text-align: center;
+        }
+
+            .favorite-btn i {
+                font-size: 25px;
+            }
     </style>
     <script type="text/javascript">
         function updateStatus(element) {
@@ -200,6 +212,20 @@
                         <asp:GridView ID="GVDetails" runat="server" DataKeyNames="ID" OnRowDataBound="GVDetails_RowDataBound" CssClass="table table-bordered table-striped" HeaderStyle-BackColor="#5b78b1"
                             HeaderStyle-Font-Bold="true" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" AutoGenerateColumns="false" OnRowCommand="GVDetails_RowCommand">
                             <Columns>
+                                <asp:TemplateField HeaderText="" ItemStyle-HorizontalAlign="Center" ItemStyle-Width="10px" HeaderStyle-Width="10px">
+                                    <ItemTemplate>
+                                        <asp:LinkButton ID="btnFavorite" runat="server"
+                                            CssClass="favorite-btn"
+                                            CommandName="ToggleFavorite"
+                                            CommandArgument='<%# Eval("ID") %>'>
+                                           <i class='<%# (Eval("FavoriteProduct") != DBNull.Value 
+                                                && Convert.ToBoolean(Eval("FavoriteProduct")))
+                                                ? "bi bi-star-fill text-warning"
+                                                : "bi bi-star text-secondary" %>'></i>
+                                    </asp:LinkButton>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
                                 <asp:TemplateField HeaderText="Sr.No." ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
                                         <asp:Label ID="lblsno" runat="server" Text='<%# Container.DataItemIndex+1 %>'></asp:Label>

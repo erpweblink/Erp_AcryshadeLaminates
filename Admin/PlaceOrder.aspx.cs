@@ -97,11 +97,6 @@ public partial class PlaceOrder : System.Web.UI.Page
         return "Success";
     }
 
-
-    protected void lnkBtn_Click(object sender, EventArgs e)
-    {
-        Response.Redirect("OrderList.aspx");
-    }
 }
 
 
