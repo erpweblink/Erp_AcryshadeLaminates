@@ -60,7 +60,7 @@ public partial class PlaceOrder : System.Web.UI.Page
         {
             SqlDataAdapter da = new SqlDataAdapter(
                 @"SELECT ID,ProductName,Size,ImagenamePath,FavoriteProduct
-                  FROM tbl_ProdcutMaster WHERE IsActive = 1",
+                  FROM tbl_ProdcutMaster WHERE IsActive = 1 AND isdeleted = 0",
                 con);
 
             da.Fill(dt);

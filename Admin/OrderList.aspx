@@ -43,8 +43,68 @@
         .sticky-top {
             z-index: 10;
         }
+
+
+        /* ===== FULL SCREEN LOADER ===== */
+        #pageLoader {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(6px);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ===== SPINNER ===== */
+        .loader-ring {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top: 4px solid #4f7cff;
+            border-right: 4px solid #7c4dff;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 25px rgba(79,124,255,0.6);
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* glow text */
+        .loader-text {
+            margin-top: 15px;
+            color: #fff;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-align: center;
+            font-size: 14px;
+            animation: pulse 1.2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,100% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
     </style>
     <script>
+        function showLoader() {
+            document.getElementById("pageLoader").style.display = "flex";
+        }
+
         function loadWorkOrderData(data) {
             var totalProducts = 0;
             var totalQty = 0;
@@ -208,6 +268,13 @@
     <asp:ToolkitScriptManager ID="ToolkitScriptManager1" runat="server"></asp:ToolkitScriptManager>
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
+            <div id="pageLoader">
+                <div style="text-align: center;">
+                    <div class="loader-ring"></div>
+                    <div class="loader-text">Placing Order...</div>
+                </div>
+            </div>
+
             <div class="col-md-4 col-12 d-none">
                 <asp:Label ID="lblMCImage" runat="server" Font-Bold="true" CssClass="form-label">Attach Order <span class="text-danger mt-1">(.pdf)</span>:</asp:Label>
                 <asp:FileUpload ID="FileMCImage" runat="server" CssClass="form-control" accept=".pdf" onchange="validateFileSize(this)" />
@@ -228,14 +295,14 @@
                                 <p class="text-muted mb-0">
                                     Review products, upload custom products and confirm your order.
                                 </p>
-                                 <a href="/Admin/PlaceOrder.aspx">Back to Products </a>
+                                <a href="/Admin/PlaceOrder.aspx">Back to Products </a>
                             </div>
 
                             <div>
                                 <span class="badge bg-primary fs-6 p-3">Total Products :
                                  <span id="productCount">0</span>
                                 </span>
-                               
+
                             </div>
                         </div>
                     </div>
@@ -310,7 +377,7 @@
                                         ID="btnsave"
                                         runat="server"
                                         CssClass="btn btn-success btn-lg shadow"
-                                        OnClick="btnsave_Click">
+                                        OnClick="btnsave_Click"  OnClientClick="showLoader();">
 
                                         <i class="bi bi-cart-check-fill"></i>
                                         Place Order

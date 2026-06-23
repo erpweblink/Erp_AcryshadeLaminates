@@ -4,6 +4,38 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style type="text/css">
+        .order-headerss {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap; /* allows responsiveness */
+        }
+
+            /* remove default margin issues */
+            .order-headerss h2 {
+                margin: 0;
+                white-space: nowrap;
+            }
+
+        /* optional styling for link h2 */
+        .product-link a {
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 600px) {
+            .order-headerss {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+                .order-headerss h2 {
+                    white-space: normal;
+                }
+        }
+
         .order-details {
             display: none;
             margin-top: 10px;
@@ -357,14 +389,19 @@
             document.getElementById("imgModal")
                 .style.display = "none";
         }
-</script>
+    </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:ToolkitScriptManager ID="ToolkitScriptManager1" runat="server"></asp:ToolkitScriptManager>
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
             <div class="order-container">
-                <h2>My Orders</h2>
+                <div class="order-headerss">
+                    <h2 class="fw-bold">My Orders</h2>
+                    <h2 class="product-link">
+                        <a href="/Admin/PlaceOrder.aspx">Product List</a>
+                    </h2>
+                </div>
                 <div id="orderList"></div>
             </div>
 
