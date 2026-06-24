@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Web;
 using System.Web.Script.Serialization;
 using System.Web.Services;
@@ -32,7 +35,14 @@ public partial class OrderList : System.Web.UI.Page
     protected void BindOrder()
     {
         DataTable dt = new DataTable();
-        SqlDataAdapter cmd = new SqlDataAdapter("SELECT * FROM tbl_DealersOrderTemp WHERE DealersID=@DealersID AND CAST(AddedDate AS DATE)=CAST(GETDATE() AS DATE)", con);
+        SqlDataAdapter cmd = new SqlDataAdapter(@"SELECT *
+                    FROM tbl_DealersOrderTemp
+                    WHERE DealersID =@DealersID
+                    AND CAST(AddedDate as date) = (
+                        SELECT CAST(MAX(AddedDate) as date)
+                        FROM tbl_DealersOrderTemp
+                        WHERE DealersID = @DealersID
+                    )", con);
         cmd.SelectCommand.Parameters.AddWithValue("@DealersID", Session["ID"].ToString());
         cmd.SelectCommand.Parameters.AddWithValue("@AddedDate", DateTime.Now);
         cmd.Fill(dt);
@@ -142,7 +152,7 @@ public partial class OrderList : System.Web.UI.Page
             }
 
 
-             int fileIndex = 1;
+            int fileIndex = 1;
             // LOOP THROUGH ALL ROWS
             for (int i = 0; i < ProductName.Length; i++)
             {
@@ -152,7 +162,7 @@ public partial class OrderList : System.Web.UI.Page
                     cmd.Parameters.AddWithValue("@SP_Action", "PlaceorderDtls");
                     cmd.Parameters.AddWithValue("@HeaderId", Id);
                     cmd.Parameters.AddWithValue("@ProductId", string.IsNullOrWhiteSpace(ProductId[i]) ? "" : ProductId[i]);
-                    cmd.Parameters.AddWithValue("@ProductName", string.IsNullOrWhiteSpace(ProductName[i]) ? "" : ProductName[i]);                
+                    cmd.Parameters.AddWithValue("@ProductName", string.IsNullOrWhiteSpace(ProductName[i]) ? "" : ProductName[i]);
                     cmd.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(Description[i]) ? "" : Description[i]);
                     cmd.Parameters.AddWithValue("@Size", string.IsNullOrWhiteSpace(Size[i]) ? "0" : Size[i]);
                     cmd.Parameters.AddWithValue("@Qty", string.IsNullOrWhiteSpace(Qty[i]) ? "0" : Qty[i]);
@@ -178,7 +188,10 @@ public partial class OrderList : System.Web.UI.Page
                             Directory.CreateDirectory(folderPath);
                         }
 
-                        file.SaveAs(Path.Combine(folderPath, fileName));
+                        string fullPath = Path.Combine(folderPath, fileName);
+
+                        SaveCompressedImage(file, fullPath, quality: 60, maxWidth: 800);
+
 
                         cmd.Parameters.AddWithValue(
                             "@UploadedImage",
@@ -222,6 +235,36 @@ public partial class OrderList : System.Web.UI.Page
         finally
         {
             con.Close();
+        }
+    }
+
+    public static void SaveCompressedImage(HttpPostedFile file, string fullPath, int quality = 60, int maxWidth = 800)
+    {
+        using (var image = Image.FromStream(file.InputStream))
+        {
+            int newWidth = image.Width;
+            int newHeight = image.Height;
+
+            // resize if image is too large
+            if (image.Width > maxWidth)
+            {
+                newWidth = maxWidth;
+                newHeight = (image.Height * maxWidth) / image.Width;
+            }
+
+            using (var bitmap = new Bitmap(image, new Size(newWidth, newHeight)))
+            {
+                ImageCodecInfo jpgEncoder = ImageCodecInfo
+                    .GetImageDecoders()
+                    .First(c => c.FormatID == ImageFormat.Jpeg.Guid);
+
+                Encoder encoder = Encoder.Quality;
+                EncoderParameters encParams = new EncoderParameters(1);
+
+                encParams.Param[0] = new EncoderParameter(encoder, quality);
+
+                bitmap.Save(fullPath, jpgEncoder, encParams);
+            }
         }
     }
 }
