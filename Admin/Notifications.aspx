@@ -1,4 +1,4 @@
-﻿<%@ Page Title="" Language="C#" MasterPageFile="~/MasterPage.master" EnableEventValidation="false" AutoEventWireup="true" Async="true" CodeFile="OrderHistory.aspx.cs" Inherits="OrderHistory" %>
+﻿<%@ Page Title="" Language="C#" MasterPageFile="~/MasterPage.master" EnableEventValidation="false" AutoEventWireup="true" Async="true" CodeFile="Notifications.aspx.cs" Inherits="Notifications" %>
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
@@ -90,10 +90,6 @@
 
         .status-delivered {
             background: #4caf50;
-        }
-
-        .status-rejected {
-            background: #ef0707;
         }
 
         .products-container {
@@ -236,6 +232,34 @@
             }
         }
 
+        .btn-accept {
+            background: #198754;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: .2s;
+        }
+
+            .btn-accept:hover {
+                background: #157347;
+            }
+
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: .2s;
+        }
+
+            .btn-reject:hover {
+                background: #bb2d3b;
+            }
+
         /* ===== MODAL ===== */
         .img-modal {
             display: none;
@@ -264,6 +288,14 @@
                 height: 150px;
             }
         }
+
+        @media(max-width:768px) {
+
+            .btn-accept,
+            .btn-reject {
+                flex: 1;
+            }
+        }
     </style>
     <script type="text/javascript">
         $(document).ready(function () {
@@ -283,9 +315,11 @@
         }
 
         function loadOrders() {
+            var orderID = $("#<%= hdnOrderID.ClientID %>").val();
             $.ajax({
                 type: "POST",
-                url: "OrderHistory.aspx/GetOrders",
+                url: "Notifications.aspx/GetOrders",
+                data: JSON.stringify({ orderID: orderID }),
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function (response) {
@@ -299,81 +333,80 @@
         }
 
         function renderOrders(orders) {
-
             let html = "";
 
             orders.forEach(o => {
 
-                let statusClass = "";
-
-                if (o.OrderStatus === "Order Placed") statusClass = "status-placed";
-                else if (o.OrderStatus === "Shipped") statusClass = "status-shipped";
-                else if (o.OrderStatus === "Order Approved") statusClass = "status-delivered";
-                else if (o.OrderStatus === "Order Rejected") statusClass = "status-rejected";
-
                 html += `
-                    <div class="order-card">
+                 <div class="order-card">
 
-                        <div class="order-header" onclick="toggleOrder('${o.ID}')">
-                            <span id="icon_${o.ID}">▼</span>
+                     <div class="order-header" onclick="toggleOrder('${o.ID}')">
+                         <span id="icon_${o.ID}">▼</span>
 
-                            <div>
-                                <b>Order ID:</b> ${o.OrderID}<br/>
-                                <small>Placed on: ${o.CreatedDate}</small>
-                            </div>
+                         <div>
+                                 <b>${o.DealerName}</b> <br/>
+                             <small>Placed on: ${o.CreatedDate}</small>
+                         </div>
 
-                            <div class="order-status ${statusClass}">
-                                ${o.OrderStatus}
-                            </div>
-                        </div>
+                         <div class="order-status">
+                            <button class="btn-accept"
+                                    onclick="event.preventDefault();event.stopPropagation();acceptOrder('${o.EnID}')">
+                                ✓ Approve
+                            </button>
 
-                        <div id="details_${o.ID}" class="order-details">
+                            <button class="btn-reject"
+                                    onclick="event.stopPropagation();rejectOrder('${o.EnID}')">
+                                ✕ Reject
+                            </button>
+                         </div>
+                     </div>
 
-                            <div>
-                                <b>Estimated Delivery:</b>
-                                ${o.EstimatedDeliveryDate ?? 'Not Updated'}
-                            </div>
+                     <div id="details_${o.ID}" class="order-details">
 
-                            <div class="products-container">
-                    `;
+                         <div>
+                              <b>Order ID:</b> ${o.OrderID}<br/>
+                         </div>
+
+                         <div class="products-container">
+                 `;
 
                 o.Products.forEach(p => {
                     var Image = '/Content/' + p.ImagePathName.replace('~/', '');
 
                     html += `
-                        <div class="product-row">
-                            <img src="${Image}" onclick="openModal('${Image}')" />
+                     <div class="product-row">
+                         <img src="${Image}" onclick="openModal('${Image}')" />
 
-                            <div class="product-info">
-                                <div class="product-name">${p.ProductName}</div>
-                        `;
+                         <div class="product-info">
+                             <div class="product-name">${p.ProductName}</div>
+                     `;
 
                     if (p.ProductNote && p.ProductNote.trim() !== "") {
                         html += `
-                            <div class="product-note">
-                                ${p.ProductNote}
-                            </div>
-                        `;
+                         <div class="product-note">
+                             ${p.ProductNote}
+                         </div>
+                     `;
                     }
 
                     html += `
-                            <div class="product-meta">
-                                Type: ${p.ProductType} | Size: ${p.Size}
-                            </div>
+                         <div class="product-meta">
+                             Type: ${p.ProductType} | Size: ${p.Size}
+                         </div>
 
-                            <div class="product-meta">
-                                Qty: ${p.Qty}
-                            </div>
-                        </div>
-                    </div>
-                    `;
+                         <div class="product-meta">
+                             Qty: ${p.Qty}
+                         </div>
+                     </div>
+                 </div>
+                 `;
                 });
 
                 html += `
-                        </div>
-                    </div>
-                    </div>
-                    `;
+                     </div>
+                 </div>
+                 </div>
+                 `;
             });
 
             $("#orderList").html(html);
@@ -394,19 +427,40 @@
             document.getElementById("imgModal")
                 .style.display = "none";
         }
+
+        function acceptOrder(EnID) {
+            window.location.replace('WorkOrderMaster.aspx?OrderID=' + EnID);
+        }
+
+        function rejectOrder(id) {
+
+            if (!confirm("Reject this order?"))
+                return;
+
+            $.ajax({
+                type: "POST",
+                url: "Notifications.aspx/RejectOrder",
+                data: JSON.stringify({ id: id }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function () {
+                    loadOrders();
+                }
+            });
+        }
     </script>
 </asp:Content>
-<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <asp:ToolkitScriptManager ID="ToolkitScriptManager1" runat="server"></asp:ToolkitScriptManager>
     <asp:UpdatePanel ID="UpdatePanel1" runat="server">
         <ContentTemplate>
+            <asp:HiddenField ID="hdnOrderID" runat="server" />
             <div class="order-container">
                 <div class="order-headerss">
-                    <h2 class="fw-bold">My Orders</h2>
-                    <h2 class="product-link">
-                        <a href="/Admin/PlaceOrder.aspx">Product List</a>
-                    </h2>
-                </div><br /><br />
+                    <h2 class="fw-bold">Notifications</h2>
+                </div>
+                <br />
+                <br />
                 <div id="orderList"></div>
             </div>
 

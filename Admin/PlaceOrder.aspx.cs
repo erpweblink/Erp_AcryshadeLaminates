@@ -18,7 +18,22 @@ public partial class PlaceOrder : System.Web.UI.Page
         {
             if (!IsPostBack)
             {
-
+                //Check if you has access to the page of not
+                {
+                    string username = Session["ID"].ToString();
+                    using (SqlConnection cons = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
+                    {
+                        string query = @"SELECT PageAccess FROM tbl_UserRoleAuthorization WHERE UserID = @UserID AND PageName = 'PlaceOrder.aspx'";
+                        SqlCommand cmds = new SqlCommand(query, cons);
+                        cmds.Parameters.AddWithValue("@UserID", username);
+                        cons.Open();
+                        object result = cmds.ExecuteScalar();
+                        if (result == null || result.ToString() != "True")
+                        {
+                            Response.Redirect("/AccessDenied.aspx");
+                        }
+                    }
+                }
             }
         }
     }

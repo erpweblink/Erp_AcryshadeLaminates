@@ -24,7 +24,7 @@ public partial class OrderHistory : System.Web.UI.Page
                         string username = Session["ID"].ToString();
                         using (SqlConnection cons = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
                         {
-                            string query = @"SELECT PageAccess FROM tbl_UserRoleAuthorization WHERE UserID = @UserID AND PageName = 'CompanyList.aspx'";
+                            string query = @"SELECT PageAccess FROM tbl_UserRoleAuthorization WHERE UserID = @UserID AND PageName = 'PlaceOrder.aspx'";
                             SqlCommand cmds = new SqlCommand(query, cons);
                             cmds.Parameters.AddWithValue("@UserID", username);
                             cons.Open();

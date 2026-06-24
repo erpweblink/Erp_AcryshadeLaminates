@@ -11,7 +11,7 @@ public partial class MasterPage : System.Web.UI.MasterPage
         if (!IsPostBack)
         {
             UserNameShow();
-            //PageAuthorization();
+            PageAuthorization();
         }
     }
 
@@ -147,6 +147,16 @@ public partial class MasterPage : System.Web.UI.MasterPage
                 }
                 /*End*/
 
+                /*PlaceOrder*/
+                {
+                    if (MenuName == "PlaceOrder.aspx")
+                    {
+                        string PageAccess = row["PageAccess"].ToString();
+                        PLoTab.Visible = PageAccess == "True" ? true : false;
+                    }
+                }
+                /*End*/
+
                 /*Scheduler*/
                 {
                     if (MenuName == "ReceivedWOList.aspx")
@@ -172,19 +182,31 @@ public partial class MasterPage : System.Web.UI.MasterPage
                         DesAppTab.Visible = PageAccess == "True" ? true : false;
                     }
 
-                    if (MenuName == "ReceivedWOList.aspx")
+                    if (MenuName == "AssignWorkOrder.aspx")
                     {
                         string PageAccess = row["PageAccess"].ToString();
                         RecWOTab.Visible = PageAccess == "True" ? true : false;
                     }
 
-                    if (MenuName == "WOProduction.aspx")
+                    if (MenuName == "WoProductionS1.aspx")
                     {
                         string PageAccess = row["PageAccess"].ToString();
                         WOProdTab.Visible = PageAccess == "True" ? true : false;
                     }
 
-                    if (AssMCTab.Visible == false && DesAppTab.Visible == false && RecWOTab.Visible == false && WOProdTab.Visible == false)
+                    if (MenuName == "WoProductionS2.aspx")
+                    {
+                        string PageAccess = row["PageAccess"].ToString();
+                        WOProd1Tab.Visible = PageAccess == "True" ? true : false;
+                    }
+
+                    if (MenuName == "Packaging.aspx")
+                    {
+                        string PageAccess = row["PageAccess"].ToString();
+                        WOPackTab.Visible = PageAccess == "True" ? true : false;
+                    }
+
+                    if (AssMCTab.Visible == false && DesAppTab.Visible == false && RecWOTab.Visible == false && WOProdTab.Visible == false && WOProd1Tab.Visible == false && WOPackTab.Visible == false)
                     {
                         ProductionTab.Visible = false;
                     }
@@ -215,6 +237,7 @@ public partial class MasterPage : System.Web.UI.MasterPage
                     }
                 }
                 /*End*/
+
             }
         }
         else
@@ -231,7 +254,7 @@ public partial class MasterPage : System.Web.UI.MasterPage
             ProductTab.Visible = false;
             TransTab.Visible = false;
             WOrdTab.Visible = false;
-           // SchedTab.Visible = false;
+            PLoTab.Visible = false;
             ProductionTab.Visible = false;
             RecWOTab.Visible = false;
             UserAuthorTab.Visible = false;

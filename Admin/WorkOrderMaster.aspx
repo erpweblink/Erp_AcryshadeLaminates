@@ -67,6 +67,81 @@
                 border-radius: 4px;
                 cursor: pointer;
             }
+
+
+
+        /* Autocomplete dropdown */
+        .ui-autocomplete {
+            max-height: 250px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 999999 !important;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 6px 20px rgba(0,0,0,.15);
+            padding: 5px 0;
+            font-size: 14px;
+            /* Important */
+            max-width: 95vw !important;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        .ui-menu-item-wrapper {
+            padding: 10px 15px;
+            white-space: normal !important;
+            word-break: break-word;
+        }
+        /* Each item */
+        .ui-menu-item {
+            padding: 0;
+        }
+
+        /* Hover / selected */
+        .ui-state-active,
+        .ui-menu-item-wrapper.ui-state-active {
+            background: #5b78b1 !important;
+            border: none !important;
+            color: #fff !important;
+            margin: 0 !important;
+        }
+
+        /* Hover effect */
+        .ui-menu-item-wrapper:hover {
+            background: #f5f7fb;
+        }
+
+        /* Custom scrollbar */
+        .ui-autocomplete::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .ui-autocomplete::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .ui-autocomplete::-webkit-scrollbar-thumb {
+            background: #5b78b1;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+
+            .ui-autocomplete {
+                max-width: 95vw !important;
+                width: 95vw !important;
+                left: 10px !important;
+                right: 10px !important;
+                font-size: 13px;
+                max-height: 200px;
+            }
+
+            .ui-menu-item-wrapper {
+                padding: 12px;
+                line-height: 1.4;
+            }
+        }
     </style>
 
     <script type="text/javascript">
@@ -81,6 +156,12 @@
 
             $input.autocomplete({
                 minLength: 1,
+                appendTo: "body",
+                position: {
+                    my: "left top",
+                    at: "left bottom",
+                    collision: "flipfit"
+                },
                 source: function (request, response) {
                     $.ajax({
                         url: 'WorkOrderMaster.aspx/GetProductAutoComplete',
@@ -95,7 +176,6 @@
                                     label: item.ProductName,
                                     value: item.ProductName,
                                     id: item.ProductId,
-                                    partNo: item.PartNo,
                                     size: item.Size
                                 };
                             }));
@@ -105,8 +185,7 @@
                 select: function (event, ui) {
                     var row = $(this).closest('tr');
                     row.find('input[name="ProductId[]"]').val(ui.item.id);
-                    row.find('input[name="ProductName[]"]').val(ui.item.value);
-                    row.find('input[name="SheetNo[]"]').val(ui.item.partNo);
+                    row.find('textarea[name="ProductName[]"]').val(ui.item.value);
                     row.find('select[name="Size[]"]').val(ui.item.size);
 
                     return false;
@@ -126,11 +205,10 @@
 
                 // Get values from last row
                 var productName = lastRow.find('[name="ProductName[]"]').val().trim();
-                var itemCode = lastRow.find('[name="SheetNo[]"]').val().trim();
                 var size = lastRow.find('[name="Size[]"]').val();
 
                 if (productName && productName.trim() !== '') {
-                    SaveProductMaster(productName, itemCode, size);
+                    SaveProductMaster(productName, size);
                 }
 
                 // Convert current add button to delete
@@ -149,24 +227,16 @@
 
                  <!-- Product Name -->
                  <td style="border: 1px solid #e3e6f0; padding: 8px;">
-                     <input type="text"
+                     <textarea type="text"
                          name="ProductName[]"
                          autocomplete="off"
                          class="form-control productname"
-                         style="border-radius: 8px; height: 42px; min-width: 150px;" />
+                         style="border-radius: 8px; height: 42px; min-width: 250px;" ></textarea>
                      <div class="error-msg productname-error text-danger" style="font-size: 12px;"></div>
                      <input type="hidden" name="ProductId[]" class="productid" />
                  </td>
 
-                 <!-- Sheet No -->
-                 <td style="border: 1px solid #e3e6f0; padding: 8px;">
-                     <input type="text" name="SheetNo[]" autocomplete="off"
-                         class="form-control sheetno"
-                         rows="2"
-                         style="border-radius: 8px; min-width: 120px; resize: none;" />
-                     <div class="error-msg sheetno-error text-danger" style="font-size: 12px;"></div>
-                 </td>
-
+             
                     <!-- Type -->
                    <td style="border: 1px solid #e3e6f0; padding: 8px;">
                        <select name="Type[]"
@@ -274,7 +344,7 @@
 
             });
 
-            function SaveProductMaster(productName, itemCode, size) {
+            function SaveProductMaster(productName, size) {
                 $.ajax({
                     type: "POST",
                     url: "WorkOrderMaster.aspx/SaveProductMaster",
@@ -282,11 +352,10 @@
                     dataType: "json",
                     data: JSON.stringify({
                         ProductName: productName,
-                        ItemCode: itemCode,
                         Size: size
                     }),
                     success: function (response) {
-                    
+
                         if (response.d === "Success") {
                             alert("New Product Created");
                         }
@@ -311,11 +380,10 @@
             let isValid = true;
 
             row.find('.error-msg').text('');
-            row.find('input,select,textarea').removeClass('error-border');
+            row.find('select,textarea').removeClass('error-border');
 
             const fields = [
                 { selector: '[name="ProductName[]"]', msg: 'Product Name is required' },
-                { selector: '[name="SheetNo[]"]', msg: 'Item Code is required' },
                 { selector: '[name="Size[]"]', msg: 'Size is required' },
                 { selector: '.qty', msg: 'Enter valid Qty' }
             ];
@@ -485,11 +553,11 @@
                 $("#<%= txtShipPinCode.ClientID %>").prop('readonly', false);
                 $("#<%= txtShipGst.ClientID %>").prop('readonly', false);
 
-                ////$("#<%= ddlShipAddress.ClientID %>").prop('disabled', false);
+                $("#<%= ddlShipAddress.ClientID %>").prop('disabled', false);
             }
         });
 
-        function loadWorkOrderData(data) {     
+        function loadWorkOrderData(data) {
             $('#tblRawMaterial tbody').html('');
             $('#check_address').prop('disabled', true);
             $.each(data, function (index, item) {
@@ -517,21 +585,12 @@
 
                 // Product Name
                 row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
-                    '<input type = "text" name = "ProductName[]" autocomplete = "off" ' +
+                    '<textarea type = "text" name = "ProductName[]" autocomplete = "off" ' +
                     'class="form-control productname" ' +
-                    'value="' + item.ProductName + '" ' +
-                    'style = "border-radius: 8px; height: 42px; min-width: 150px;" />' +
+                    'style = "border-radius: 8px; height: 42px; min-width: 250px;" >' + item.ProductName + '</textarea>' +
                     '<div class="error-msg productname-error text-danger" style="font-size: 12px;"></div>' +
                     '<input type="hidden" name="ProductId[]" class="productid" value="' + item.ProductId + '"/></td>';
 
-                // Sheet No
-                row += ' <td style="border: 1px solid #e3e6f0; padding: 8px;">' +
-                    ' <input type="text" name="SheetNo[]"  autocomplete="off" ' +
-                    'class="form-control sheetno" rows="2" ' +
-                    'value="' + item.PartNo + '" ' +
-                    ' style="border-radius: 8px; min-width: 120px; resize: none;" />' +
-                    ' <div class="error-msg sheetno-error text-danger" style="font-size: 12px;"></div>' +
-                    '</td>';
 
                 //Type 
                 row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
@@ -592,13 +651,13 @@
                 const imageUrl = item.UploadedImage && item.UploadedImage.trim() !== 'null'
                     ? item.UploadedImage.replace('~/', '/Content/')
                     : 'https://placehold.co/100x100?text=Image';
-            
+
 
                 // '<img src="https://placehold.co/100x100?text=Image"' +
                 //Upload image
                 row += '<td style = "border: 1px solid #e3e6f0; padding: 8px;" > ' +
                     '<div class="position-relative d-inline-block">' +
-              
+
                     `<img src="${imageUrl}" ` +
                     'class="product-image-preview" ' +
                     'style="width: 70px; height: 70px; object-fit: cover; border: 1px solid #ddd; border-radius: 8px;" />' +
@@ -615,7 +674,152 @@
                     'accept = "image/*" ' +
                     'style = "display: none;" /> ' +
                     '</div > ' +
-                    ' <input type="hidden" value="' + item.UploadedImage +'" name="ProdImageName[]" class="file-input" />'+
+                    ' <input type="hidden" value="' + item.UploadedImage + '" name="ProdImageName[]" class="file-input" />' +
+
+                    '<div class="error-msg productimage-error text-danger"' +
+                    'style = "font-size: 12px;" > ' +
+                    '</div>' +
+                    '</td>';
+
+                row += '<td class="text-center" style="border: 1px solid #e3e6f0; padding: 8px;">' +
+                    btnHtml +
+                    '</td>';
+
+                row += '</tr>';
+
+                $('#tblRawMaterial tbody').append(row);
+            });
+
+            updateSerialNumbers();
+        }
+
+        function loadOrderData(data) {
+            $('#tblRawMaterial tbody').html('');
+            $.each(data, function (index, item) {
+
+                var btnHtml = '';
+
+                if (index == data.length - 1) {
+                    btnHtml =
+                        '<button  type="button" class="btnAdd" style="border: none; background: none; cursor: pointer;">' +
+                        '<i class="bi bi-plus-square-fill" style="color:#16a34a;font-size:26px"></i>' +
+                        '</button>';
+                }
+                else {
+                    btnHtml =
+                        '<button type="button" class="btnDelete" style="border: none; background: none; cursor: pointer;">' +
+                        '<i class="bi bi-trash-fill" style="color:red;font-size:23px"></i>' +
+                        '</button>';
+                }
+
+                var row = '';
+
+                row += '<tr style="transition: 0.3s;">';
+
+                row += '<td class="srno text-center"  style="border:1px solid #e3e6f0;padding: 10px;font-weight: 600;">' + (index + 1) + '</td>';
+
+                // Product Name
+                row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
+                    '<textarea type = "text" name = "ProductName[]" autocomplete = "off" ' +
+                    'class="form-control productname" ' +
+                    'style = "border-radius: 8px; height: 42px; min-width: 250px;" >' + item.ProductName + '</textarea>' +
+                    '<div class="error-msg productname-error text-danger" style="font-size: 12px;"></div>' +
+                    '<input type="hidden" name="ProductId[]" class="productid" value="' + item.ProductID + '"/></td>';
+
+
+                //Type 
+                row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
+                    '<select name="Type[]" ' +
+                    'class="form-control typo" ' +
+                    'style="border-radius: 8px; min-width: 120px; resize: none;" >' +
+                    '<option value="Regular" ' + (item.ProductType == 'Regular' ? ' selected' : '') + '>Regular</option>' +
+                    '<option value="Custom"' + (item.ProductType == 'Custom' ? ' selected' : '') + '>Custom</option>' +
+                    '</select>' +
+                    '<div class="error-msg typo-error text-danger" style="font-size: 12px;"></div>' +
+                    '</td>';
+
+                //Description
+                row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
+                    '<textarea name="Description[]" autocomplete="off" ' +
+                    'class="form-control description"' +
+                    'style="border-radius: 8px; height: 42px; min-width: 200px;">' +
+                    item.ProductNote +
+                    '</textarea>' +
+                    ' <div class="error-msg description-error text-danger" style="font-size: 12px;"></div>' +
+                    '</td>';
+
+                //Size
+                row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">';
+                row += '<select name="Size[]" class="form-control size" ' +
+                    'style="border-radius: 8px; height: 42px; min-width: 120px;"  onchange="GetSQFeet(this)">';
+                row += '<option value="">-Select Size-</option>';
+                row += ' <option value="8x2"' + (item.Size == '8x2' ? ' selected' : '') + '>8x2</option>';
+                row += '  <option value="8x4"' + (item.Size == '8x4' ? ' selected' : '') + '>8x4</option>';
+                row += '</select>';
+                row += ' <div class="error-msg size-error text-danger" style="font-size: 12px;"></div>';
+                row += '</td>';
+
+
+                //Qty
+                row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
+                    '<input type="number" step="0" name="Qty[]" ' +
+                    'class="form-control qty" ' +
+                    'value="' + item.Qty + '" ' +
+                    'style="border-radius: 8px; height: 42px; min-width: 70px;" oninput="GetSQFeet(this)"/>' +
+                    '<div class="error-msg qty-error text-danger" style="font-size: 12px;"></div>' +
+                    '</td>';
+
+                var sqftPerSheet = 0;
+
+                if (item.Size === "8x2") {
+                    sqftPerSheet = 8 * 2; // 16 sq ft
+                } else if (item.Size === "8x4") {
+                    sqftPerSheet = 8 * 4; // 32 sq ft
+                }
+
+                var totalSqFeet = sqftPerSheet * item.Qty;
+
+                //Sq Feet
+                row += '<td style = "border: 1px solid #e3e6f0; padding: 8px;" >' +
+                    '<input type="text" name="SqFeet[]" readonly="readonly" value="' + totalSqFeet + '" class="form-control sqfeet"' +
+                    'style = "border-radius: 8px; height: 42px; min-width: 60px;" /> ' +
+                    '<div class="error-msg sqfeet-error text-danger" style = "font-size: 12px;" ></div > ' +
+                    '</td >';
+
+                //Unit
+                row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
+                    '<input type="text" name="Unit[]" value="NOS" readonly="readonly" class="form-control unit" ' +
+                    'style="border-radius: 8px; height: 42px; min-width: 70px;"/>' +
+                    ' <div class="error-msg unit-error text-danger" style="font-size: 12px;"></div>' +
+                    '</td>';
+
+                const imageUrl = item.ImagePathName && item.ImagePathName.trim() !== 'null'
+                    ? item.ImagePathName.replace('~/', '/Content/')
+                    : 'https://placehold.co/100x100?text=Image';
+
+
+                // '<img src="https://placehold.co/100x100?text=Image"' +
+                //Upload image
+                row += '<td style = "border: 1px solid #e3e6f0; padding: 8px;" > ' +
+                    '<div class="position-relative d-inline-block">' +
+
+                    `<img src="${imageUrl}" ` +
+                    'class="product-image-preview" ' +
+                    'style="width: 70px; height: 70px; object-fit: cover; border: 1px solid #ddd; border-radius: 8px;" />' +
+
+                    '<a href="javascript:void(0);" ' +
+                    'class="upload-btn position-absolute bottom-0 end-0 rounded-circle text-white border border-white shadow" ' +
+                    'style="background:rgb(89 118 175); width: 27px;height: 26px;display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer;"> ' +
+                    '<i class="bi bi-camera"></i>' +
+                    '</a>' +
+
+                    '<input type = "file"' +
+                    'name = "ProductImage[]"' +
+                    'class="file-input"' +
+                    'accept = "image/*" ' +
+                    'style = "display: none;" /> ' +
+                    '</div > ' +
+                    ' <input type="hidden" value="' + item.ImagePathName + '" name="ProdImageName[]" class="file-input" />' +
 
                     '<div class="error-msg productimage-error text-danger"' +
                     'style = "font-size: 12px;" > ' +
@@ -811,8 +1015,7 @@
                             <thead>
                                 <tr style="background: #5b78b1; color: white; text-align: center; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; height: 55px;">
                                     <th style="border: 1px solid #dcdcdc; padding: 12px; min-width: 50px;">Sr No</th>
-                                    <th style="border: 1px solid #dcdcdc; padding: 12px; min-width: 150px;">Product Name</th>
-                                    <th style="border: 1px solid #dcdcdc; padding: 12px; min-width: 120px;">Item Code</th>
+                                    <th style="border: 1px solid #dcdcdc; padding: 12px; min-width: 250px;">Product Name</th>
                                     <th style="border: 1px solid #dcdcdc; padding: 12px; min-width: 120px;">Type</th>
                                     <th style="border: 1px solid #dcdcdc; padding: 12px; min-width: 200px;">Description</th>
                                     <th style="border: 1px solid #dcdcdc; padding: 12px; min-width: 120px;">Size</th>
@@ -832,22 +1035,15 @@
 
                                     <!-- Product Name -->
                                     <td style="border: 1px solid #e3e6f0; padding: 8px;">
-                                        <input type="text"
+                                        <textarea type="text"
                                             name="ProductName[]"
                                             autocomplete="off"
                                             class="form-control productname"
-                                            style="border-radius: 8px; height: 42px; min-width: 150px;" />
+                                            style="border-radius: 8px; height: 42px; min-width: 250px;"></textarea>
                                         <div class="error-msg productname-error text-danger" style="font-size: 12px;"></div>
                                         <input type="hidden" name="ProductId[]" class="productid" />
                                     </td>
 
-                                    <!-- Sheet No -->
-                                    <td style="border: 1px solid #e3e6f0; padding: 8px;">
-                                        <input type="text" name="SheetNo[]" autocomplete="off"
-                                            class="form-control sheetno" rows="2"
-                                            style="border-radius: 8px; min-width: 120px; resize: none;" />
-                                        <div class="error-msg sheetno-error text-danger" style="font-size: 12px;"></div>
-                                    </td>
 
                                     <!-- Type -->
                                     <td style="border: 1px solid #e3e6f0; padding: 8px;">
@@ -907,7 +1103,7 @@
                                     <td style="border: 1px solid #e3e6f0; padding: 8px;">
                                         <div class="position-relative d-inline-block">
                                             <img src="https://placehold.co/100x100?text=Image" class="product-image-preview"
-                                            style="width: 70px; height: 70px; object-fit: cover; border: 1px solid #ddd; border-radius: 8px;" />
+                                                style="width: 70px; height: 70px; object-fit: cover; border: 1px solid #ddd; border-radius: 8px;" />
                                             <a href="javascript:void(0);" class="upload-btn position-absolute bottom-0 end-0 rounded-circle text-white border border-white shadow"
                                                 style="background: rgb(89 118 175); width: 27px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer;">
                                                 <i class="bi bi-camera"></i>
