@@ -45,7 +45,7 @@
 
                         <span class="nav-text">Masters</span>
                         <span class="ms-auto d-none">
-                            <i class="bi bi-chevron-down dropdown-icon" style="color: #3d73ea;font-weight: 900;"></i>
+                            <i class="bi bi-chevron-down dropdown-icon" style="color: #3d73ea; font-weight: 900;"></i>
                         </span>
                     </a>
 
@@ -142,7 +142,7 @@
 
                         <span class="nav-text">Production</span>
                         <span class="ms-auto d-none">
-                            <i class="bi bi-chevron-down dropdown-icon" style="color: #3d73ea;font-weight: 900;"></i>
+                            <i class="bi bi-chevron-down dropdown-icon" style="color: #3d73ea; font-weight: 900;"></i>
                         </span>
                     </a>
 
@@ -202,12 +202,12 @@
                 <div class="nav-dropdown" id="DIvRep" runat="server">
                     <a href="javascript:void(0);" class="nav-link dropdown-toggle-menu active">
                         <span class="nav-icon">
-                            <i class="bi bi-file-earmark-spreadsheet" ></i>
+                            <i class="bi bi-file-earmark-spreadsheet"></i>
                         </span>
 
                         <span class="nav-text">Reports</span>
                         <span class="ms-auto d-none">
-                            <i class="bi bi-chevron-down dropdown-icon" style="color: #3d73ea;font-weight: 900;"></i>
+                            <i class="bi bi-chevron-down dropdown-icon" style="color: #3d73ea; font-weight: 900;"></i>
                         </span>
                     </a>
 
@@ -241,6 +241,34 @@
                         <button class="icon-button theme-toggle d-none" type="button" data-theme-toggle aria-label="Switch color theme" title="Switch color theme">
                             <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
                         </button>
+
+                        <div class="dropdown me-3 position-static">
+                            <button class="icon-button position-relative"
+                                type="button"
+                                id="notificationDropdown"
+                                data-bs-toggle="dropdown"
+                                data-bs-auto-close="outside">
+
+                                <i class="bi bi-bell-fill fs-5"></i>
+
+                                <span id="notificationCount"
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0
+                                </span>
+                            </button>
+
+                            <div class="dropdown-menu notification-panel"
+                                aria-labelledby="notificationDropdown">
+
+                                <div class="notification-header">
+                                    <span>Notifications</span>
+                                    <a href="/Admin/Notifications.aspx" class="small text-primary">View All</a>
+                                </div>
+
+                                <div id="notificationList" class="notification-body">
+                                </div>
+
+                            </div>
+                        </div>
 
                         <div class="dropdown">
                             <button class="profile-button dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -277,8 +305,83 @@
             </footer>
         </div>
     </div>
+
     <script src="../Content/assets/js/bootstrap.bundle.min.js"></script>
     <script src="../Content/assets/js/main.js"></script>
     <script src="../Content/assets/js/customebynikhil.js"></script>
+    <script type="text/javascript">
+        function loadNotifications() {
+            $.ajax({
+                type: "POST",
+                url: "Dashboard.aspx/GetNotifications",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+
+                    const data = response.d || [];
+                    const list = document.getElementById('notificationList');
+                    const count = document.getElementById('notificationCount');
+
+                    count.innerText = data.length || '0';
+
+                    let html = '';
+
+                    if (data.length === 0) {
+                        html += `
+                        <li>
+                            <span class="dropdown-item-text text-muted">
+                                No notifications
+                            </span>
+                        </li>`;
+                    }
+                    else {
+                        data.forEach(function (item) {
+                            html += `
+                        <div class="notification-item order-cardss"
+                             data-orderid="${item.Id}">
+
+                            <div class="notification-order">
+                                📦 ${item.orderId}
+                            </div>
+
+                            <div class="notification-dealer">
+                                ${item.dealerName}
+                            </div>
+
+                            <div class="notification-meta">
+                                Products: ${item.totalProducts}
+                                &nbsp;|&nbsp;
+                                Qty: ${item.productQty}
+                            </div>
+
+                            <div class="notification-time">
+                                ${item.orderDate}
+                            </div>
+                        </div>`;
+                        });
+                    }
+
+                    list.innerHTML = html;
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error loading notifications:", error);
+                }
+            });
+        }
+
+        $(document).on('click', '.order-cardss', function () {
+            var orderId = $(this).data('orderid');
+
+            window.location.href =
+                'Notifications.aspx?OrderID=' +orderId;
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadNotifications();
+
+            // Refresh every minute
+            setInterval(loadNotifications, 60000);
+        });
+    </script>
 </body>
 </html>

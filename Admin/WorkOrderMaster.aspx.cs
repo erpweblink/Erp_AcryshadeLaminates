@@ -46,7 +46,7 @@ public partial class WorkOrderMaster : System.Web.UI.Page
 
 
                 txtworkorderdate.Text = DateTime.Now.ToString("yyyy-MM-dd");
-                txtworkorderdate.Enabled = false;   
+                txtworkorderdate.Enabled = false;
 
                 if (Request.QueryString["Id"] != null)
                 {
@@ -54,9 +54,11 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                     hdnVal.Value = ID;
                     LoadData(ID);
                 }
-                else
+                if (Request.QueryString["OrderID"] != null)
                 {
-                   // txtworkorderdate.Attributes["min"] = DateTime.Today.ToString("yyyy-MM-dd");
+                    string ID = objcls.Decrypt(Request.QueryString["OrderID"].ToString());
+                    hdnVal.Value = ID;
+                    LoadOrderedData(ID);
                 }
             }
         }
@@ -136,6 +138,71 @@ public partial class WorkOrderMaster : System.Web.UI.Page
         }
     }
 
+    protected void LoadOrderedData(string ID)
+    {
+        DataTable dt = new DataTable();
+        SqlDataAdapter cmd = new SqlDataAdapter(@"SELECT DH.ID,OrderID,DH.DealerID as DealerID,UM.FullName as DealerName,
+                        UM.BillAddress as BillAddress,
+                        UM.GstNo as BillGST,UM.BillPinCode
+                        FROM tbl_DealersOrderHDR DH
+                        INNER JOIN tbl_DealersOrderDTLs DD 
+                        ON DD.HeaderID = DH.ID
+                        LEFT JOIN tbl_UserMaster UM
+                        ON UM.ID = DH.DealerID
+                        WHERE DH.ID=@Id", con);
+        cmd.SelectCommand.Parameters.AddWithValue("@Id", Convert.ToInt32(ID));
+        cmd.Fill(dt);
+        if (dt.Rows.Count > 0)
+        {
+            txtworkorderdate.Text = DateTime.Now.ToString("yyyy-MM-dd");
+            txtworkorderdate.Enabled = false;
+            txttallyref.AutoPostBack = false;
+
+            txtDealerName.Text = dt.Rows[0]["DealerName"].ToString();
+            hdnDealerId.Value = dt.Rows[0]["DealerID"].ToString();
+            AutoCompleteExtender2.ContextKey = dt.Rows[0]["DealerID"].ToString();
+
+            txtBillingAddress.Text = dt.Rows[0]["BillAddress"].ToString();
+            txtrefno.Text = dt.Rows[0]["OrderID"].ToString();
+            txtBillGst.Text = dt.Rows[0]["BillGST"].ToString();
+            txtBillPinCode.Text = dt.Rows[0]["BillPinCode"].ToString();
+
+
+            DataTable dts = new DataTable();
+            SqlDataAdapter cmds = new SqlDataAdapter("Select * from tbl_DealersOrderDTLs WHERE HeaderID =@HeaderID ", con);
+            cmds.SelectCommand.Parameters.AddWithValue("@HeaderID", ID);
+            cmds.Fill(dts);
+            if (dts.Rows.Count > 0)
+            {
+                JavaScriptSerializer js = new JavaScriptSerializer();
+
+                List<Dictionary<string, object>> rows =
+                    new List<Dictionary<string, object>>();
+
+                foreach (DataRow dr in dts.Rows)
+                {
+                    Dictionary<string, object> row =
+                        new Dictionary<string, object>();
+
+                    foreach (DataColumn col in dts.Columns)
+                    {
+                        row.Add(col.ColumnName, dr[col]);
+                    }
+
+                    rows.Add(row);
+                }
+
+                string json = js.Serialize(rows);
+
+                ClientScript.RegisterStartupScript(
+                    this.GetType(),
+                    "loadOrderData",
+                    "loadOrderData(" + json + ");",
+                    true);
+            }
+        }
+    }
+
     protected void btnsave_Click(object sender, EventArgs e)
     {
         try
@@ -158,7 +225,6 @@ public partial class WorkOrderMaster : System.Web.UI.Page
             // DETAIL VALUES
             string[] ProductId = Request.Form.GetValues("ProductId[]");
             string[] ProductName = Request.Form.GetValues("ProductName[]");
-            string[] SheetNo = Request.Form.GetValues("SheetNo[]");
             string[] Type = Request.Form.GetValues("Type[]");
             string[] Description = Request.Form.GetValues("Description[]");
             string[] Size = Request.Form.GetValues("Size[]");
@@ -174,7 +240,6 @@ public partial class WorkOrderMaster : System.Web.UI.Page
             for (int i = 0; i < ProductName.Length; i++)
             {
                 if (string.IsNullOrWhiteSpace(ProductName[i]) &&
-                   string.IsNullOrWhiteSpace(SheetNo[i]) &&
                    string.IsNullOrWhiteSpace(Description[i]) &&
                    string.IsNullOrWhiteSpace(Size[i]) &&
                    string.IsNullOrWhiteSpace(Qty[i]) &&
@@ -308,7 +373,7 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                     cmd.Parameters.AddWithValue("@HeaderId", Id);
                     cmd.Parameters.AddWithValue("@ProductId", string.IsNullOrWhiteSpace(ProductId[i]) ? "" : ProductId[i]);
                     cmd.Parameters.AddWithValue("@ProductName", string.IsNullOrWhiteSpace(ProductName[i]) ? "" : ProductName[i]);
-                    cmd.Parameters.AddWithValue("@PartNo", string.IsNullOrWhiteSpace(SheetNo[i]) ? "0" : SheetNo[i]);
+                    cmd.Parameters.AddWithValue("@PartNo", "0");
                     cmd.Parameters.AddWithValue("@Type", string.IsNullOrWhiteSpace(Type[i]) ? "0" : Type[i]);
                     cmd.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(Description[i]) ? "" : Description[i]);
                     cmd.Parameters.AddWithValue("@Size", string.IsNullOrWhiteSpace(Size[i]) ? "0" : Size[i]);
@@ -354,6 +419,16 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                     cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
                     cmd.ExecuteNonQuery();
                 }
+            }
+
+
+            if (Request.QueryString["OrderID"] != null)
+            {
+                string query = @"UPDATE tbl_DealersOrderHDR SET OrderStatus='Order Approved',ApproveOrNotDate = GETDATE() WHERE ID = @OrderID ";
+
+                SqlCommand cmds = new SqlCommand(query, con);
+                cmds.Parameters.AddWithValue("@OrderID", hdnVal.Value);
+                cmds.ExecuteNonQuery();
             }
 
             con.Close();
@@ -461,7 +536,6 @@ public partial class WorkOrderMaster : System.Web.UI.Page
         return list;
     }
 
-    [ScriptMethod]
     [WebMethod]
     public static List<string> GetCustNameList(string prefixText, int count, string contextKey)
     {
@@ -615,7 +689,7 @@ public partial class WorkOrderMaster : System.Web.UI.Page
     }
 
     [WebMethod]
-    public static object SaveProductMaster(string ProductName, string ItemCode, string Size)
+    public static object SaveProductMaster(string ProductName, string Size)
     {
         try
         {
@@ -636,12 +710,11 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                 {
                     SqlCommand insertCmd = new SqlCommand(
                         @"INSERT INTO tbl_ProdcutMaster
-                      (Productcode,Productname,PartNo,Size,IsActive,IsDeleted,CreatedBy,CreatedOn)
+                      (Productcode,Productname,Size,IsActive,IsDeleted,CreatedBy,CreatedOn)
                       VALUES
-                      ([dbo].[FN_ProductNo](),@ProductName,@ItemCode,@Size,1,0,@ActionBy,GETDATE())", con);
+                      ([dbo].[FN_ProductNo](),@ProductName,@Size,1,0,@ActionBy,GETDATE())", con);
 
                     insertCmd.Parameters.AddWithValue("@ProductName", ProductName);
-                    insertCmd.Parameters.AddWithValue("@ItemCode", ItemCode);
                     insertCmd.Parameters.AddWithValue("@Size", Size);
                     insertCmd.Parameters.AddWithValue("@ActionBy", HttpContext.Current.Session["ID"].ToString());
 

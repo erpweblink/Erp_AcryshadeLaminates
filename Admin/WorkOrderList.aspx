@@ -1,6 +1,5 @@
 <%@ Page Title="" Language="C#" MasterPageFile="~/MasterPage.master" EnableEventValidation="false" AutoEventWireup="true" Async="true" CodeFile="WorkOrderList.aspx.cs" Inherits="WorkOrderList" %>
 
-
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
@@ -100,7 +99,7 @@
                         <div class="col-md-1">
                             <asp:LinkButton ID="btnrefresh" runat="server"
                                 OnClick="btnrefresh_Click" CssClass="btn btn-outline-danger"> 
-                   <i class="bi bi-arrow-clockwise" ></i>
+                                <i class="bi bi-arrow-clockwise" ></i>
                             </asp:LinkButton>
                         </div>
                         <div class="col-md-8 d-flex justify-content-end">
@@ -132,7 +131,6 @@
                                                         </ItemTemplate>
                                                     </asp:TemplateField>
                                                     <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="ProductName" HeaderText="Product Name" />
-                                                    <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="PartNo" HeaderText="Item Code" />
                                                     <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="Description" HeaderText="Description" />
                                                     <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="Size" HeaderText="Size" />
                                                     <asp:BoundField ItemStyle-HorizontalAlign="Center" DataField="Unit" HeaderText="Unit" />
