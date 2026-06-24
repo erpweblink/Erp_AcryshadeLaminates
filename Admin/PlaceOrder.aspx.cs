@@ -59,7 +59,7 @@ public partial class PlaceOrder : System.Web.UI.Page
         using (SqlConnection con = new SqlConnection(cs))
         {
             SqlDataAdapter da = new SqlDataAdapter(
-                @"SELECT ID,ProductName,Size,ImagenamePath,FavoriteProduct
+                @"SELECT ID,ProductName,Size,ImagenamePath,FavoriteProduct,IsNull(FavoriteProductRank,0) as FavoriteProductRank
                   FROM tbl_ProdcutMaster WHERE IsActive = 1 AND isdeleted = 0",
                 con);
 

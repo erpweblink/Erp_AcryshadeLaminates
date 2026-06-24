@@ -318,9 +318,8 @@
         }
 
         function renderInitial() {
-
             let trending =
-                allProducts.filter(x => x.FavoriteProduct);
+                allProducts.filter(x => x.FavoriteProduct).sort((a, b) => a.FavoriteProductRank - b.FavoriteProductRank);
 
             let regular =
                 allProducts.filter(x => !x.FavoriteProduct);
@@ -341,40 +340,6 @@
             } else {
                 document.getElementById("divTrending").style.display = "block";
             }
-        }
-
-        function searchProducts() {
-
-            let text =
-                document.getElementById("txtSearch")
-                    .value
-                    .toLowerCase()
-                    .trim();
-
-            if (text === "") {
-
-                document.getElementById("divTrending").style.display = "block";
-                document.getElementById("divRegular").style.display = "block";
-                document.getElementById("divSearch").style.display = "none";
-
-                return;
-            }
-
-            document.getElementById("divTrending").style.display = "none";
-            document.getElementById("divRegular").style.display = "none";
-            document.getElementById("divSearch").style.display = "block";
-
-            let filtered =
-                allProducts.filter(x =>
-                    x.ProductName
-                        .toLowerCase()
-                        .includes(text)
-                );
-
-            renderCards(
-                filtered,
-                "searchContainer"
-            );
         }
 
         function renderCards(products, containerId) {
@@ -428,6 +393,40 @@
             document
                 .getElementById(containerId)
                 .innerHTML = html;
+        }
+
+        function searchProducts() {
+
+            let text =
+                document.getElementById("txtSearch")
+                    .value
+                    .toLowerCase()
+                    .trim();
+
+            if (text === "") {
+
+                document.getElementById("divTrending").style.display = "block";
+                document.getElementById("divRegular").style.display = "block";
+                document.getElementById("divSearch").style.display = "none";
+
+                return;
+            }
+
+            document.getElementById("divTrending").style.display = "none";
+            document.getElementById("divRegular").style.display = "none";
+            document.getElementById("divSearch").style.display = "block";
+
+            let filtered =
+                allProducts.filter(x =>
+                    x.ProductName
+                        .toLowerCase()
+                        .includes(text)
+                );
+
+            renderCards(
+                filtered,
+                "searchContainer"
+            );
         }
 
         function addToCart(productId) {
