@@ -53,13 +53,14 @@ public partial class OrderHistory : System.Web.UI.Page
             con.Open();
 
             string query = @"
-            SELECT 
-                h.ID,h.OrderID, h.DealerID, h.CreatedDate, h.OrderStatus,
+             SELECT 
+                h.ID,h.OrderID,WH.TallyRefNo, h.DealerID, h.CreatedDate, h.OrderStatus,
                 h.EstimatedDeliveryDate,
                 d.ProductID, d.ProductName, d.ProductType, d.Size,
                 d.Qty, d.ImagePathName,d.ProductNote
             FROM tbl_DealersOrderHDR h
             INNER JOIN tbl_DealersOrderDTLs d ON h.ID = d.HeaderID
+            LEFT JOIN tbl_WorkOrderHdr WH ON h.ID = WH.PlaceOrderID
             ORDER BY h.ID DESC";
 
             SqlCommand cmd = new SqlCommand(query, con);
@@ -76,6 +77,7 @@ public partial class OrderHistory : System.Web.UI.Page
 
                     orders[id]["ID"] = id;
                     orders[id]["OrderID"] = dr["OrderID"];
+                    orders[id]["TallyRefNo"] = dr["TallyRefNo"];
                     orders[id]["DealerID"] = dr["DealerID"];
                     orders[id]["CreatedDate"] = Convert.ToDateTime(dr["CreatedDate"]).ToString("dd MMM yyyy");
                     orders[id]["OrderStatus"] = dr["OrderStatus"].ToString();
