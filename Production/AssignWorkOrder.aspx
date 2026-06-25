@@ -940,6 +940,7 @@
 
         var selectedTodayWOs = [];
         function toggleWO(woId, chk) {
+            debugger;
             if (!selectedMachine) {
                 alert("Select Machine First");
                 chk.checked = false;
@@ -947,13 +948,14 @@
             }
 
             var wo = todaysWorkOrders.find(x => x.woId == woId);
-            if (wo.machineName !== "Not Allocated") {
-                if (selectedMachine.MachineName !== wo.machineName) {
-                    alert(`Please send work order to ${wo.machineName}`);
-                    chk.checked = false;
-                    return;
-                }
-            }
+
+            //if (wo.machineName !== "Not Allocated") {
+            //    if (selectedMachine.MachineName !== wo.machineName) {
+            //        alert(`Please send work order to ${wo.machineName}`);
+            //        chk.checked = false;
+            //        return;
+            //    }
+            //}
 
             if (chk.checked) {
                 selectedTodayWOs.push(wo);
@@ -1196,8 +1198,6 @@
                     MachineAllocatedWOs = [];
 
                     window.location.href = window.location.href;
-                    //loadMachines();
-                    //loadWorkOrder();
                 },
                 error: function (xhr) {
                     alert("Error while saving allocation");

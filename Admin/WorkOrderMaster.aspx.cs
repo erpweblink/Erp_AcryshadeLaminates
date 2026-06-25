@@ -87,14 +87,22 @@ public partial class WorkOrderMaster : System.Web.UI.Page
             txtworkorderdate.Text = dt1.ToString("yyyy-MM-dd");
 
             txtDealerName.Text = dt.Rows[0]["Dealer"].ToString();
+            txtDealerName.ReadOnly = true;
             txtCustName.Text = dt.Rows[0]["CustomerName"].ToString();
+            txtCustName.ReadOnly = true;
             txtrefno.Text = dt.Rows[0]["CustomerRefNo"].ToString();
+            txtrefno.ReadOnly = true;
             txtBillingAddress.Text = dt.Rows[0]["BillingAddress"].ToString();
+            txtBillingAddress.ReadOnly = true;
             txtBillGst.Text = dt.Rows[0]["BillingGstNo"].ToString();
+            txtBillGst.ReadOnly = true;
             txtShipAddress.Text = dt.Rows[0]["ShippingAddress"].ToString();
             txtShipGst.Text = dt.Rows[0]["ShippingGstNo"].ToString();
+            txtShipGst.ReadOnly = true;
             txtBillPinCode.Text = dt.Rows[0]["BillingPincode"].ToString();
+            txtBillPinCode.ReadOnly = true;
             txtShipPinCode.Text = dt.Rows[0]["ShippingPincode"].ToString();
+            txtShipPinCode.ReadOnly = true;
 
             DateTime dt2 = Convert.ToDateTime(dt.Rows[0]["DeliveryDate"]);
             txtDeliveryDate.Text = dt2.ToString("yyyy-MM-dd");
@@ -375,7 +383,7 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                     cmd.Parameters.AddWithValue("@ProductName", string.IsNullOrWhiteSpace(ProductName[i]) ? "" : ProductName[i]);
                     cmd.Parameters.AddWithValue("@PartNo", "0");
                     cmd.Parameters.AddWithValue("@Type", string.IsNullOrWhiteSpace(Type[i]) ? "0" : Type[i]);
-                    cmd.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(Description[i]) ? "" : Description[i]);
+                    cmd.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(Description[i]) ? Type[i]+"-N/A" : Description[i]);
                     cmd.Parameters.AddWithValue("@Size", string.IsNullOrWhiteSpace(Size[i]) ? "0" : Size[i]);
                     cmd.Parameters.AddWithValue("@Qty", string.IsNullOrWhiteSpace(Qty[i]) ? "0" : Qty[i]);
                     cmd.Parameters.AddWithValue("@SqFeet", string.IsNullOrWhiteSpace(SqFeet[i]) ? "0" : SqFeet[i]);
