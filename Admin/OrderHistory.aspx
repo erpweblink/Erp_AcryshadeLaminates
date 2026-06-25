@@ -65,9 +65,9 @@
 
         .order-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 15px;
+            justify-content: space-between;
+            gap: 20px;
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
             margin-bottom: 10px;
@@ -236,6 +236,39 @@
             }
         }
 
+        .progress-ring {
+            position: relative;
+            width: 70px;
+            height: 70px;
+        }
+
+            .progress-ring svg {
+                transform: rotate(-90deg);
+            }
+
+            .progress-ring circle {
+                fill: none;
+                stroke-width: 8;
+            }
+
+        .progress-bg {
+            stroke: #e6e6e6;
+        }
+
+        .progress-fill {
+            stroke-linecap: round;
+            transition: stroke-dashoffset .6s ease;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
         /* ===== MODAL ===== */
         .img-modal {
             display: none;
@@ -263,6 +296,48 @@
             .product-card img {
                 height: 150px;
             }
+        }
+
+        .order-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .progress-ring {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+        }
+
+            .progress-ring svg {
+                width: 40px;
+                height: 40px;
+                transform: rotate(-90deg);
+            }
+
+            .progress-ring circle {
+                fill: none;
+                stroke-width: 4;
+            }
+
+        .progress-bg {
+            stroke: #e5e5e5;
+        }
+
+        .progress-fill {
+            stroke-linecap: round;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8px;
+            font-weight: bold;
         }
     </style>
     <script type="text/javascript">
@@ -302,29 +377,94 @@
 
             let html = "";
 
+
             orders.forEach(o => {
-
                 let statusClass = "";
+                let progress = 0;
+                let progressColor = "#ff9800";
+                if (o.OrderStatus === "Order Placed") {
+                    statusClass = "status-placed";
+                    progress = 0;
+                    progressColor = "#ff9800";
+                }
+                else if (o.OrderStatus === "Order Approved") {
+                    statusClass = "status-delivered";
+                    progress = 25;
+                    progressColor = "#2196f3";
+                }
+                else if (o.OrderStatus === "Delivered") {
+                    statusClass = "status-shipped";
+                    progress = 100;
+                    progressColor = "#4caf50";
+                }
+                else if (o.OrderStatus === "Order Rejected") {
+                    statusClass = "status-rejected";
+                    progress = 100;
+                    progressColor = "#f44336";
+                }
 
-                if (o.OrderStatus === "Order Placed") statusClass = "status-placed";
-                else if (o.OrderStatus === "Shipped") statusClass = "status-shipped";
-                else if (o.OrderStatus === "Order Approved") statusClass = "status-delivered";
-                else if (o.OrderStatus === "Order Rejected") statusClass = "status-rejected";
+                let tallyRefHtml = "";
+
+                if (o.TallyRefNo && o.TallyRefNo.trim() !== "") {
+                    tallyRefHtml = `
+                        <span style="color:red;background: #f9fd0ad1;font-size:17px;">
+                            <b>Work Order: ${o.TallyRefNo}</b>
+                        </span>
+                        <br/>
+                    `;
+                }
 
                 html += `
                     <div class="order-card">
 
                         <div class="order-header" onclick="toggleOrder('${o.ID}')">
+
                             <span id="icon_${o.ID}">▼</span>
 
                             <div>
-                                <b>Order ID:</b> ${o.OrderID}<br/>
+                                ${tallyRefHtml}
+                                <b>Order ID: </b> ${o.OrderID}<br/>
                                 <small>Placed on: ${o.CreatedDate}</small>
                             </div>
 
-                            <div class="order-status ${statusClass}">
-                                ${o.OrderStatus}
+                            <div class="order-right">
+
+                                <div class="order-status ${statusClass}">
+                                    ${o.OrderStatus}
+                                </div>
+
+                               <div class="progress-ring">
+
+                                <svg viewBox="0 0 40 40">
+
+                                    <circle
+                                        class="progress-bg"
+                                        cx="20"
+                                        cy="20"
+                                        r="16">
+                                    </circle>
+
+                                    <circle
+                                        class="progress-fill"
+                                        cx="20"
+                                        cy="20"
+                                        r="16"
+                                        stroke="${progressColor}"
+                                        stroke-dasharray="100"
+                                        stroke-dashoffset="${100 - progress}">
+                                    </circle>
+
+                                </svg>
+
+                                <div class="progress-text"
+                                     style="color:${progressColor}">
+                                     ${progress}%
+                                </div>
+
                             </div>
+
+                            </div>
+
                         </div>
 
                         <div id="details_${o.ID}" class="order-details">
@@ -379,7 +519,6 @@
             $("#orderList").html(html);
         }
 
-
         function openModal(src) {
 
             document.getElementById("imgModal")
@@ -406,7 +545,9 @@
                     <h2 class="product-link">
                         <a href="/Admin/PlaceOrder.aspx">Product List</a>
                     </h2>
-                </div><br /><br />
+                </div>
+                <br />
+                <br />
                 <div id="orderList"></div>
             </div>
 

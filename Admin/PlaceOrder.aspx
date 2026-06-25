@@ -2,6 +2,7 @@
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
 
@@ -79,7 +80,7 @@
             gap: 12px;
             padding: 14px 18px;
             border-radius: 14px;
-            background: rgb(255 255 255 / 70%);
+            background: rgb(238 227 214 / 17%);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.08);
             box-shadow: 0 10px 30px rgba(0,0,0,0.4);
@@ -98,9 +99,9 @@
             min-width: 160px;
             max-width: 320px;
             padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.15);
-            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            border-bottom: 3px solid #1471fc;
+            background: rgba(255, 255, 255, 0.06);
             color: black;
             outline: none;
             transition: 0.25s;
@@ -122,46 +123,51 @@
         /* ===== PRODUCT CARD (GLASS EFFECT) ===== */
         .product-card {
             position: relative;
-            border-radius: 14px;
-            padding: 12px;
-            background: rgb(255 255 255);
-            backdrop-filter: blur(14px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 25px rgb(0 0 0 / 72%);
-            text-align: center;
-            transition: transform 0.25s, box-shadow 0.25s;
+            overflow: hidden;
+            border-radius: 18px;
+            background: rgb(238 227 214 / 17%);
+            padding: 10px;
+            transition: all .35s ease;
+            border: 1px solid rgba(255,255,255,.4);
+            box-shadow: 0 10px 25px rgba(0,0,0,.12), 0 4px 10px rgba(0,0,0,.08);
         }
 
             .product-card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 12px 35px rgba(0,0,0,0.6);
+                transform: translateY(-8px);
+                box-shadow: 0 20px 40px rgba(0,0,0,.18);
+            }
+
+            .product-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 4px;
+                background: linear-gradient( 90deg, #5b86ff, #7c4dff, #ff4da6 );
             }
 
             /* ===== IMAGE ===== */
             .product-card img {
                 width: 100%;
-                height: 200px;
+                height: 220px;
                 object-fit: cover;
-                border-radius: 10px;
-                cursor: pointer;
-                transition: 0.3s;
+                border-radius: 14px;
+                transition: .4s;
             }
 
-                .product-card img:hover {
-                    transform: scale(1.03);
-                }
+            .product-card:hover img {
+                transform: scale(1.08);
+            }
 
         /* ===== NAME ===== */
         .product-name {
-            margin-top: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            height: 42px;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            color: #000000;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.4;
+            min-height: 38px;
+            margin-top: 10px;
         }
 
         /* ===== INPUTS ===== */

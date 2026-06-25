@@ -429,6 +429,13 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                 SqlCommand cmds = new SqlCommand(query, con);
                 cmds.Parameters.AddWithValue("@OrderID", hdnVal.Value);
                 cmds.ExecuteNonQuery();
+
+                string querys = @"UPDATE tbl_WorkOrderHdr SET PlaceOrderID=@OrderID WHERE ID =@ID";
+
+                SqlCommand cmdss = new SqlCommand(querys, con);
+                cmdss.Parameters.AddWithValue("@OrderID", hdnVal.Value);
+                cmdss.Parameters.AddWithValue("@ID", Id);
+                cmdss.ExecuteNonQuery();
             }
 
             con.Close();
