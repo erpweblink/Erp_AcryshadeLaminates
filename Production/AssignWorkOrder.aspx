@@ -3,8 +3,9 @@
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
 
+
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <style type="text/css">
         /* ================= TABLE BASE STYLE (MATCH GRIDVIEW) ================= */
@@ -78,7 +79,7 @@
                 color: white;
             }
 
-      
+
         /* INPUT STYLE LIKE ASP.NET */
         input[type="checkbox"], input[type="radio"] {
             transform: scale(1.1);
@@ -316,7 +317,7 @@
                         ddl.append("<option value='" + m.MachineID + "'>" + m.MachineName + "</option>");
                     });
                     loadWorkOrder();
-                    
+
                 },
                 error: function (xhr, status, error) {
                     console.log(error);
@@ -393,7 +394,6 @@
                                 remQty: 0,
                                 balanceQty: 0,
                                 status: row.Status || "Machine Not Allocated",
-                                machineName: MachineDtls?.MachineName || "Not Allocated",
                                 details: [],
                                 isCompleted: true
                             };
@@ -401,7 +401,6 @@
 
                         var remainingQty = parseFloat(row.RemainingQty || 0);
                         var remainingSqFeet = parseFloat(row.RemainingSqFeet || 0);
-
                         grouped[row.MainID].details.push({
                             detailedId: row.DetailedID,
                             product: row.ProductName,
@@ -416,8 +415,17 @@
                             allocatedSqFeet: parseFloat(row.AllocatedSqFeet || 0),
 
                             usedQty: 0,
-                            usedSqFt: 0
+                            usedSqFt: 0,
+
+                            machineall: row.MachineID
+                                ? row.MachineID
+                                    .split(',')
+                                    .map(id => 'M' + id.trim())
+                                    .join(', ')
+                                : ""
                         });
+
+
 
                         grouped[row.MainID].totalSqFeet += parseFloat(row.SqFeet || 0);
                         grouped[row.MainID].totalQty += parseFloat(row.Qty);
@@ -428,6 +436,7 @@
                             grouped[row.MainID].isCompleted = false;
                         }
                     });
+
 
                     $.each(grouped, function (key, value) {
                         workOrders.push(value);
@@ -462,9 +471,6 @@
                                 wo.status &&
                                 wo.status !== "Completed";
 
-                            //if (isToday || isPendingOld) {
-                            //    todaysWorkOrders.push(wo);
-                            //}
                             if (isPendingOld) {
                                 wo.priority = 1; // 🔴 overdue (highest priority)
                                 todaysWorkOrders.push(wo);
@@ -490,7 +496,7 @@
 
                     workOrders = otherWorkOrders;
 
-                   // autoScheduleWorkOrders();
+                    // autoScheduleWorkOrders();
                     bindTodaysWorkOrders();
                     bindWorkOrders();
                 },
@@ -517,14 +523,23 @@
             html += "<th>Total Qty</th>";
             html += "<th>Balance</th>";
             html += "<th>Status</th>";
-            html += "<th>Machine Name</th>";
             html += "</tr>";
             html += "</thead>";
 
             html += "<tbody>";
             $.each(todaysWorkOrders, function (i, wo) {
+                var isLocked = (wo.status === "Work Started" || wo.status === "Completed");
 
-                html += "<tr class='drag-row' data-id='" + wo.woId + "'>";
+                var badges = wo.balanceQty;
+                var badgeHtml = "";
+                debugger;
+                if (badges === 0) {
+                    badgeHtml = "<span class='badge bg-success'>" + badges + "</span>";
+                } else {
+                    badgeHtml = "<span class='badge bg-danger'>" + badges + "</span>";
+                }
+
+                html += "<tr class='drag-row " + (isLocked ? "locked-row" : "") + "'   data-id='" + wo.woId + "'>";
                 if (wo.isCompleted) {
                     html += "<td><input type='checkbox' disabled></td>";
                 }
@@ -538,7 +553,7 @@
                 html += "<td>" + wo.customer + "</td>";
                 html += "<td>" + wo.totalSqFeet + "</td>";
                 html += "<td>" + wo.totalQty + "</td>";
-                html += "<td id='bal_" + wo.woId + "'>" + wo.balanceQty + "</td>";
+                html += "<td id='bal_" + wo.woId + "'>" + badgeHtml + "</td>";
 
                 var statusColor = "black";
 
@@ -555,7 +570,6 @@
                 html += "<td style='font-weight:bold;color:" + statusColor + "'>" +
                     wo.status +
                     "</td>";
-                html += "<td><span class='badge bg-success'>" + wo.machineName + "</span></td>";
                 html += "</tr>";
 
                 html += "<tr id='detailRow_" + wo.woId + "' style='display:none'>";
@@ -569,6 +583,7 @@
             html += "</table>";
 
             $("#woContainer").html(html);
+            enableDragDrop();
         }
 
         function toggleDetails(id) {
@@ -591,7 +606,6 @@
 
             html += "<tr>";
             html += "<th>Product</th>";
-            html += "<th>Part No</th>";
             html += "<th>Size</th>";
             html += "<th>Original SqFt</th>";
             html += "<th>Original Qty</th>";
@@ -599,13 +613,27 @@
             html += "<th>Remaining Qty</th>";
             html += "<th>Used Qty</th>";
             html += "<th>Used SqFt</th>";
+            html += "<th>Machine</th>";
             html += "</tr>";
 
             $.each(wo.details, function (i, item) {
+                var badges = item.machineall;
+                var badgeHtml = badges;
+
+                if (badges === "M1") {
+                    badgeHtml = "<span class='badge bg-success'>M1</span>";
+                }
+                else if (badges === "M2") {
+                    badgeHtml = "<span class='badge bg-warning text-dark'>M2</span>";
+                } else if (badges === "M1, M2") {
+                    badgeHtml = "<span class='badge bg-success'>M1</span>" + " " + "<span class='badge bg-warning text-dark'>M2</span>";
+                } else {
+                    badgeHtml = "<span class='badge bg-danger'>N/A</span>";
+                }
+
                 html += "<tr>";
 
                 html += "<td>" + item.product + "</td>";
-                html += "<td>" + item.partNo + "</td>";
                 html += "<td>" + item.size + "</td>";
                 html += "<td>" + item.originalsqFeet + "</td>";
                 html += "<td>" + item.originalQty + "</td>";
@@ -620,6 +648,8 @@
 
                 html += "<td id='us_" + woId + "_" + i + "'>" + item.usedSqFt + "</td>";
 
+                html += "<td>" + badgeHtml + "</td>";
+
                 html += "</tr>";
             });
 
@@ -633,7 +663,6 @@
             var selectedId = $("#ddlMachineFilter").val();
 
             var filtered = todaysWorkOrders;
-
             if (selectedId !== "all") {
                 filtered = todaysWorkOrders.filter(x =>
                     x.machineName !== "Not Allocated" &&
@@ -782,7 +811,6 @@
 
             html += "<tr>";
             html += "<th>Product</th>";
-            html += "<th>Part No</th>";
             html += "<th>Size</th>";
             html += "<th>SqFt</th>";
             html += "<th>Qty</th>";
@@ -792,7 +820,6 @@
                 html += "<tr>";
 
                 html += "<td>" + item.product + "</td>";
-                html += "<td>" + item.partNo + "</td>";
                 html += "<td>" + item.size + "</td>";
                 html += "<td>" + item.sqFeet + "</td>";
                 html += "<td>" + item.qty + "</td>";
@@ -856,26 +883,26 @@
                     var currentWoSqFt = parseFloat(wo.totalSqFeet || 0);
 
 
-                    var availableSqFt =
-                        stageCapacity -
-                        scheduledSqFt -
-                        selectedSqFt;
+                    //var availableSqFt =
+                    //    stageCapacity -
+                    //    scheduledSqFt -
+                    //    selectedSqFt;
 
-                    if (currentWoSqFt > availableSqFt) {
+                    //if (currentWoSqFt > availableSqFt) {
 
-                        alert(
-                            "Cannot select this Work Order.\n\n" +
-                            "Schedule Date : " + scheduleDate + "\n" +
-                            "Stage Capacity : " + stageCapacity + "\n" +
-                            "Already Scheduled : " + scheduledSqFt + "\n" +
-                            "Currently Selected : " + selectedSqFt + "\n" +
-                            "Available SqFt : " + availableSqFt + "\n" +
-                            "Current WO SqFt : " + currentWoSqFt
-                        );
+                    //    alert(
+                    //        "Cannot select this Work Order.\n\n" +
+                    //        "Schedule Date : " + scheduleDate + "\n" +
+                    //        "Stage Capacity : " + stageCapacity + "\n" +
+                    //        "Already Scheduled : " + scheduledSqFt + "\n" +
+                    //        "Currently Selected : " + selectedSqFt + "\n" +
+                    //        "Available SqFt : " + availableSqFt + "\n" +
+                    //        "Current WO SqFt : " + currentWoSqFt
+                    //    );
 
-                        chk.checked = false;
-                        return;
-                    }
+                    //    chk.checked = false;
+                    //    return;
+                    //}
 
                     selectedWOs.push({
                         woId: woId,
@@ -912,7 +939,7 @@
                 AssignedDate: wo.scheduledDate,
                 totalSqFeet: wo.totalSqFeet,
                 balanceQty: wo.balanceQty,
-               // allocatedQty: wo.totalQty - wo.balanceQty,
+                // allocatedQty: wo.totalQty - wo.balanceQty,
                 allocatedQty: wo.remQty - wo.balanceQty,
                 details: []
             };
@@ -924,6 +951,7 @@
                     product: item.product,
                     partNo: item.partNo,
                     size: item.size,
+                    orgQty: item.originalQty,
                     qty: item.qty,
                     sqFeet: item.sqFeet,
                     usedQty: item.usedQty,
@@ -940,7 +968,6 @@
 
         var selectedTodayWOs = [];
         function toggleWO(woId, chk) {
-            debugger;
             if (!selectedMachine) {
                 alert("Select Machine First");
                 chk.checked = false;
@@ -1254,7 +1281,7 @@
                         <br />
                         <h4 class="m-0 font-weight-bold" style="color: #eb7025; font-weight: 900;">Todays Orders 
                                 <b class="badge bg-success" style="color: whitesmoke; font-size: medium;"><i><span id="lblDate" runat="server"></span></i></b>
-                            <select id="ddlMachineFilter" onchange="filterTodaysByMachine()" class="form-control  machine-ddl">
+                            <select id="ddlMachineFilter" onchange="filterTodaysByMachine()" class="form-control machine-ddl d-none">
                                 <option value="all">All Machines</option>
                             </select>
                             <span style="float: right">Capacity Used (SqFt):

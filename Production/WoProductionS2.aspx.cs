@@ -90,7 +90,7 @@ public partial class WoProductionS2 : System.Web.UI.Page
         using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
         {
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@SP_Action", "AssignWorkOrderS2");
+            cmd.Parameters.AddWithValue("@SP_Action", "AssignWorkOrders");
             cmd.Parameters.AddWithValue("@Id", machineId); // 🔥 ADD THIS
             cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
 
@@ -112,14 +112,25 @@ public partial class WoProductionS2 : System.Web.UI.Page
                 con.Open();
 
                 int headerId = 0;
+                int MachineID = 0;
                 decimal allocatedQty = 0;
                 string headerStatus = "";
 
                 // 1. Get HeaderID + AllocatedQty
                 string getQuery = @"
-                SELECT HeaderID, AllocatedQty
-                FROM tbl_MachineProductionDTLS
-                WHERE ID = @DetailedID";
+                            SELECT 
+                                mpa.ID AS dtlsID,
+                                mpa.AllocatedQty,
+                                mpa.MachineID,
+                                D.HeaderID,
+                                D.ID AS ProductDetailID,
+                                H.WorkOrderID
+                            FROM tbl_MachineProductionAllocation mpa
+                            INNER JOIN tbl_MachineProductionDTLS D
+                                ON D.ID = mpa.ProductDtlID
+                            INNER JOIN tbl_MachineProductionHDR H
+                                ON H.ID = D.HeaderID
+                            WHERE mpa.ID = @DetailedID";
 
                 using (SqlCommand cmd = new SqlCommand(getQuery, con))
                 {
@@ -130,6 +141,7 @@ public partial class WoProductionS2 : System.Web.UI.Page
                         if (dr.Read())
                         {
                             headerId = Convert.ToInt32(dr["HeaderID"]);
+                            MachineID = Convert.ToInt32(dr["MachineID"]);
                             allocatedQty = Convert.ToDecimal(dr["AllocatedQty"]);
                         }
                     }
@@ -150,17 +162,17 @@ public partial class WoProductionS2 : System.Web.UI.Page
 
                 // 3. Update Detail
                 string updateQuery = @"
-                UPDATE tbl_MachineProductionDTLS
+                UPDATE tbl_MachineProductionAllocation  
                 SET
-                    Stage2CompletedQty = @Stage1CompletedQty,
-                    Stage2CompetedSqFeet = @Stage1CompetedSqFeet,
-                    Stage2CompletedDate =
+                    CompletedQty = @Stage1CompletedQty,
+                    CompletedSqFeet = @Stage1CompetedSqFeet,
+                    CompletedDate =
                         CASE
                             WHEN @Stage1CompletedQty =
-                                 TRY_CONVERT(decimal(18,2), AllocatedQty)
-                                 AND Stage2CompletedDate IS NULL
+                                 TRY_CONVERT(decimal, AllocatedQty)
+                                 AND CompletedDate IS NULL
                             THEN GETDATE()
-                            ELSE Stage2CompletedDate
+                            ELSE CompletedDate
                         END
                 WHERE ID = @DetailedID";
 
@@ -173,59 +185,7 @@ public partial class WoProductionS2 : System.Web.UI.Page
                     cmd.ExecuteNonQuery();
                 }
 
-                //.Check For Complettion 
-                #region Work Order Completion Check
-
-                decimal originalQty = 0;
-                decimal totalCompletedQty = 0;
-
-                string woQuery = @"
-                SELECT SUM(ISNULL(CAST(TotalQty as decimal),0))
-                FROM tbl_MachineProductionDTLS
-                WHERE HeaderID = @WorkOrderID";
-
-                using (SqlCommand cmd = new SqlCommand(woQuery, con))
-                {
-                    cmd.Parameters.AddWithValue("@WorkOrderID", headerId);
-
-                    object obj = cmd.ExecuteScalar();
-                    originalQty = obj == DBNull.Value ? 0 : Convert.ToDecimal(obj);
-                }
-
-                string completedQuery = @"
-                SELECT SUM(ISNULL(CAST(Stage2CompletedQty as decimal),0))
-                FROM tbl_MachineProductionDTLS 
-                WHERE HeaderID = @WorkOrderID";
-
-                using (SqlCommand cmd = new SqlCommand(completedQuery, con))
-                {
-                    cmd.Parameters.AddWithValue("@WorkOrderID", headerId);
-
-                    object obj = cmd.ExecuteScalar();
-                    totalCompletedQty = obj == DBNull.Value ? 0 : Convert.ToDecimal(obj);
-                }
-
-                if (totalCompletedQty >= originalQty && originalQty > 0)
-                {
-                    headerStatus = "Completed";
-                    string updateHeader = @"
-                        UPDATE tbl_MachineProductionHDR
-                        SET S2Status = @Status
-                        WHERE ID = @HeaderID";
-
-                    using (SqlCommand cmd = new SqlCommand(updateHeader, con))
-                    {
-                        cmd.Parameters.AddWithValue("@Status", headerStatus);
-                        cmd.Parameters.AddWithValue("@HeaderID", headerId);
-
-                        cmd.ExecuteNonQuery();
-                    }
-
-                }
-
-                #endregion
-
-
+         
                 return new
                 {
                     Status = "Success",

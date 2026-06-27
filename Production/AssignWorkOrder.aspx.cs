@@ -52,7 +52,7 @@ public partial class AssignWorkOrder : System.Web.UI.Page
         using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
         {
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@SP_Action", "GetMachineCapacity");
+            cmd.Parameters.AddWithValue("@SP_Action", "GetMachineCapacityss");
             cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
             SqlDataAdapter da = new SqlDataAdapter(cmd);
             da.Fill(dt);
@@ -70,7 +70,7 @@ public partial class AssignWorkOrder : System.Web.UI.Page
         using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
         {
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.AddWithValue("@SP_Action", "GetWorkOrder");
+            cmd.Parameters.AddWithValue("@SP_Action", "GetWorkOrdersss");
             cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
             SqlDataAdapter da = new SqlDataAdapter(cmd);
             da.Fill(dt);
@@ -180,15 +180,16 @@ public partial class AssignWorkOrder : System.Web.UI.Page
                         Convert.ToDateTime(allocation["AssignedDate"]);
 
                     int productionHeaderId = 0;
+                   
 
                     #region CHECK EXISTING HEADER
 
                     string checkHeaderQuery = @"
-                SELECT TOP 1 ID
-                FROM tbl_MachineProductionHDR
-                WHERE WorkOrderID = @WorkOrderID
-                  AND S1Status <> 'Completed'
-                ORDER BY ID DESC";
+                        SELECT TOP 1 ID
+                        FROM tbl_MachineProductionHDR
+                        WHERE WorkOrderID = @WorkOrderID
+                          AND S1Status <> 'Completed'
+                        ORDER BY ID DESC";
 
                     using (SqlCommand cmd = new SqlCommand(checkHeaderQuery, con))
                     {
@@ -236,6 +237,7 @@ public partial class AssignWorkOrder : System.Web.UI.Page
 
                     foreach (Dictionary<string, object> detail in details)
                     {
+                        int productdetailsId = 0;
                         decimal usedQty =
                             Convert.ToDecimal(detail["usedQty"]);
 
@@ -255,28 +257,99 @@ public partial class AssignWorkOrder : System.Web.UI.Page
                         decimal qty =
                             Convert.ToDecimal(detail["qty"]);
 
+                        decimal mainQty =
+                            Convert.ToDecimal(detail["orgQty"]);
+
                         decimal sqFeet =
                             Convert.ToDecimal(detail["sqFeet"]);
+
+                        string checkDetailsQuery = @"
+                            SELECT TOP 1 MPD.ID
+                            FROM tbl_MachineProductionDTLS MPD
+                            INNER JOIN tbl_MachineProductionHDR MPH 
+                            ON MPH.ID = MPD.HeaderID
+                            WHERE MPH.WorkOrderID = @WorkOrderID 
+                              AND MPD.ProductName = @ProductName
+                              AND MPD.Size = @Size
+                              AND MPD.TotalQty = @TotalQty
+                             -- AND MPD.SqFeet = @SqFeet
+                            ORDER BY MPD.ID DESC";
+
+                        using (SqlCommand cmd = new SqlCommand(checkDetailsQuery, con))
+                        {
+                            cmd.Parameters.AddWithValue("@WorkOrderID", woId);
+                            cmd.Parameters.AddWithValue("@ProductName", product);
+                            cmd.Parameters.AddWithValue("@Size", size);
+                            cmd.Parameters.AddWithValue("@TotalQty", mainQty);
+                            //cmd.Parameters.AddWithValue("@SqFeet", sqFeet);
+
+                            object obj = cmd.ExecuteScalar();
+
+                            if (obj != null)
+                                productdetailsId = Convert.ToInt32(obj);
+                        }
+                        if (productdetailsId == 0)
+                        {
+                            #region INSERT Products 
+                            using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
+                            {
+                                cmd.CommandType =
+                                    CommandType.StoredProcedure;
+
+                                cmd.Parameters.AddWithValue("@HeaderID",
+                                    productionHeaderId);
+
+                                cmd.Parameters.AddWithValue("@ProductName",
+                                    product);
+
+                                cmd.Parameters.AddWithValue("@Size",
+                                    size);
+
+                                cmd.Parameters.AddWithValue("@TotalQty",
+                                    qty);
+
+                                cmd.Parameters.AddWithValue("@SqFeet",
+                                    sqFeet);
+
+                                cmd.Parameters.AddWithValue("@SP_Action",
+                                    "InsertToProductionDtls");
+
+                                cmd.Parameters.Add("@Result", SqlDbType.Int)
+                                    .Direction =
+                                    ParameterDirection.Output;
+
+                                cmd.ExecuteNonQuery();
+
+                                productdetailsId = Convert.ToInt32(cmd.Parameters["@Result"].Value);
+                            }
+                            #endregion
+                        }
 
                         int existingDetailId = 0;
 
                         #region CHECK EXISTING DETAIL
 
                         string checkDetailQuery = @"
-                    SELECT TOP 1 ID
-                    FROM tbl_MachineProductionDTLS
-                    WHERE HeaderID = @HeaderID
-                      AND ProductName = @ProductName
-                      AND Size = @Size";
+                            SELECT TOP 1 MPA.ID
+                            FROM tbl_MachineProductionAllocation MPA
+                            INNER JOIN tbl_MachineProductionDTLS MPD 
+                            ON MPD.ID = MPA.ProductDtlID 
+                            WHERE MPD.ID = @HeaderID
+                              AND MPA.MachineID = @MachineID
+                              AND MPD.ProductName = @ProductName
+                              AND MPD.Size = @Size";
 
                         using (SqlCommand cmd =
                             new SqlCommand(checkDetailQuery, con))
                         {
                             cmd.Parameters.AddWithValue("@HeaderID",
-                                productionHeaderId);
+                                productdetailsId);
 
                             cmd.Parameters.AddWithValue("@ProductName",
                                 product);
+
+                            cmd.Parameters.AddWithValue("@MachineID",
+                                machineId);
 
                             cmd.Parameters.AddWithValue("@Size",
                                 size);
@@ -295,7 +368,7 @@ public partial class AssignWorkOrder : System.Web.UI.Page
                         if (existingDetailId > 0)
                         {
                             string updateQuery = @"
-                        UPDATE tbl_MachineProductionDTLS
+                        UPDATE tbl_MachineProductionAllocation
                         SET
                             AllocatedQty =
                                 ISNULL(CAST(AllocatedQty as decimal),0) + @AllocatedQty,
@@ -326,25 +399,16 @@ public partial class AssignWorkOrder : System.Web.UI.Page
 
                         else
                         {
-                            using (SqlCommand cmd =new SqlCommand("SP_ProductionsPlanning", con))
+                            using (SqlCommand cmd = new SqlCommand("SP_ProductionsPlanning", con))
                             {
                                 cmd.CommandType =
                                     CommandType.StoredProcedure;
 
                                 cmd.Parameters.AddWithValue("@HeaderID",
-                                    productionHeaderId);
+                                    productdetailsId);
 
-                                cmd.Parameters.AddWithValue("@ProductName",
-                                    product);
-
-                                cmd.Parameters.AddWithValue("@Size",
-                                    size);
-
-                                cmd.Parameters.AddWithValue("@TotalQty",
-                                    qty);
-
-                                cmd.Parameters.AddWithValue("@SqFeet",
-                                    sqFeet);
+                                cmd.Parameters.AddWithValue("@MachineID",
+                                    machineId);
 
                                 cmd.Parameters.AddWithValue("@AllocatedQty",
                                     usedQty);
@@ -352,11 +416,8 @@ public partial class AssignWorkOrder : System.Web.UI.Page
                                 cmd.Parameters.AddWithValue("@AllocatedSqFeet",
                                     usedSqFt);
 
-                                cmd.Parameters.AddWithValue("@Stage1MachineID",
-                                    machineId);
-
                                 cmd.Parameters.AddWithValue("@SP_Action",
-                                    "InsertToProductionDtlsS1");
+                                    "InsertToProductionDtlsAllocation");
 
                                 cmd.Parameters.Add("@Result", SqlDbType.Int)
                                     .Direction =

@@ -244,7 +244,7 @@
                                 totalQty: 0,
                                 AllocatedQty: 0,
                                 balanceQty: 0,
-                                status: row.Status || "Not Active",
+                                status: "Not Active",
                                 details: [],
                                 isCompleted: true
                             };
@@ -261,10 +261,9 @@
                             allocatedQty: parseFloat(row.AllocatedQty || 0),
                             allocatedSqFeet: parseFloat(row.AllocatedSqFeet || 0),
 
-                            compQty: parseFloat(row.Stage1CompletedQty || 0),
-                            usedQty: parseFloat(row.Stage2CompletedQty || 0),
-                            usedSqFt: parseFloat(row.Stage2CompetedSqFeet || 0),
-                            stage2compDate: row.Stage2CompletedDate
+                            usedQty: parseFloat(row.CompletedQty || 0),
+                            usedSqFt: parseFloat(row.CompetedSqFeet || 0),
+                            stage2compDate: row.CompletedDate
 
                         });
 
@@ -272,8 +271,15 @@
                         grouped[row.ProductionID].totalQty += parseFloat(row.totQty);
                         grouped[row.ProductionID].AllocatedQty += parseFloat(row.AllocatedQty);
 
-                        grouped[row.ProductionID].balanceQty += parseFloat(row.Stage2CompletedQty);
+                        grouped[row.ProductionID].balanceQty += parseFloat(row.CompletedQty);
 
+                        if (grouped[row.ProductionID].AllocatedQty !== 0) {
+                            grouped[row.ProductionID].status = 'Partially Active';
+                        } else if (grouped[row.ProductionID].totalQty === grouped[row.ProductionID].AllocatedQty) {
+                            grouped[row.ProductionID].status = 'Active';
+                        } else {
+                            grouped[row.ProductionID].status = 'Not Active';
+                        }
                     });
 
                     $.each(grouped, function (key, value) {
@@ -410,7 +416,7 @@
                 html += "<td>" + item.originalsqFeet + "</td>";
                 html += "<td>" + item.originalQty + "</td>";
                 html += "<td>" + item.allocatedSqFeet + "</td>";
-                html += "<td>" + item.compQty + "/" + item.allocatedQty + "</td>";
+                html += "<td>" + item.allocatedQty + "</td>";
 
                 html += "<td>";
 
@@ -446,11 +452,6 @@
 
             var newQty = item.usedQty + delta;
 
-            if (delta > 0 && newQty > item.compQty) {
-                alert("Completed Qty cannot exceed Stage 1 Completed Qty (" + item.compQty + ").");
-                qtyUpdating[key] = false;
-                return;
-            }
 
             if (item.usedQty >= item.allocatedQty && delta < 0) {
                 alert("This item is already completed. You cannot reduce quantity.");
@@ -498,6 +499,7 @@
                         if (response.d.IsCompleted) {
                             alert("Allocated Qty Completed.");
                         }
+
                         if (response.d.HeaderStatus === "Completed") {
                             window.location.href = window.location.href;
                         }

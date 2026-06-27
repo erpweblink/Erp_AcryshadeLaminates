@@ -228,6 +228,7 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function (response) {
+                    debugger;
                     var rows = JSON.parse(response.d);
                     AssignWorkOrders = [];
                     var grouped = {};
@@ -244,12 +245,11 @@
                                 totalQty: 0,
                                 AllocatedQty: 0,
                                 balanceQty: 0,
-                                status: row.Status || "Machine Not Allocated",
+                                status: row.Status1 || "Machine Not Allocated",
                                 details: [],
                                 isCompleted: true
                             };
                         }
-
                         grouped[row.ProductionID].details.push({
                             detailedId: row.DetailedID,
                             product: row.ProductName,
@@ -261,10 +261,9 @@
                             allocatedQty: parseFloat(row.AllocatedQty || 0),
                             allocatedSqFeet: parseFloat(row.AllocatedSqFeet || 0),
 
-                            s2ComQty: parseFloat(row.Stage2CompletedQty || 0),
-                            usedQty: parseFloat(row.Stage1CompletedQty || 0),
-                            usedSqFt: parseFloat(row.Stage1CompetedSqFeet || 0),
-                            stage1compDate: row.Stage1CompletedDate
+                            usedQty: parseFloat(row.CompletedQty || 0),
+                            usedSqFt: parseFloat(row.CompetedSqFeet || 0),
+                            stage1compDate: row.CompletedDate
 
                         });
 
@@ -272,11 +271,19 @@
                         grouped[row.ProductionID].totalQty += parseFloat(row.totQty);
                         grouped[row.ProductionID].AllocatedQty += parseFloat(row.AllocatedQty);
 
-                        grouped[row.ProductionID].balanceQty += parseFloat(row.Stage1CompletedQty);
-
+                        grouped[row.ProductionID].balanceQty += parseFloat(row.CompletedQty);
                     });
 
                     $.each(grouped, function (key, value) {
+
+                        var hasStarted = value.details.some(function (d) {
+                            return d.usedQty > 0;
+                        });
+
+                        if (hasStarted) {
+                            value.status = "Work Started";
+                        }
+
                         // check if ALL items are stage2 completed
                         var allStage1Done = value.details.length > 0 &&
                             value.details.every(function (d) {
@@ -437,7 +444,6 @@
         }
 
         function changeQty(woId, index, delta) {
-            debugger;
             var key = woId + "_" + index;
 
             // 🚫 prevent multiple fast clicks
