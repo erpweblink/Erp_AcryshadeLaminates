@@ -231,7 +231,7 @@
                     var rows = JSON.parse(response.d);
                     AssignWorkOrders = [];
                     var grouped = {};
-
+                    debugger;
                     $.each(rows, function (i, row) {
                         if (!grouped[row.ProductionID]) {
                             grouped[row.ProductionID] = {
@@ -243,6 +243,7 @@
                                 totalSqFeet: 0,
                                 totalQty: 0,
                                 AllocatedQty: 0,
+                                RevertQty: 0,
                                 balanceQty: 0,
                                 status: "Not Active",
                                 details: [],
@@ -263,7 +264,8 @@
 
                             usedQty: parseFloat(row.CompletedQty || 0),
                             usedSqFt: parseFloat(row.CompetedSqFeet || 0),
-                            stage2compDate: row.CompletedDate
+                            stage2compDate: row.CompletedDate,
+                            revertQty: parseFloat(row.RevertQty || 0)
 
                         });
 
@@ -271,14 +273,16 @@
                         grouped[row.ProductionID].totalQty += parseFloat(row.totQty);
                         grouped[row.ProductionID].AllocatedQty += parseFloat(row.AllocatedQty);
 
+                        grouped[row.ProductionID].RevertQty += parseFloat(row.RevertQty);
+
                         grouped[row.ProductionID].balanceQty += parseFloat(row.CompletedQty);
 
-                        if (grouped[row.ProductionID].AllocatedQty !== 0) {
+                        if (grouped[row.ProductionID].totalQty === grouped[row.ProductionID].balanceQty) {
+                            grouped[row.ProductionID].status = 'Completed';
+                        }else if (grouped[row.ProductionID].totalQty === grouped[row.ProductionID].AllocatedQty){
+                            grouped[row.ProductionID].status = 'Active';      
+                        }else if (grouped[row.ProductionID].AllocatedQty !== 0) {
                             grouped[row.ProductionID].status = 'Partially Active';
-                        } else if (grouped[row.ProductionID].totalQty === grouped[row.ProductionID].AllocatedQty) {
-                            grouped[row.ProductionID].status = 'Active';
-                        } else {
-                            grouped[row.ProductionID].status = 'Not Active';
                         }
                     });
 
@@ -338,6 +342,7 @@
             html += "<th>Total Qty</th>";
             html += "<th>Allocated Qty</th>";
             html += "<th>Completed Qty</th>";
+            html += "<th>Revert Qty</th>";
             html += "<th>Status</th>";
             html += "</tr>";
             html += "</thead>";
@@ -355,6 +360,7 @@
                 html += "<td>" + wo.totalQty + "</td>";
                 html += "<td>" + wo.AllocatedQty + "</td>";
                 html += "<td id='bal_" + wo.woId + "'>" + wo.balanceQty + "</td>";
+                html += "<td>" + wo.RevertQty + "</td>";
 
                 var statusColor = "black";
                 if (wo.status == "Partially Active" || wo.status == "Active")
@@ -425,12 +431,51 @@
                 var disableMinus = isActive ? "" : "disabled";
                 var disablePlus = isActive ? "" : "disabled";
 
-                html += "<button type='button' " + disableMinus + " onclick='changeQty(" + woId + "," + i + ",-1)'>-</button>";
+                html += "<button type='button' " + disableMinus + " onclick='showMinusPanel(" + woId + "," + i + ")'>-</button>";
                 html += " <span id='uq_" + woId + "_" + i + "'>" + item.usedQty + "</span> ";
-                html += "<button type='button' " + disablePlus + " onclick='changeQty(" + woId + "," + i + ",1)'>+</button>";
+                html += "<button type='button'  id='plus_" + woId + "_" + i + "' " + disablePlus + " onclick='changeQty(" + woId + "," + i + ",1,false,false,\"No\")'>+</button>";
                 html += "</td>";
 
                 html += "</tr>";
+
+                html += "<tr class='minusPanel' id='minusPanel_" + woId + "_" + i + "' style='display:none;background:#f8f9fa'>";
+                html += "<td colspan='7' style='text-align:right;'>";
+
+                html += "<div style='display:inline-block;padding:15px;border:1px solid #ccc;background:#9ab6dc;border-radius:6px;width:350px;text-align:left;'>";
+
+                html += "<label style='margin-right:20px;color: red;'>";
+                html += "<input style='border:1px solid red' type='checkbox' id='mistaken_" + woId + "_" + i + "' ";
+                html += "onclick='selectReason(\"mistaken\"," + woId + "," + i + ")'> ";
+                html += "Mistaken";
+                html += "</label>";
+
+                html += "<label style='color: red;'>";
+                html += "<input style='border:1px solid red' type='checkbox' id='faulty_" + woId + "_" + i + "' ";
+                html += "onclick='selectReason(\"faulty\"," + woId + "," + i + ")'> ";
+                html += "Revert To Stage 1";
+                html += "</label>";
+
+                html += "<div id='reasonDiv_" + woId + "_" + i + "' style='display:none;margin-top:10px;'>";
+
+                html += "<textarea id='reason_" + woId + "_" + i + "' ";
+                html += "class='form-control' rows='3' ";
+                html += "placeholder='Enter faulty reason'></textarea>";
+
+                html += "</div>";
+
+                html += "<div style='margin-top:12px;text-align:right;'>";
+
+                html += "<button type='button' class='btn btn-outline-success btn-sm' onclick='confirmMinus(" + woId + "," + i + ")'>";
+                html += "Confirm";
+                html += "</button>";
+
+                html += "</div>";
+
+                html += "</div>";
+
+                html += "</td>";
+                html += "</tr>";
+
             });
 
             html += "</table>";
@@ -438,8 +483,88 @@
             $("#details_" + woId).html(html);
         }
 
-        function changeQty(woId, index, delta) {
+        function showMinusPanel(woId, index) {
 
+            var wo = AssignWorkOrders.find(x => x.woId == woId);
+            var item = wo.details[index];
+
+            if (item.usedQty === 0)
+                return;
+
+            var panel = $("#minusPanel_" + woId + "_" + index);
+            var plusBtn = $("#plus_" + woId + "_" + index);
+
+            // If already open, close it and enable +
+            if (panel.is(":visible")) {
+                panel.hide();
+                plusBtn.prop("disabled", false);
+                return;
+            }
+
+            // Close all open panels
+            $(".minusPanel").hide();
+
+            // Enable all plus buttons
+            $("button[id^='plus_']").prop("disabled", false);
+
+            // Show current panel
+            panel.show();
+
+            // Disable current plus button
+            plusBtn.prop("disabled", true);
+        }
+
+        function selectReason(type, woId, index) {
+
+            if (type === "mistaken") {
+
+                $("#faulty_" + woId + "_" + index).prop("checked", false);
+                $("#reasonDiv_" + woId + "_" + index).hide();
+                $("#reason_" + woId + "_" + index).val("");
+
+            } else {
+
+                $("#mistaken_" + woId + "_" + index).prop("checked", false);
+
+                if ($("#faulty_" + woId + "_" + index).is(":checked"))
+                    $("#reasonDiv_" + woId + "_" + index).show();
+                else
+                    $("#reasonDiv_" + woId + "_" + index).hide();
+            }
+        }
+
+        function confirmMinus(woId, index) {
+
+            var mistaken = $("#mistaken_" + woId + "_" + index).is(":checked");
+            var faulty = $("#faulty_" + woId + "_" + index).is(":checked");
+            var reason = $("#reason_" + woId + "_" + index).val();
+
+            if (!mistaken && !faulty) {
+                alert("Select Mistaken or Faulty.");
+                return;
+            }
+
+            if (faulty && reason.trim() == "") {
+                alert("Please enter faulty reason.");
+                return;
+            }
+
+            // Hide panel
+            $("#minusPanel_" + woId + "_" + index).hide();
+
+            // Existing quantity change
+            changeQty(
+                woId,
+                index,
+                -1,
+                mistaken,
+                faulty,
+                reason
+            );
+        }
+
+        function changeQty(woId, index, delta, mistaken, faulty, reason) {
+            debugger;
             var key = woId + "_" + index;
 
             // 🚫 prevent multiple fast clicks
@@ -453,10 +578,10 @@
             var newQty = item.usedQty + delta;
 
 
-            if (item.usedQty >= item.allocatedQty && delta < 0) {
-                alert("This item is already completed. You cannot reduce quantity.");
-                return;
-            }
+            //if (item.usedQty >= item.allocatedQty && delta < 0) {
+            //    alert("This item is already completed. You cannot reduce quantity.");
+            //    return;
+            //}
 
             if (newQty < 0) {
                 alert("Completed Qty cannot be less than 0.");
@@ -472,6 +597,7 @@
 
             var sqFtPerQty = item.allocatedSqFeet / item.allocatedQty;
             var completedSqFt = newQty * sqFtPerQty;
+            var revertedSqFt = sqFtPerQty;
 
             $.ajax({
                 type: "POST",
@@ -479,7 +605,11 @@
                 data: JSON.stringify({
                     detailedId: item.detailedId,
                     completedQty: newQty,
-                    completedSqFt: completedSqFt
+                    completedSqFt: completedSqFt,
+                    revertedSqFt: revertedSqFt,
+                    mistaken: mistaken,
+                    faulty: faulty,
+                    reason: reason
                 }),
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
@@ -500,7 +630,19 @@
                             alert("Allocated Qty Completed.");
                         }
 
+
+                        $("#mistaken_" + woId + "_" + index).prop("checked", false);
+                        $("#faulty_" + woId + "_" + index).prop("checked", false);
+                        $("#reason_" + woId + "_" + index).val("");
+                        $("#reasonDiv_" + woId + "_" + index).hide();
+                        $("#minusPanel_" + woId + "_" + index).hide();
+                        $("#plus_" + woId + "_" + index).prop("disabled", false);
+
                         if (response.d.HeaderStatus === "Completed") {
+                            window.location.href = window.location.href;
+                        }
+
+                        if (response.d.HeaderStatus === "Reduced") {
                             window.location.href = window.location.href;
                         }
                     }

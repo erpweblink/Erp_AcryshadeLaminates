@@ -313,7 +313,7 @@
         function loadNotifications() {
             $.ajax({
                 type: "POST",
-                url: "Dashboard.aspx/GetNotifications",
+                url: "/Dashboard.aspx/GetNotifications",
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function (response) {

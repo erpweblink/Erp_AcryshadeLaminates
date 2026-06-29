@@ -232,7 +232,7 @@
                     var rows = JSON.parse(response.d);
                     AssignWorkOrders = [];
                     var grouped = {};
-
+                    debugger;
                     $.each(rows, function (i, row) {
                         if (!grouped[row.ProductionID]) {
                             grouped[row.ProductionID] = {
@@ -244,6 +244,7 @@
                                 totalSqFeet: 0,
                                 totalQty: 0,
                                 AllocatedQty: 0,
+                                RevertQty: 0,
                                 balanceQty: 0,
                                 status: row.Status1 || "Machine Not Allocated",
                                 details: [],
@@ -263,13 +264,16 @@
 
                             usedQty: parseFloat(row.CompletedQty || 0),
                             usedSqFt: parseFloat(row.CompetedSqFeet || 0),
-                            stage1compDate: row.CompletedDate
+                            stage1compDate: row.CompletedDate,
+                            revertQty: parseFloat(row.RevertQty || 0)
 
                         });
 
                         grouped[row.ProductionID].totalSqFeet += parseFloat(row.SqFeet || 0);
                         grouped[row.ProductionID].totalQty += parseFloat(row.totQty);
                         grouped[row.ProductionID].AllocatedQty += parseFloat(row.AllocatedQty);
+
+                        grouped[row.ProductionID].RevertQty += parseFloat(row.RevertQty);
 
                         grouped[row.ProductionID].balanceQty += parseFloat(row.CompletedQty);
                     });
@@ -339,13 +343,13 @@
             html += "<th>Total Qty</th>";
             html += "<th>Allocated Qty</th>";
             html += "<th>Completed Qty</th>";
+            html += "<th>Revert Qty</th>";
             html += "<th>Status</th>";
             html += "</tr>";
             html += "</thead>";
 
             html += "<tbody>";
             $.each(AssignWorkOrders, function (i, wo) {
-                AssignWorkOrders
                 html += "<tr class='drag-row' data-id='" + wo.woId + "'>";
                 html += "<td>" + count++ + "</td>";
                 html += "<td><button type='button' onclick='toggleDetails(" + wo.woId + ")'>+</button></td>";
@@ -356,6 +360,7 @@
                 html += "<td>" + wo.totalQty + "</td>";
                 html += "<td>" + wo.AllocatedQty + "</td>";
                 html += "<td id='bal_" + wo.woId + "'>" + wo.balanceQty + "</td>";
+                html += "<td>" + wo.RevertQty + "</td>";
 
                 var statusColor = "black";
 
@@ -410,6 +415,7 @@
             html += "<th>Assigned SqFt</th>";
             html += "<th>Assigned Qty</th>";
             html += "<th>Completed Qty</th>";
+            html += "<th>Reverted Qty</th>";
             html += "</tr>";
 
             $.each(wo.details, function (i, item) {
@@ -426,15 +432,41 @@
 
                 var isCompleted = item.usedQty >= item.allocatedQty;
 
-                // disable both buttons when completed
+                var usedqty = parseFloat(item.usedQty);
+
+                // disable both buttons when completed " + disableMinus +"
                 var disableMinus = isCompleted ? "disabled" : "";
                 var disablePlus = isCompleted ? "disabled" : "";
 
-                html += "<button type='button' " + disableMinus + " onclick='changeQty(" + woId + "," + i + ",-1)'>-</button>";
-                html += " <span id='uq_" + woId + "_" + i + "'>" + item.usedQty + "</span> ";
-                html += "<button type='button' " + disablePlus + " onclick='changeQty(" + woId + "," + i + ",1)'>+</button>";
+                html += "<button type='button' onclick='showMinusPanel(" + woId + "," + i + ")'>-</button>";
+                html += " <span id='uq_" + woId + "_" + i + "'>" + usedqty + "</span> ";
+                html += "<button type='button' id='plus_" + woId + "_" + i + "' " + disablePlus + " onclick='changeQty(" + woId + "," + i + ",1,false,false,\"No\")'>+</button>";
                 html += "</td>";
+                html += "<td>" + item.revertQty + "</td>";
 
+                html += "</tr>";
+
+                html += "<tr class='minusPanel' id='minusPanel_" + woId + "_" + i + "' style='display:none;background:#f8f9fa'>";
+                html += "<td colspan='7' style='text-align:right;'>";
+
+                html += "<div style='display:inline-block;padding:15px;border:1px solid #ccc;background:#9ab6dc;border-radius:6px;width:350px;text-align:left;'>";
+
+                html += "<label style='margin-right:20px;color: red;'>";
+                html += "<input style='border:1px solid red' type='checkbox' id='mistaken_" + woId + "_" + i + "'>";
+                html += "Mistaken";
+                html += "</label>";
+
+                html += "<div style='margin-top:12px;text-align:right;'>";
+
+                html += "<button type='button' class='btn btn-outline-success btn-sm' onclick='confirmMinus(" + woId + "," + i + ")'>";
+                html += "Confirm";
+                html += "</button>";
+
+                html += "</div>";
+
+                html += "</div>";
+
+                html += "</td>";
                 html += "</tr>";
             });
 
@@ -443,7 +475,61 @@
             $("#details_" + woId).html(html);
         }
 
-        function changeQty(woId, index, delta) {
+        function showMinusPanel(woId, index) {
+
+            var wo = AssignWorkOrders.find(x => x.woId == woId);
+            var item = wo.details[index];
+
+            if (item.usedQty === 0)
+                return;
+
+            var panel = $("#minusPanel_" + woId + "_" + index);
+            var plusBtn = $("#plus_" + woId + "_" + index);
+
+            // If already open, close it and enable +
+            if (panel.is(":visible")) {
+                panel.hide();
+                plusBtn.prop("disabled", false);
+                return;
+            }
+
+            // Close all open panels
+            $(".minusPanel").hide();
+
+            // Enable all plus buttons
+            $("button[id^='plus_']").prop("disabled", false);
+
+            // Show current panel
+            panel.show();
+
+            // Disable current plus button
+            plusBtn.prop("disabled", true);
+        }
+
+        function confirmMinus(woId, index) {
+
+            var mistaken = $("#mistaken_" + woId + "_" + index).is(":checked");
+          
+            if (!mistaken) {
+                alert("Select Mistaken");
+                return;
+            }
+
+            // Hide panel
+            $("#minusPanel_" + woId + "_" + index).hide();
+
+            // Existing quantity change
+            changeQty(
+                woId,
+                index,
+                -1,
+                mistaken,
+                false,
+                'NO'
+            );
+        }
+
+        function changeQty(woId, index, delta, mistaken, faulty, reason) {
             var key = woId + "_" + index;
 
             // 🚫 prevent multiple fast clicks
@@ -465,10 +551,10 @@
                 return;
             }
 
-            if (item.usedQty >= item.allocatedQty && delta < 0) {
-                alert("This item is already completed. You cannot reduce quantity.");
-                return;
-            }
+            //if (item.usedQty >= item.allocatedQty && delta < 0) {
+            //    alert("This item is already completed. You cannot reduce quantity.");
+            //    return;
+            //}
 
             if (newQty < 0) {
                 alert("Completed Qty cannot be less than 0.");
@@ -491,7 +577,10 @@
                 data: JSON.stringify({
                     detailedId: item.detailedId,
                     completedQty: newQty,
-                    completedSqFt: completedSqFt
+                    completedSqFt: completedSqFt,
+                    mistaken: mistaken,
+                    faulty: faulty,
+                    reason: reason
                 }),
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
@@ -525,6 +614,14 @@
                             color = "green";
 
                         $("#status_" + woId).css("color", color);
+
+
+                        $("#mistaken_" + woId + "_" + index).prop("checked", false);
+                        $("#faulty_" + woId + "_" + index).prop("checked", false);
+                        $("#reason_" + woId + "_" + index).val("");
+                        $("#reasonDiv_" + woId + "_" + index).hide();
+                        $("#minusPanel_" + woId + "_" + index).hide();
+                        $("#plus_" + woId + "_" + index).prop("disabled", false);
 
                         if (response.d.IsCompleted) {
                             alert("Allocated Qty Completed.");

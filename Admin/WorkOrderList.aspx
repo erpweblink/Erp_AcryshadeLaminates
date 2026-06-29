@@ -26,6 +26,8 @@
             font-weight: 900;
         }
 
+
+
         /*CSS fro Image Pop UP*/
         .product-image-preview {
             width: 70px;
