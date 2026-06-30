@@ -195,6 +195,14 @@
                             <span class="nav-text">Packaging</span>
                         </a>
 
+                        <a href="/Production/Delivery.aspx" class="nav-link sub-link" id="WODelTab" runat="server">
+                            <span class="nav-icon">
+                                <i class="bi bi-truck"></i>
+                            </span>
+
+                            <span class="nav-text">Delivery</span>
+                        </a>
+
                     </div>
                 </div>
 

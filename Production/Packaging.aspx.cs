@@ -268,6 +268,15 @@ public partial class Packaging : System.Web.UI.Page
                     cmupdateHeaderQueryd.ExecuteNonQuery();
                 }
 
+                string updateWOHeaderQuery = @"UPDATE tbl_WorkOrderHdr SET isproductioncompleted = 1 
+                    WHERE ID =  @DetailedId";
+
+                using (SqlCommand cmWOHeaderQuery = new SqlCommand(updateWOHeaderQuery, con))
+                {
+                    cmWOHeaderQuery.Parameters.AddWithValue("@DetailedId", workOrderId);
+                    cmWOHeaderQuery.ExecuteNonQuery();
+                }
+
 
                 con.Close();
                 return new

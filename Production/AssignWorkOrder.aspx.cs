@@ -271,7 +271,7 @@ public partial class AssignWorkOrder : System.Web.UI.Page
                             WHERE MPH.WorkOrderID = @WorkOrderID 
                               AND MPD.ProductName = @ProductName
                               AND MPD.Size = @Size
-                              AND MPD.TotalQty = @TotalQty
+                              AND CAST(MPD.TotalQty as decimal) = CAST(@TotalQty as decimal)
                              -- AND MPD.SqFeet = @SqFeet
                             ORDER BY MPD.ID DESC";
 
