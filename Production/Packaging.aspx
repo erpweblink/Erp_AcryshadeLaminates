@@ -162,6 +162,7 @@
                                 customer: row.Dealer,
                                 totalSqFeet: 0,
                                 totalQty: 0,
+                                alloqty:0,
                                 competeQty: 0,
                                 details: [],
                                 isCompleted: true,
@@ -187,6 +188,7 @@
 
                         grouped[row.ProductionID].totalSqFeet += parseFloat(row.SqFeet || 0);
                         grouped[row.ProductionID].totalQty += parseFloat(row.totQty);
+                        grouped[row.ProductionID].alloqty += parseFloat(row.CompletedQty);
                         grouped[row.ProductionID].competeQty += parseFloat(row.PackagingQty);
                     });
 
@@ -234,6 +236,7 @@
             html += "<th>Customer</th>";
             html += "<th>Total Sq Feet</th>";
             html += "<th>Total Qty</th>";
+            html += "<th>Allocated Qty</th>";
             html += "<th>Completed Qty</th>";
             html += "<th>Status</th>";
             html += "</tr>";
@@ -250,6 +253,7 @@
                 html += "<td>" + wo.customer + "</td>";
                 html += "<td>" + wo.totalSqFeet + "</td>";
                 html += "<td>" + wo.totalQty + "</td>";
+                html += "<td>" + wo.alloqty + "</td>";
                 html += "<td id='bal_" + wo.woId + "'>" + wo.competeQty + "</td>";
 
 
