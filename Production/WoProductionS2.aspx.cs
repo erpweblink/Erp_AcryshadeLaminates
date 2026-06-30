@@ -188,8 +188,7 @@ public partial class WoProductionS2 : System.Web.UI.Page
                 UPDATE tbl_MachineProductionAllocation  
                 SET
                     CompletedQty = @Stage1CompletedQty,
-                    CompletedSqFeet = @Stage1CompetedSqFeet,
-                    PackagingQty = @Stage1CompletedQty
+                    CompletedSqFeet = @Stage1CompetedSqFeet   
                 WHERE ID = @DetailedID";
 
                 using (SqlCommand cmd = new SqlCommand(updateQuery, con))
@@ -250,12 +249,7 @@ public partial class WoProductionS2 : System.Web.UI.Page
                                                 WHEN CAST(AllocatedSqFeet as decimal) >= @SqFeet
                                                 THEN CAST(AllocatedSqFeet as decimal) - @SqFeet
                                                 ELSE 0
-                                              END,
-                           PackagingQty = CASE
-                                                WHEN ISNULL(CAST(PackagingQty as decimal),0) > 0
-                                                THEN CAST(PackagingQty as decimal) - 1
-                                                ELSE 0
-                                           END
+                                              END                  
                         WHERE ID = @Stage2AllocationId";
 
                     using (SqlCommand cmd = new SqlCommand(updateStage2, con))

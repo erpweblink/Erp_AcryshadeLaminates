@@ -234,7 +234,7 @@
             html += "<th>Customer</th>";
             html += "<th>Total Sq Feet</th>";
             html += "<th>Total Qty</th>";
-            html += "<th>Balance Qty</th>";
+            html += "<th>Completed Qty</th>";
             html += "<th>Status</th>";
             html += "</tr>";
             html += "</thead>";
@@ -336,8 +336,8 @@
             html += "<th>Size</th>";
             html += "<th>Original SqFt</th>";
             html += "<th>Original Qty</th>";
-            html += "<th>Completed Qty</th>";
-            html += "<th>Pack</th>";
+            html += "<th>Assigned Qty</th>";
+            html += "<th>Packed</th>";
             html += "<th>Image</th>";
             html += "</tr>";
 

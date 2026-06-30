@@ -343,7 +343,7 @@
             html += "<th>Total Qty</th>";
             html += "<th>Allocated Qty</th>";
             html += "<th>Completed Qty</th>";
-            html += "<th>Revert Qty</th>";
+            html += "<th>Reverted Count</th>";
             html += "<th>Status</th>";
             html += "</tr>";
             html += "</thead>";
@@ -415,7 +415,7 @@
             html += "<th>Assigned SqFt</th>";
             html += "<th>Assigned Qty</th>";
             html += "<th>Completed Qty</th>";
-            html += "<th>Reverted Qty</th>";
+            html += "<th>Reverted Count</th>";
             html += "</tr>";
 
             $.each(wo.details, function (i, item) {

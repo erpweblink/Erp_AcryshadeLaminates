@@ -265,7 +265,7 @@
                             usedQty: parseFloat(row.CompletedQty || 0),
                             usedSqFt: parseFloat(row.CompetedSqFeet || 0),
                             stage2compDate: row.CompletedDate,
-                            revertQty: parseFloat(row.RevertQty || 0)
+                            revertQty: parseFloat(row.PackagingRevertQty || 0)
 
                         });
 
@@ -273,7 +273,7 @@
                         grouped[row.ProductionID].totalQty += parseFloat(row.totQty);
                         grouped[row.ProductionID].AllocatedQty += parseFloat(row.AllocatedQty);
 
-                        grouped[row.ProductionID].RevertQty += parseFloat(row.RevertQty);
+                        grouped[row.ProductionID].RevertQty += parseFloat(row.PackagingRevertQty);
 
                         grouped[row.ProductionID].balanceQty += parseFloat(row.CompletedQty);
 
@@ -412,6 +412,7 @@
             html += "<th>Assigned SqFt</th>";
             html += "<th>Assigned Qty</th>";
             html += "<th>Completed Qty</th>";
+            html += "<th>Reverted Qty</th>";
             html += "</tr>";
 
             $.each(wo.details, function (i, item) {
@@ -435,6 +436,8 @@
                 html += " <span id='uq_" + woId + "_" + i + "'>" + item.usedQty + "</span> ";
                 html += "<button type='button'  id='plus_" + woId + "_" + i + "' " + disablePlus + " onclick='changeQty(" + woId + "," + i + ",1,false,false,\"No\")'>+</button>";
                 html += "</td>";
+
+                html += "<td>" + item.revertQty + "</td>";
 
                 html += "</tr>";
 

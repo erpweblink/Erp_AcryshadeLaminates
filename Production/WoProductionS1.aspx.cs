@@ -110,11 +110,51 @@ public partial class WoProductionS1 : System.Web.UI.Page
         {
             using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
             {
+                con.Open();
+
+                bool block = false;
+
+                string query = @"
+                           SELECT TOP 1
+                                    D.ID,
+                                    D.MachineID,
+                                    D.AllocatedQty
+                                FROM tbl_MachineProductionAllocation M
+                                INNER JOIN tbl_MachineProductionAllocation D
+                                    ON D.ProductDtlID = M.ProductDtlID
+                                   AND D.StageName = M.StageName
+                                   AND D.ID <> M.ID
+                                WHERE M.ID = @DetailedID
+                                  AND D.AllocatedQty > M.AllocatedQty
+                                  AND NOT EXISTS
+                                  (
+                                      SELECT 1
+                                      FROM tbl_MachineProductionAllocation S2
+                                      WHERE S2.ProductDtlID = D.ProductDtlID
+                                        AND S2.NextStageId = D.ID
+                                  );";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@DetailedID", detailedId);
+
+                    block = cmd.ExecuteScalar() != null;
+                }
+
+                if (block)
+                {
+                    return new
+                    {
+                        Status = "Error",
+                        Message = "You cannot send quantity until the machine with the higher allocated quantity starts the next stage.",
+                        IsCompleted = false
+                    };
+                }
+
                 int stage2AllocationId = 0;
                 decimal stage2AllocatedQty = 0;
                 decimal stage2AllocatedSqFt = 0;
 
-                con.Open();
                 if (mistaken != "False" || faulty != "False")
                 {
                     string getssQuery = @"INSERT INTO tbl_MachineReturnQtyLogs(DetailsID,Mistaken,Faulty,reason,CreatedDate,RevertedFrom,RevertedBy)
@@ -214,11 +254,9 @@ public partial class WoProductionS1 : System.Web.UI.Page
 
                 #endregion
 
-
                 decimal oldCompletedQty = 0;
                 decimal oldCompletedSqFt = 0;
 
-              
 
                 string oldQuery = @"SELECT
                                         ISNULL(CompletedQty,0) AS CompletedQty,
@@ -306,6 +344,7 @@ public partial class WoProductionS1 : System.Web.UI.Page
                                     WHERE ProductDtlID = @ProductDtlID
                                     AND MachineID = @Stage2MachineID
                                     AND NextStageId IS NOT NULL";
+
                     using (SqlCommand cmdsss = new SqlCommand(GETMCQuery, con))
                     {
                         cmdsss.Parameters.AddWithValue("@ProductDtlID", ProductDetailID);
@@ -336,8 +375,8 @@ public partial class WoProductionS1 : System.Web.UI.Page
                         if (res == null || res == DBNull.Value)
                         {
 
-                            string assignQuery = @"INSERT INTO tbl_MachineProductionAllocation(ProductDtlID,MachineID,AllocatedQty,AllocatedSqFeet,NextStageId)
-                                          VALUES(@ProductDtlID,@MachineID,@AllocatedQty,@AllocatedSqFeet,@DetailedID)";
+                            string assignQuery = @"INSERT INTO tbl_MachineProductionAllocation(ProductDtlID,MachineID,AllocatedQty,AllocatedSqFeet,NextStageId,StageName)
+                                          VALUES(@ProductDtlID,@MachineID,@AllocatedQty,@AllocatedSqFeet,@DetailedID,'Stage 2')";
 
                             using (SqlCommand cmdss = new SqlCommand(assignQuery, con))
                             {
@@ -392,7 +431,6 @@ public partial class WoProductionS1 : System.Web.UI.Page
                         }
                     }
                 }
-
 
 
 
@@ -504,7 +542,7 @@ public partial class WoProductionS1 : System.Web.UI.Page
                         cmd.Parameters.AddWithValue("@DetailedID", workOrderId);
                         cmd.ExecuteNonQuery();
                     }
-                }      
+                }
 
                 return new
                 {
