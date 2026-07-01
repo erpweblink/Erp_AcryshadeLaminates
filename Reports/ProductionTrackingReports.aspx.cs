@@ -23,7 +23,7 @@ public partial class ProductionTrackingReports : System.Web.UI.Page
         DataTable dt = new DataTable();
         SqlDataAdapter cmd = new SqlDataAdapter("SP_Reports", con);
         cmd.SelectCommand.CommandType = CommandType.StoredProcedure;
-        cmd.SelectCommand.Parameters.AddWithValue("@SP_Action", "productionsreports");
+        cmd.SelectCommand.Parameters.AddWithValue("@SP_Action", "ProductionsTrackingReports");
         cmd.Fill(dt);
         GVdetails.DataSource = dt;
         GVdetails.DataBind();

@@ -41,7 +41,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <asp:GridView ID="GVdetails" runat="server" DataKeyNames="ID" OnRowDataBound="GVdetails_RowDataBound" CssClass="table table-bordered table-striped" HeaderStyle-BackColor="#5b78b1"
+                        <asp:GridView ID="GVdetails" runat="server"  OnRowDataBound="GVdetails_RowDataBound" CssClass="table table-bordered table-striped" HeaderStyle-BackColor="#5b78b1"
                             HeaderStyle-Font-Bold="true" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" AutoGenerateColumns="false" OnRowCommand="GVdetails_RowCommand">
                             <Columns>
                                 <asp:TemplateField HeaderText="Sr.No." ItemStyle-HorizontalAlign="Center">
@@ -59,41 +59,71 @@
                                         <asp:Label ID="lblProductName" runat="server" Text='<%#Eval("ProductName")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Part No" ItemStyle-HorizontalAlign="Center">
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblPartNo" runat="server" Text='<%#Eval("PartNo")%>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Size" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
                                         <asp:Label ID="lblSize" runat="server" Text='<%#Eval("Size")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Received Qty" ItemStyle-HorizontalAlign="Center">
+                                <asp:TemplateField HeaderText="Machine Names" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
-                                        <asp:Label ID="lblLoginReceivedQty" runat="server" Text='<%#Eval("ReceivedQty")%>'></asp:Label>
+                                        <asp:Label ID="lblMachineNames" runat="server" Text='<%#Eval("MachineNames")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Balance Qty" ItemStyle-HorizontalAlign="Center">
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblBalanceqty" runat="server" Text='<%#Eval("Balanceqty")%>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Rejected Qty" ItemStyle-HorizontalAlign="Center">
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblRejectedQty" runat="server" Text='<%#Eval("RejectedQty")%>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Status" ItemStyle-HorizontalAlign="Center">
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblWOStatus" runat="server" Text='<%#Eval("WOStatus")%>'></asp:Label>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Stage" ItemStyle-HorizontalAlign="Center">
+                                <asp:TemplateField HeaderText="Allocated Stage" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
                                         <asp:Label ID="lblAllocatedStage" runat="server" Text='<%#Eval("AllocatedStage")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Total Qty" ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblTotalQty" runat="server" Text='<%#Eval("TotalQty")%>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Machine1Qty" ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblMachine1Qty" runat="server" Text='<%#Eval("Machine1Qty")%>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Machine2Qty" ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblMachine2Qty" runat="server" Text='<%#Eval("Machine2Qty")%>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+
+                                <asp:TemplateField HeaderText="Machine3Qty" ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblMachine3Qty" runat="server" Text='<%#Eval("Machine3Qty")%>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Machine1CompletedQty" ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblMachine1CompletedQty" runat="server" Text='<%#Eval("Machine1CompletedQty")%>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+
+                                <asp:TemplateField HeaderText="Machine2CompletedQty" ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblMachine2CompletedQty" runat="server" Text='<%#Eval("Machine2CompletedQty")%>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+                                <asp:TemplateField HeaderText="Machine3CompletedQty" ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblMachine3CompletedQty" runat="server" Text='<%#Eval("Machine3CompletedQty")%>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
+
+                                <asp:TemplateField HeaderText="Machine3CompletedQty" ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblMachine3CompletedQty" runat="server" Text='<%#Eval("Machine3CompletedQty")%>'></asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+
                             </Columns>
                         </asp:GridView>
                     </div>
