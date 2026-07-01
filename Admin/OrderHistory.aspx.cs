@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.Web;
 using System.Web.Services;
 
 
@@ -54,16 +55,25 @@ public partial class OrderHistory : System.Web.UI.Page
 
             string query = @"
              SELECT 
-                h.ID,h.OrderID,WH.TallyRefNo, h.DealerID, h.CreatedDate, h.OrderStatus,
+                h.ID,h.OrderID,WH.TallyRefNo, h.DealerID, h.CreatedDate, 
+                CASE
+                    WHEN DispatchedStatus IS NOT NULL AND DispatchedStatus <> '' THEN DispatchedStatus
+                    WHEN PackagingStatus IS NOT NULL AND PackagingStatus <> '' THEN PackagingStatus
+                    WHEN ProductionStatus IS NOT NULL AND ProductionStatus <> '' THEN ProductionStatus
+                    WHEN DesginStatus IS NOT NULL AND DesginStatus <> '' THEN DesginStatus
+                    ELSE OrderStatus
+                END AS CurrentStatus,
                 h.EstimatedDeliveryDate,
                 d.ProductID, d.ProductName, d.ProductType, d.Size,
                 d.Qty, d.ImagePathName,d.ProductNote
             FROM tbl_DealersOrderHDR h
             INNER JOIN tbl_DealersOrderDTLs d ON h.ID = d.HeaderID
             LEFT JOIN tbl_WorkOrderHdr WH ON h.ID = WH.PlaceOrderID
+            WHERE h.DealerID = @DealerID
             ORDER BY h.ID DESC";
 
             SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@DealerID", HttpContext.Current.Session["ID"].ToString());
             SqlDataReader dr = cmd.ExecuteReader();
 
             while (dr.Read())
@@ -80,7 +90,7 @@ public partial class OrderHistory : System.Web.UI.Page
                     orders[id]["TallyRefNo"] = dr["TallyRefNo"];
                     orders[id]["DealerID"] = dr["DealerID"];
                     orders[id]["CreatedDate"] = Convert.ToDateTime(dr["CreatedDate"]).ToString("dd MMM yyyy");
-                    orders[id]["OrderStatus"] = dr["OrderStatus"].ToString();
+                    orders[id]["OrderStatus"] = dr["CurrentStatus"].ToString();
                     orders[id]["EstimatedDeliveryDate"] =
                         dr["EstimatedDeliveryDate"] == DBNull.Value
                         ? null

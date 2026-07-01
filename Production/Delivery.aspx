@@ -200,7 +200,7 @@
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Status" ItemStyle-HorizontalAlign="Center" HeaderStyle-Width="160px">
                                     <ItemTemplate>
-                                        <asp:LinkButton ID="lblVal" runat="server"
+                                        <asp:LinkButton ID="lblVal" runat="server" Enabled='<%# Eval("IsAllCompleted").ToString() == "True" ? false:true %>'
                                             Visible='<%# string.IsNullOrWhiteSpace(Eval("IsAllCompleted").ToString()) ? true : true %>'
                                             Text='<%#
                                                     Eval("IsAllCompleted").ToString() == "True" ? "Delivered" :
@@ -228,10 +228,10 @@
 
             <div class="modal fade" id="deliveryModal" tabindex="-1">
                 <div class="modal-dialog">
-                    <div class="modal-content">
+                    <div class="modal-content" style="background: #313438;">
 
                         <div class="modal-header">
-                            <h5 class="modal-title">Complete Delivery</h5>
+                            <h5 class="modal-title" style="color: whitesmoke">Complete Delivery</h5>
                         </div>
 
                         <div class="modal-body">
@@ -239,16 +239,16 @@
                             <asp:HiddenField ID="hfOrderId" runat="server" />
 
                             <div class="mb-3">
-                                <label>LR Copy<span style="color: red">*</span></label>
+                                <label style="color: whitesmoke">LR Copy<span style="color: red">*</span></label>
                                 <asp:FileUpload ID="fuLRCopy" runat="server" CssClass="form-control" onchange="ToggleConfirmButton();" />
                             </div>
 
                             <div class="mb-3">
-                                <label>Remark<span style="color: red">*</span></label>
+                                <label style="color: whitesmoke">Remark<span style="color: red">*</span></label>
                                 <asp:TextBox ID="txtRemark" runat="server"
                                     CssClass="form-control"
                                     TextMode="MultiLine"
-                                    Rows="3"></asp:TextBox>
+                                    Rows="3" Style="background: transparent; color: whitesmoke;"></asp:TextBox>
                                 <asp:RequiredFieldValidator
                                     ID="rfvRemark"
                                     runat="server"

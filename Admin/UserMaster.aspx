@@ -43,7 +43,7 @@
                     <div class="row">
                         <div class="col-md-4 col-12">
                             <asp:Label ID="lblUserCnt" runat="server" Font-Bold="true" CssClass="form-label">Mobile Number :</asp:Label>
-                            <asp:TextBox ID="txtUserCnt" runat="server" AutoComplete="off" CssClass="form-control"></asp:TextBox>
+                            <asp:TextBox ID="txtUserCnt" runat="server" AutoComplete="off" CssClass="form-control" MaxLength="10" onkeypress="return event.charCode >= 48 && event.charCode <= 57"></asp:TextBox>
                         </div>
                         <div class="col-md-4 col-12">
                             <asp:Label ID="lblRole" runat="server" Font-Bold="true" CssClass="form-label"><span class="spncls">*</span>Role :</asp:Label>

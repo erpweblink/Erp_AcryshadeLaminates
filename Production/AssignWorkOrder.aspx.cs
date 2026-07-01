@@ -149,6 +149,40 @@ public partial class AssignWorkOrder : System.Web.UI.Page
 
                         cmd.ExecuteNonQuery();
                     }
+
+                    int PalcOrderId = 0;
+                    string getStage2 = @"SELECT ISNULL(PlaceOrderID,0) as PlaceOrder FROM tbl_WorkOrderHDR
+                           WHERE ID = @WoId AND CAST(ScheduledDate as date) = CAST(@ScheduledDate as date)";
+
+                    using (SqlCommand cmd = new SqlCommand(getStage2, con))
+                    {
+                        cmd.Parameters.AddWithValue("@WoId", woId);
+                        cmd.Parameters.AddWithValue("@ScheduledDate", DateTime.Now);
+
+                        using (SqlDataReader dr = cmd.ExecuteReader())
+                        {
+                            if (dr.Read())
+                            {
+                                PalcOrderId = Convert.ToInt32(dr["PlaceOrder"]);
+                            }
+                        }
+                    }
+                    if(PalcOrderId != 0)
+                    {
+                        string querys = @"
+                                UPDATE tbl_DealersOrderHDR
+                                SET ProductionStatus = @ProductionStatus
+                                WHERE ID = @Id";
+
+                        using (SqlCommand cmds = new SqlCommand(querys, con))
+                        {
+                            cmds.Parameters.AddWithValue("@ProductionStatus", "Production Started");
+                            cmds.Parameters.AddWithValue("@Id", PalcOrderId);
+
+                            cmds.ExecuteNonQuery();
+                        }
+                    }
+
                 }
             }
 

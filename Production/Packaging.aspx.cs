@@ -278,6 +278,38 @@ public partial class Packaging : System.Web.UI.Page
                 }
 
 
+                int PalcOrderId = 0;
+                string getStage2 = @"SELECT ISNULL(PlaceOrderID,0) as PlaceOrder FROM tbl_WorkOrderHDR
+                           WHERE ID = @WoId ";
+
+                using (SqlCommand cmd = new SqlCommand(getStage2, con))
+                {
+                    cmd.Parameters.AddWithValue("@WoId", workOrderId);
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        if (dr.Read())
+                        {
+                            PalcOrderId = Convert.ToInt32(dr["PlaceOrder"]);
+                        }
+                    }
+                }
+                if (PalcOrderId != 0)
+                {
+                    string querys = @"
+                                UPDATE tbl_DealersOrderHDR
+                                SET PackagingStatus = @PackagingStatus
+                                WHERE ID = @Id";
+
+                    using (SqlCommand cmds = new SqlCommand(querys, con))
+                    {
+                        cmds.Parameters.AddWithValue("@PackagingStatus", "Order Packed");
+                        cmds.Parameters.AddWithValue("@Id", PalcOrderId);
+
+                        cmds.ExecuteNonQuery();
+                    }
+                }
+
+
                 con.Close();
                 return new
                 {

@@ -113,40 +113,55 @@ public partial class WoProductionS1 : System.Web.UI.Page
                 con.Open();
 
                 bool block = false;
+                string operatorName = "";
 
                 string query = @"
-                           SELECT TOP 1
-                                    D.ID,
-                                    D.MachineID,
-                                    D.AllocatedQty
-                                FROM tbl_MachineProductionAllocation M
-                                INNER JOIN tbl_MachineProductionAllocation D
-                                    ON D.ProductDtlID = M.ProductDtlID
-                                   AND D.StageName = M.StageName
-                                   AND D.ID <> M.ID
-                                WHERE M.ID = @DetailedID
-                                  AND D.AllocatedQty > M.AllocatedQty
-                                  AND NOT EXISTS
-                                  (
-                                      SELECT 1
-                                      FROM tbl_MachineProductionAllocation S2
-                                      WHERE S2.ProductDtlID = D.ProductDtlID
-                                        AND S2.NextStageId = D.ID
-                                  );";
+                    SELECT TOP 1
+                           D.ID,
+                           D.MachineID,
+                           UM.FullName AS OperatorName,
+                           D.AllocatedQty
+                    FROM tbl_MachineProductionAllocation M
+                    INNER JOIN tbl_MachineProductionAllocation D
+                        ON D.ProductDtlID = M.ProductDtlID
+                    INNER JOIN tbl_AssignedMachines AM
+                        ON AM.MachineID = D.MachineID
+                    INNER JOIN tbl_UserMaster UM
+                        ON UM.ID = AM.OperatorID
+                    WHERE M.ID = @DetailedID
+                      AND D.StageName = M.StageName
+                      AND D.ID <> M.ID
+                      AND D.AllocatedQty > M.AllocatedQty
+                      AND NOT EXISTS
+                      (
+                          SELECT 1
+                          FROM tbl_MachineProductionAllocation S2
+                          WHERE S2.ProductDtlID = D.ProductDtlID
+                            AND S2.NextStageId = D.ID
+                      );";
 
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
                     cmd.Parameters.AddWithValue("@DetailedID", detailedId);
 
-                    block = cmd.ExecuteScalar() != null;
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            block = true;
+                            operatorName = reader["OperatorName"].ToString();
+                        }
+                    }
                 }
 
                 if (block)
                 {
+                    string message = "You cannot send quantity until " + operatorName + " with the higher allocated quantity starts working.";
+                  
                     return new
                     {
                         Status = "Error",
-                        Message = "You cannot send quantity until the machine with the higher allocated quantity starts the next stage.",
+                        Message = message,
                         IsCompleted = false
                     };
                 }

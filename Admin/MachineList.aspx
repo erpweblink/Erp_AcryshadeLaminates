@@ -172,11 +172,6 @@
                         <div class="col-md-3">
                             <asp:Label ID="Label1" runat="server" Font-Bold="true" CssClass="form-label">Search:</asp:Label>
                             <asp:TextBox ID="txtcompanyname" CssClass="form-control" runat="server" Width="100%" OnTextChanged="txtCustomerName_TextChanged" AutoPostBack="true"></asp:TextBox>
-                            <%-- <asp:AutoCompleteExtender ID="AutoCompleteExtender1" runat="server" CompletionListCssClass="completionList"
-                                CompletionListHighlightedItemCssClass="itemHighlighted" CompletionListItemCssClass="listItem"
-                                CompletionInterval="10" MinimumPrefixLength="1" ServiceMethod="GetCompanyList"
-                                TargetControlID="txtcompanyname" Enabled="true">
-                            </asp:AutoCompleteExtender>--%>
                         </div>
                         <div class="col-md-1">
                             <asp:LinkButton ID="btnrefresh" runat="server"
@@ -215,9 +210,9 @@
                                         <asp:Label ID="lblMachineName" runat="server" Text='<%#Eval("MachineName")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Machine Description" ItemStyle-HorizontalAlign="Center">
+                                <asp:TemplateField HeaderText="Machine Description" ItemStyle-HorizontalAlign="Center" ItemStyle-Width="245" ItemStyle-Height="90" ItemStyle-BorderStyle="None">
                                     <ItemTemplate>
-                                        <asp:Label ID="lblMachineDescription" runat="server" Text='<%#Eval("MachineDescription")%>'></asp:Label>
+                                        <asp:TextBox TextMode="MultiLine" ReadOnly="true" ID="lblMachineDescription" runat="server" Height="90" Width="245" BorderStyle="None" Text='<%#Eval("MachineDescription")%>'></asp:TextBox>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Per Hour Capacity" ItemStyle-HorizontalAlign="Center">

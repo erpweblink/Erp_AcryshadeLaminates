@@ -75,7 +75,7 @@
                                 ControlToValidate="txtMCDesc" ForeColor="Red" SetFocusOnError="true" ValidationGroup="001"></asp:RequiredFieldValidator>
                         </div>
                         <div class="col-md-4 col-12">
-                            <asp:Label ID="lblMCPerHrQty" runat="server" Font-Bold="true" CssClass="form-label"><span class="spncls">*</span>Per Hour Capacity:</asp:Label>
+                            <asp:Label ID="lblMCPerHrQty" runat="server" Font-Bold="true" CssClass="form-label"><span class="spncls">*</span>Per Hour Capacity<small style="color:red">(Sq.Ft.)</small>:</asp:Label>
                             <asp:TextBox ID="txtMCPerHrQty" runat="server" ValidationGroup="001" AutoComplete="off" CssClass="form-control" onkeypress="return ((event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46)"></asp:TextBox>
                             <asp:RequiredFieldValidator ID="RequiredFieldValidator3" runat="server" ErrorMessage="Please Enter Per Hour Capacity"
                                 ControlToValidate="txtMCPerHrQty" ForeColor="Red" SetFocusOnError="true" ValidationGroup="001"></asp:RequiredFieldValidator>

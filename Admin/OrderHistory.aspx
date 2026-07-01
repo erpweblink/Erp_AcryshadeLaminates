@@ -389,10 +389,25 @@
                 }
                 else if (o.OrderStatus === "Order Approved") {
                     statusClass = "status-delivered";
-                    progress = 25;
+                    progress = 20;
                     progressColor = "#2196f3";
                 }
-                else if (o.OrderStatus === "Delivered") {
+                else if (o.OrderStatus === "Design Approved") {
+                    statusClass = "status-shipped";
+                    progress = 40;
+                    progressColor = "#4caf50";
+                }
+                else if (o.OrderStatus === "Production Started") {
+                    statusClass = "status-shipped";
+                    progress = 60;
+                    progressColor = "#4caf50";
+                }
+                else if (o.OrderStatus === "Order Packed") {
+                    statusClass = "status-shipped";
+                    progress = 80;
+                    progressColor = "#4caf50";
+                }
+                else if (o.OrderStatus === "Order Dispatched") {
                     statusClass = "status-shipped";
                     progress = 100;
                     progressColor = "#4caf50";

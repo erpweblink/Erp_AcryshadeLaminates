@@ -195,7 +195,7 @@
                                             ToolTip="Approve" CommandName="Approved"
                                             CommandArgument='<%#Eval("ID")%>'
                                             CssClass="btn btn-outline-info btn-sm"
-                                            Visible='<%# string.IsNullOrWhiteSpace(Eval("isdesignapproved").ToString())?true:false %>'>
+                                            Visible='<%# Eval("isdesignapproved").ToString() == "False" ? true : false %>'>
                                             <i class="bi bi-check-lg"></i>
                                         </asp:LinkButton>
                                         &nbsp;&nbsp;
@@ -204,15 +204,9 @@
                                             CommandName="DisApproved"
                                             CommandArgument='<%# Eval("ID") %>'
                                             CssClass="btn btn-outline-danger btn-sm"
-                                            Visible='<%# string.IsNullOrWhiteSpace(Eval("isdesignapproved").ToString())?true:false %>'>
+                                            Visible='<%# Eval("isdesignapproved").ToString() == "False" ? true : false %>'>
                                              <i class="bi bi-x-lg"></i>
                                         </asp:LinkButton>
-                                        <asp:Label ID="lblVal" runat="server"
-                                            Visible='<%# !string.IsNullOrWhiteSpace(Eval("isdesignapproved").ToString())?true:false %>'
-                                            Text='<%#Eval("isdesignapproved").ToString() == "True"?"Approved":"Not Approved" %>'
-                                            ForeColor='<%#Eval("isdesignapproved").ToString() == "True"? System.Drawing.Color.Green : System.Drawing.Color.Red %>'
-                                            Font-Bold="true">
-                                        </asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                             </Columns>

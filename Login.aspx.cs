@@ -73,18 +73,21 @@ public partial class Login : System.Web.UI.Page
                         Session["EmailID"] = dt.Rows[0]["EmailID"].ToString();
                         Session["Mobileno"] = dt.Rows[0]["MobileNo"].ToString();
                         Session["UserCode"] = dt.Rows[0]["UserCode"].ToString();
-
-                        string script = @"
-                            Swal.fire({
-                                icon: 'success',
-                                text: 'Login successfully..!!',
-                                showConfirmButton: false,
-                                timer: 2000,
-                                timerProgressBar: true
-                            }).then(function () {
-                                window.location.href = 'Admin/Dashboard.aspx';
-                            });";
-
+                        string url = "Admin/Dashboard.aspx";
+                        if (Session["Role"].ToString() == "Dealer")
+                        {
+                            url = "Admin/OrderHistory.aspx";
+                        }
+                        string script = string.Format(@"
+                                Swal.fire({{
+                                    icon: 'success',
+                                    text: 'Login successfully..!!',
+                                    showConfirmButton: false,
+                                    timer: 2000,
+                                    timerProgressBar: true
+                                }}).then(function () {{
+                                    window.location.href = '{0}';
+                                }});", url);
                         ClientScript.RegisterStartupScript(this.GetType(), "alert", script, true);
                     }
                 }

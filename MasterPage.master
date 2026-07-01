@@ -98,7 +98,7 @@
                             <span class="nav-text">Machine</span>
                         </a>
 
-                        <a href="/Admin/RawMaterialList.aspx" class="nav-link sub-link" id="RawMatTab" runat="server">
+                        <a href="/Admin/RawMaterialList.aspx" class="nav-link sub-link d-none" id="RawMatTab" runat="server">
                             <span class="nav-icon">
                                 <i class="bi bi-boxes"></i>
                             </span>
@@ -321,7 +321,7 @@
         function loadNotifications() {
             $.ajax({
                 type: "POST",
-                url: "/Dashboard.aspx/GetNotifications",
+                url: "/Admin/Dashboard.aspx/GetNotifications",
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function (response) {

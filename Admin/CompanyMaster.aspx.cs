@@ -327,11 +327,11 @@ public partial class CompanyMaster : System.Web.UI.Page
             con.Close();
             if (btnsave.Text == "Update")
             {
-                Session["message"] = "Company updated successfully.";
+                Session["message"] = "Sub-Dealer updated successfully.";
             }
             else
             {
-                Session["message"] = "Company created successfully.";
+                Session["message"] = "Sub-Dealer created successfully.";
             }
             Session["icon"] = "success";
             Session["time"] = "2000";

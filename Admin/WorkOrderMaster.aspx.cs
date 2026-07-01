@@ -432,10 +432,11 @@ public partial class WorkOrderMaster : System.Web.UI.Page
 
             if (Request.QueryString["OrderID"] != null)
             {
-                string query = @"UPDATE tbl_DealersOrderHDR SET OrderStatus='Order Approved',ApproveOrNotDate = GETDATE() WHERE ID = @OrderID ";
+                string query = @"UPDATE tbl_DealersOrderHDR SET OrderStatus='Order Approved',EstimatedDeliveryDate = @EstimatedDeliveryDate,ApproveOrNotDate = GETDATE() WHERE ID = @OrderID ";
 
                 SqlCommand cmds = new SqlCommand(query, con);
                 cmds.Parameters.AddWithValue("@OrderID", hdnVal.Value);
+                cmds.Parameters.AddWithValue("@EstimatedDeliveryDate", DeliveryDate);
                 cmds.ExecuteNonQuery();
 
                 string querys = @"UPDATE tbl_WorkOrderHdr SET PlaceOrderID=@OrderID WHERE ID =@ID";

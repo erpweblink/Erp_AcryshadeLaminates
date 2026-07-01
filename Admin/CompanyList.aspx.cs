@@ -77,7 +77,7 @@ public partial class CompanyList : System.Web.UI.Page
             Cmd.ExecuteNonQuery();
             con.Close();
 
-            Session["message"] = "Company deleted successfully.";
+            Session["message"] = "Sub-Dealer deleted successfully.";
             Session["icon"] = "success";
             Session["time"] = "2000";
             Session["url"] = "/Admin/CompanyList.aspx";

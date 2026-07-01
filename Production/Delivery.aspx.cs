@@ -101,6 +101,38 @@ public partial class Delivery : System.Web.UI.Page
                 Cmd.ExecuteNonQuery();
                 con.Close();
 
+                int PalcOrderId = 0;
+                string getStage2 = @"SELECT ISNULL(PlaceOrderID,0) as PlaceOrder FROM tbl_WorkOrderHDR
+                           WHERE ID = @WoId ";
+
+                using (SqlCommand cmd = new SqlCommand(getStage2, con))
+                {
+                    cmd.Parameters.AddWithValue("@WoId", args[0]);
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        if (dr.Read())
+                        {
+                            PalcOrderId = Convert.ToInt32(dr["PlaceOrder"]);
+                        }
+                    }
+                }
+                if (PalcOrderId != 0)
+                {
+                    string querys = @"
+                                UPDATE tbl_DealersOrderHDR
+                                SET DispatchedStatus = @DispatchedStatus
+                                WHERE ID = @Id";
+
+                    using (SqlCommand cmds = new SqlCommand(querys, con))
+                    {
+                        cmds.Parameters.AddWithValue("@DispatchedStatus", "Order Dispatched");
+                        cmds.Parameters.AddWithValue("@Id", PalcOrderId);
+
+                        cmds.ExecuteNonQuery();
+                    }
+                }
+
+
                 Session["message"] = "Work Order Dispatched successfully.";
                 Session["icon"] = "success";
                 Session["time"] = "2000";
