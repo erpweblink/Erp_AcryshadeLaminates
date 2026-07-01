@@ -73,11 +73,13 @@ public partial class Login : System.Web.UI.Page
                         Session["EmailID"] = dt.Rows[0]["EmailID"].ToString();
                         Session["Mobileno"] = dt.Rows[0]["MobileNo"].ToString();
                         Session["UserCode"] = dt.Rows[0]["UserCode"].ToString();
+
                         string url = "Admin/Dashboard.aspx";
                         if (Session["Role"].ToString() == "Dealer")
                         {
                             url = "Admin/OrderHistory.aspx";
                         }
+
                         string script = string.Format(@"
                                 Swal.fire({{
                                     icon: 'success',
