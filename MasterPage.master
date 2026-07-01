@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Designed for Acryshade Laminates Pvt. Ltd.">
-     <link rel="icon" type="image/png" href="../Content/assets/images/CompanyLogo/CompLogo.jpg">
+    <link rel="icon" type="image/png" href="../Content/assets/images/CompanyLogo/CompLogo.jpg">
     <title>Acryshade Laminates</title>
 
     <link rel="stylesheet" href="../Content/assets/css/bootstrap.min.css">
@@ -258,7 +258,7 @@
                                 data-bs-toggle="dropdown"
                                 data-bs-auto-close="outside">
 
-                                <i class="bi bi-bell-fill fs-5"></i>
+                                <i id="bellIcon" class="bi bi-bell-fill fs-5"></i>
 
                                 <span id="notificationCount"
                                     class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0
@@ -331,7 +331,30 @@
                     const list = document.getElementById('notificationList');
                     const count = document.getElementById('notificationCount');
 
-                    count.innerText = data.length || '0';
+                    const bell = document.getElementById("bellIcon");
+
+                    const currentCount = data.length || 0;
+                    count.innerText = currentCount;
+
+                    // 🔴 Continuous alert only based on count
+                    if (bell) {
+                        if (currentCount > 0) {
+                            bell.classList.add("bell-alert");
+                        } else {
+                            bell.classList.remove("bell-alert");
+                        }
+                    }
+
+                    // 🔔 Optional: shake ONLY when new notifications arrive
+                    if (bell && currentCount > 0) {
+                        bell.classList.remove("bell-animate");
+
+                        // restart animation
+                        void bell.offsetWidth;
+
+                        bell.classList.add("bell-animate");
+                    }
+
 
                     let html = '';
 
@@ -382,7 +405,7 @@
             var orderId = $(this).data('orderid');
 
             window.location.href =
-                'Notifications.aspx?OrderID=' +orderId;
+                'Notifications.aspx?OrderID=' + orderId;
         });
 
         document.addEventListener('DOMContentLoaded', function () {

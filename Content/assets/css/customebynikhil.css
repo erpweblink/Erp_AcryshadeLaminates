@@ -96,11 +96,55 @@
     .notification-body {
         max-height: 70vh;
     }
-}}
+}
 
 @media (max-width: 576px) {
     .dropdown-menu-end {
         right: 0 !important;
         left: 0 !important;
     }
+}
+
+
+@keyframes bellShake {
+    0% {
+        transform: rotate(0);
+    }
+
+    15% {
+        transform: rotate(15deg);
+    }
+
+    30% {
+        transform: rotate(-15deg);
+    }
+
+    45% {
+        transform: rotate(10deg);
+    }
+
+    60% {
+        transform: rotate(-10deg);
+    }
+
+    75% {
+        transform: rotate(5deg);
+    }
+
+    100% {
+        transform: rotate(0);
+    }
+}
+
+/* single shake */
+.bell-animate {
+    display: inline-block;
+    animation: bellShake 1.6s ease-in-out;
+}
+
+/* 🔴 continuous ringing */
+.bell-alert {
+    display: inline-block;
+    animation: bellShake 1.6s ease-in-out infinite;
+    transform-origin: top center;
 }
