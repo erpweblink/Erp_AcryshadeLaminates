@@ -850,6 +850,35 @@
             }
         }
 
+        function ValidateTalRef() {
+
+            var txt = document.getElementById('<%= txttallyref.ClientID %>');
+            var tallyRef = txt.value.trim();
+
+            if (tallyRef == "")
+                return;
+
+            $.ajax({
+                type: "POST",
+                url: "WorkOrderMaster.aspx/ValidateTallyRef",
+                data: JSON.stringify({ TallyNo: tallyRef }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+
+                    if (response.d == true) {
+                        alert("Tally Reference Number already exists.");
+                        txt.value = "";
+                        txt.focus();
+                    }
+
+                },
+                error: function (xhr) {
+                    console.log(xhr.responseText);
+                }
+            });
+        }
+
         function GetSQFeet(val) {
             var row = $(val).closest("tr");
 

@@ -492,7 +492,7 @@ public partial class WorkOrderMaster : System.Web.UI.Page
             SELECT DISTINCT ID, FullName
             FROM tbl_UserMaster
             WHERE Type='Authorized'
-              AND UserRole='Dealers'
+              AND UserRole='Dealer'
               AND IsDeleted=0
               AND FullName LIKE '%' + @Search + '%'";
 
@@ -747,27 +747,29 @@ public partial class WorkOrderMaster : System.Web.UI.Page
         }
     }
 
-    protected void txttallyref_TextChanged(object sender, EventArgs e)
+    [WebMethod]
+    public static bool ValidateTallyRef(string TallyNo)
     {
-        if (!string.IsNullOrWhiteSpace(txttallyref.Text.Trim()))
+        if (string.IsNullOrWhiteSpace(TallyNo))
+            return false;
+
+        using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
         {
-            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
-            {
-                con.Open();
+            con.Open();
 
-                SqlCommand checkCmd = new SqlCommand(@"SELECT COUNT(*) FROM tbl_WorkOrderHdr
-                  WHERE IsDeleted = 0 AND UPPER(REPLACE(LTRIM(RTRIM(TallyRefNo)), ' ', '')) = UPPER(REPLACE(LTRIM(RTRIM(@TallyRef)), ' ', ''))", con);
-                checkCmd.Parameters.AddWithValue("@TallyRef", txttallyref.Text.Trim());
+            SqlCommand cmd = new SqlCommand(@"
+            SELECT COUNT(*)
+            FROM tbl_WorkOrderHdr
+            WHERE IsDeleted = 0
+            AND UPPER(REPLACE(LTRIM(RTRIM(TallyRefNo)), ' ', '')) =
+                UPPER(REPLACE(LTRIM(RTRIM(@TallyRef)), ' ', ''))", con);
 
-                int count = Convert.ToInt32(checkCmd.ExecuteScalar());
-                if (count != 0)
-                {
-                    ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", "alert('Tally Referance Number is already exists..');", true);
-                    txttallyref.Text = "";
-                }
-            }
+            cmd.Parameters.AddWithValue("@TallyRef", TallyNo.Trim());
+
+            int count = Convert.ToInt32(cmd.ExecuteScalar());
+
+            return count > 0;
         }
-
     }
 }
 
