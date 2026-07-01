@@ -56,6 +56,11 @@
             justify-content: center;
             align-items: center;
         }
+        /* optional styling for link h2 */
+        .product-link a {
+            text-decoration: none;
+            font-size: 16px;
+        }
 
         /* ===== SPINNER ===== */
         .loader-ring {
@@ -275,11 +280,6 @@
                 </div>
             </div>
 
-            <div class="col-md-4 col-12 d-none">
-                <asp:Label ID="lblMCImage" runat="server" Font-Bold="true" CssClass="form-label">Attach Order <span class="text-danger mt-1">(.pdf)</span>:</asp:Label>
-                <asp:FileUpload ID="FileMCImage" runat="server" CssClass="form-control" accept=".pdf" onchange="validateFileSize(this)" />
-                <small class="text-danger d-block mt-1">Maximum file size: 50 MB</small>
-            </div>
             <!-- Order Header -->
 
             <div class="container-fluid py-4">
@@ -295,7 +295,7 @@
                                 <p class="text-muted mb-0">
                                     Review products, upload custom products and confirm your order.
                                 </p>
-                                <a href="/Admin/PlaceOrder.aspx">Back to Products </a>
+                                <a class="product-link" href="/Admin/PlaceOrder.aspx"><i>Back to Products </i></a>
                             </div>
 
                             <div>
@@ -309,6 +309,57 @@
                 </div>
 
                 <div class="row">
+                    <!-- Order Summary -->
+                    <div class="col-lg-3">
+                        <div class="card border-0 shadow sticky-top"
+                            style="top: 20px;">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-receipt"></i>
+                                    Order Summary
+                                </h5>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Products</span>
+                                        <strong id="summaryProducts">0</strong>
+                                    </div>
+                                </div>
+                                <hr />
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Quantity</span>
+                                        <strong id="summaryQty">0</strong>
+                                    </div>
+                                </div>
+                                <hr />
+                                <div>
+                                    <asp:Label ID="lblMCImage" runat="server" CssClass="form-label">Attach Order <span class="text-danger mt-1">(.pdf)</span>:</asp:Label>
+                                    <asp:FileUpload ID="FileMCImage" runat="server" CssClass="form-control" accept=".pdf" />
+                                    <small class="text-danger d-block mt-1">Maximum file size: 50 MB</small>
+                                </div>
+                                <br />
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i>
+                                    Please verify all artwork, sizes and quantities before submitting the order.
+                                </div>
+                                <div class="d-grid">
+                                    <asp:LinkButton
+                                        ID="btnsave"
+                                        runat="server"
+                                        CssClass="btn btn-success btn-lg shadow"
+                                        OnClick="btnsave_Click" OnClientClick="showLoader();">
+
+                     <i class="bi bi-cart-check-fill"></i>
+                     Place Order
+                                    </asp:LinkButton>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="col-lg-9">
                         <div class="card border-0 shadow">
                             <div class="card-header py-3">
@@ -341,51 +392,6 @@
                         </div>
                     </div>
 
-                    <!-- Order Summary -->
-                    <div class="col-lg-3">
-                        <div class="card border-0 shadow sticky-top"
-                            style="top: 20px;">
-                            <div class="card-header bg-success text-white">
-                                <h5 class="mb-0">
-                                    <i class="bi bi-receipt"></i>
-                                    Order Summary
-                                </h5>
-                            </div>
-
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Total Products</span>
-                                        <strong id="summaryProducts">0</strong>
-                                    </div>
-                                </div>
-                                <hr />
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Total Quantity</span>
-                                        <strong id="summaryQty">0</strong>
-                                    </div>
-                                </div>
-                                <hr />
-                                <div class="alert alert-info">
-                                    <i class="bi bi-info-circle"></i>
-                                    Please verify all artwork, sizes and quantities before submitting the order.
-                                </div>
-
-                                <div class="d-grid">
-                                    <asp:LinkButton
-                                        ID="btnsave"
-                                        runat="server"
-                                        CssClass="btn btn-success btn-lg shadow"
-                                        OnClick="btnsave_Click"  OnClientClick="showLoader();">
-
-                                        <i class="bi bi-cart-check-fill"></i>
-                                        Place Order
-                                    </asp:LinkButton>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </ContentTemplate>

@@ -84,8 +84,8 @@ public partial class WorkOrdrForDesign : System.Web.UI.Page
         if (e.CommandName == "RowPO")
         {
             string ID = e.CommandArgument.ToString();
-            string fileName = Path.GetFileName(e.CommandArgument.ToString());
-            Response.Redirect("~/Content/WOAttachedFiles/" + fileName);
+           
+            Response.Redirect(ID.Replace("~/","/Content/"));
         }
     }
 

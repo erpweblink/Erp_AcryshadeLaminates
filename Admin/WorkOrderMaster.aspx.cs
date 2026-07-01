@@ -104,6 +104,16 @@ public partial class WorkOrderMaster : System.Web.UI.Page
             txtShipPinCode.Text = dt.Rows[0]["ShippingPincode"].ToString();
             txtShipPinCode.ReadOnly = true;
 
+            if (!string.IsNullOrWhiteSpace(dt.Rows[0]["AttachmentPath"].ToString()))
+            {
+                lblPdfUrl.HRef = ResolveUrl(dt.Rows[0]["AttachmentPath"].ToString().Replace("~/", "/Content/"));
+                lblPdfUrl.Visible = true;
+            }
+            else
+            {
+                lblPdfUrl.Visible = false;
+            }
+
             DateTime dt2 = Convert.ToDateTime(dt.Rows[0]["DeliveryDate"]);
             txtDeliveryDate.Text = dt2.ToString("yyyy-MM-dd");
 
@@ -151,7 +161,7 @@ public partial class WorkOrderMaster : System.Web.UI.Page
         DataTable dt = new DataTable();
         SqlDataAdapter cmd = new SqlDataAdapter(@"SELECT DH.ID,OrderID,DH.DealerID as DealerID,UM.FullName as DealerName,
                         UM.BillAddress as BillAddress,
-                        UM.GstNo as BillGST,UM.BillPinCode
+                        UM.GstNo as BillGST,UM.BillPinCode,DH.InvoicePath as AttachedPath
                         FROM tbl_DealersOrderHDR DH
                         INNER JOIN tbl_DealersOrderDTLs DD 
                         ON DD.HeaderID = DH.ID
@@ -174,7 +184,15 @@ public partial class WorkOrderMaster : System.Web.UI.Page
             txtrefno.Text = dt.Rows[0]["OrderID"].ToString();
             txtBillGst.Text = dt.Rows[0]["BillGST"].ToString();
             txtBillPinCode.Text = dt.Rows[0]["BillPinCode"].ToString();
-
+            if (!string.IsNullOrWhiteSpace(dt.Rows[0]["AttachedPath"].ToString()))
+            {
+                lblPdfUrl.HRef = ResolveUrl(dt.Rows[0]["AttachedPath"].ToString().Replace("~/", "/Content/"));
+                lblPdfUrl.Visible = true;
+            }
+            else
+            {
+                lblPdfUrl.Visible = false;
+            }
 
             DataTable dts = new DataTable();
             SqlDataAdapter cmds = new SqlDataAdapter("Select * from tbl_DealersOrderDTLs WHERE HeaderID =@HeaderID ", con);
@@ -317,10 +335,20 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                 else
                 {
                     DataTable dtImage = new DataTable();
+                    SqlDataAdapter da;
+                    if (Request.QueryString["OrderID"] != null)
+                    {
+                        da = new SqlDataAdapter(
+                            "SELECT InvoicePath as AttachmentPath FROM tbl_DealersOrderHDR WHERE ID=@Id",
+                            con);
+                    }
+                    else
+                    {
+                        da = new SqlDataAdapter(
+                            "SELECT AttachmentPath FROM tbl_WorkOrderHdr WHERE Id=@Id",
+                            con);
+                    }
 
-                    SqlDataAdapter da = new SqlDataAdapter(
-                        "SELECT AttachmentPath FROM tbl_WorkOrderHdr WHERE Id=@Id",
-                        con);
 
                     da.SelectCommand.Parameters.AddWithValue("@Id", Convert.ToInt32(string.IsNullOrWhiteSpace(hdnVal.Value) ? "0" : hdnVal.Value));
 
@@ -383,7 +411,7 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                     cmd.Parameters.AddWithValue("@ProductName", string.IsNullOrWhiteSpace(ProductName[i]) ? "" : ProductName[i]);
                     cmd.Parameters.AddWithValue("@PartNo", "0");
                     cmd.Parameters.AddWithValue("@Type", string.IsNullOrWhiteSpace(Type[i]) ? "0" : Type[i]);
-                    cmd.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(Description[i]) ? Type[i]+"-N/A" : Description[i]);
+                    cmd.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(Description[i]) ? Type[i] + "-N/A" : Description[i]);
                     cmd.Parameters.AddWithValue("@Size", string.IsNullOrWhiteSpace(Size[i]) ? "0" : Size[i]);
                     cmd.Parameters.AddWithValue("@Qty", string.IsNullOrWhiteSpace(Qty[i]) ? "0" : Qty[i]);
                     cmd.Parameters.AddWithValue("@SqFeet", string.IsNullOrWhiteSpace(SqFeet[i]) ? "0" : SqFeet[i]);

@@ -65,7 +65,7 @@ public partial class OrderHistory : System.Web.UI.Page
                 END AS CurrentStatus,
                 h.EstimatedDeliveryDate,
                 d.ProductID, d.ProductName, d.ProductType, d.Size,
-                d.Qty, d.ImagePathName,d.ProductNote
+                d.Qty, d.ImagePathName,d.ProductNote,h.InvoicePath as AttachedPath
             FROM tbl_DealersOrderHDR h
             INNER JOIN tbl_DealersOrderDTLs d ON h.ID = d.HeaderID
             LEFT JOIN tbl_WorkOrderHdr WH ON h.ID = WH.PlaceOrderID
@@ -91,6 +91,7 @@ public partial class OrderHistory : System.Web.UI.Page
                     orders[id]["DealerID"] = dr["DealerID"];
                     orders[id]["CreatedDate"] = Convert.ToDateTime(dr["CreatedDate"]).ToString("dd MMM yyyy");
                     orders[id]["OrderStatus"] = dr["CurrentStatus"].ToString();
+                    orders[id]["AttachedPath"] = dr["AttachedPath"].ToString();
                     orders[id]["EstimatedDeliveryDate"] =
                         dr["EstimatedDeliveryDate"] == DBNull.Value
                         ? null

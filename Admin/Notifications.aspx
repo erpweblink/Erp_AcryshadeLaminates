@@ -9,45 +9,18 @@
             justify-content: space-between;
             align-items: center;
             gap: 10px;
-            flex-wrap: wrap; /* allows responsiveness */
+            flex-wrap: wrap;
         }
 
-            /* remove default margin issues */
             .order-headerss h2 {
                 margin: 0;
                 white-space: nowrap;
             }
 
-        /* optional styling for link h2 */
         .product-link a {
             text-decoration: none;
             font-size: 18px;
         }
-
-        /* Mobile responsiveness */
-        @media (max-width: 600px) {
-            .order-headerss {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-                .order-headerss h2 {
-                    white-space: normal;
-                }
-        }
-
-        .order-details {
-            display: none;
-            margin-top: 10px;
-        }
-
-        .order-header {
-            cursor: pointer;
-        }
-
-            .order-header:hover {
-                background: #f8f8f8;
-            }
 
         .order-container {
             width: 95%;
@@ -60,7 +33,7 @@
             border-radius: 10px;
             margin-bottom: 20px;
             padding: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 10px rgb(0 0 0 / 15%);
         }
 
         .order-header {
@@ -68,29 +41,48 @@
             justify-content: space-between;
             align-items: center;
             gap: 15px;
+            flex-wrap: wrap;
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
             margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+            .order-header:hover {
+                background: #f8f8f8;
+            }
+
+            .order-header > div:nth-child(2) {
+                flex: 1;
+                min-width: 180px;
+            }
+
+        .order-details {
+            display: none;
+            margin-top: 10px;
         }
 
         .order-status {
-            padding: 4px 10px;
-            border-radius: 17px;
-            font-size: 18px;
-            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: transparent;
+            padding: 0;
+            color: inherit;
         }
 
-        .status-placed {
-            background: #ff9800;
-        }
+            .order-status a {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-decoration: none;
+            }
 
-        .status-shipped {
-            background: #2196f3;
-        }
-
-        .status-delivered {
-            background: #4caf50;
-        }
+            .order-status i {
+                font-size: 28px;
+            }
 
         .products-container {
             display: grid;
@@ -99,18 +91,15 @@
             margin-top: 10px;
         }
 
-
         .product-row {
             display: flex;
             align-items: center;
+            gap: 15px;
             border: 1px solid #f1f1f1;
             border-radius: 8px;
             padding: 10px;
             background: #fafafa;
-        }
-
-        .product-row {
-            transition: all 0.2s ease;
+            transition: all .2s ease;
             cursor: pointer;
             border-left: 4px solid transparent;
         }
@@ -118,8 +107,7 @@
             .product-row:hover {
                 transform: scale(1.02);
                 background: #eef6ff;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-                border-color: #cfe3ff;
+                box-shadow: 0 4px 12px rgba(0,0,0,.12);
                 border-left: 4px solid #2196f3;
             }
 
@@ -128,12 +116,12 @@
                 }
 
             .product-row img {
-                width: 70px;
-                height: 70px;
+                width: 80px;
+                height: 80px;
                 object-fit: cover;
                 border-radius: 6px;
-                margin-right: 15px;
                 border: 1px solid #ddd;
+                flex-shrink: 0;
             }
 
         .product-info {
@@ -143,11 +131,12 @@
         .product-name {
             font-weight: bold;
             margin-bottom: 5px;
+            word-break: break-word;
         }
 
         .product-meta {
             font-size: 13px;
-            color: gray;
+            color: #666;
         }
 
         .delivery {
@@ -163,9 +152,6 @@
             background: #f9f9f9;
             padding: 6px 8px;
             border-radius: 5px;
-        }
-
-        .product-note {
             max-height: 60px;
             overflow: hidden;
         }
@@ -180,7 +166,84 @@
             margin-right: 10px;
         }
 
-        @media (max-width: 768px) {
+        .btn-accept,
+        .btn-reject {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 110px;
+            height: 42px;
+            padding: 0 18px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .btn-accept {
+            background: #198754;
+            color: #fff;
+        }
+
+            .btn-accept:hover {
+                background: #157347;
+            }
+
+        .btn-reject {
+            background: #dc3545;
+            color: #fff;
+        }
+
+            .btn-reject:hover {
+                background: #bb2d3b;
+            }
+
+        /* Image Modal */
+
+        .img-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+        }
+
+            .img-modal img {
+                max-width: 90%;
+                max-height: 90%;
+                border-radius: 12px;
+                box-shadow: 0 0 30px rgba(0,0,0,.5);
+            }
+
+        /* =======================
+   Tablet
+======================= */
+
+        @media (max-width:992px) {
+
+            .products-container {
+                grid-template-columns: 1fr;
+            }
+
+            .order-status {
+                width: 100%;
+                justify-content: flex-start;
+                margin-top: 10px;
+            }
+
+            .order-header {
+                align-items: flex-start;
+            }
+        }
+
+        /* =======================
+   Mobile
+======================= */
+
+        @media (max-width:768px) {
 
             .order-container {
                 width: 100%;
@@ -194,106 +257,110 @@
             .order-header {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 10px;
             }
+
+                .order-header > div:nth-child(2) {
+                    width: 100%;
+                }
 
             .order-status {
-                font-size: 14px;
-                padding: 6px 12px;
-                border-radius: 15px;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 8px;
             }
 
-            .products-container {
-                grid-template-columns: 1fr;
+                .order-status a {
+                    width: 40px;
+                    height: 40px;
+                }
+
+            .btn-accept,
+            .btn-reject {
+                flex: 1;
+                min-width: auto;
             }
 
             .product-row {
-                flex-direction: column;
-                text-align: center;
+                align-items: flex-start;
             }
 
                 .product-row img {
-                    margin-right: 0;
-                    margin-bottom: 10px;
-                    width: 90px;
-                    height: 90px;
+                    width: 70px;
+                    height: 70px;
                 }
 
-            .product-info {
+            .product-name {
+                font-size: 15px;
+            }
+
+            .product-meta,
+            .product-note {
+                font-size: 12px;
+            }
+        }
+
+        /* =======================
+   Small Mobile
+======================= */
+
+        @media (max-width:480px) {
+
+            .order-container {
+                padding: 8px;
+            }
+
+            .order-card {
+                padding: 10px;
+            }
+
+            .order-header b {
+                font-size: 16px;
+            }
+
+            .order-header small {
+                font-size: 12px;
+            }
+
+            .order-status {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+                .order-status a {
+                    align-self: center;
+                    margin-bottom: 8px;
+                }
+
+            .btn-accept,
+            .btn-reject {
                 width: 100%;
             }
+
+            .products-container {
+                gap: 10px;
+            }
+
+            .product-row {
+                padding: 8px;
+            }
+
+                .product-row img {
+                    width: 60px;
+                    height: 60px;
+                }
 
             .product-name {
                 font-size: 14px;
             }
 
             .product-meta {
-                font-size: 12px;
-            }
-        }
-
-        .btn-accept {
-            background: #198754;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: .2s;
-        }
-
-            .btn-accept:hover {
-                background: #157347;
+                font-size: 11px;
             }
 
-        .btn-reject {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: .2s;
-        }
-
-            .btn-reject:hover {
-                background: #bb2d3b;
-            }
-
-        /* ===== MODAL ===== */
-        .img-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.9);
-            justify-content: center;
-            align-items: center;
-            z-index: 99999;
-        }
-
-            .img-modal img {
-                max-width: 90%;
-                max-height: 90%;
-                border-radius: 14px;
-                box-shadow: 0 0 40px rgba(0,0,0,0.6);
-            }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
-            .product-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .product-card img {
-                height: 150px;
-            }
-        }
-
-        @media(max-width:768px) {
-
-            .btn-accept,
-            .btn-reject {
-                flex: 1;
+            .product-note {
+                font-size: 11px;
             }
         }
     </style>
@@ -348,7 +415,22 @@
                              <small>Placed on: ${o.CreatedDate}</small>
                          </div>
 
-                         <div class="order-status">
+                        <div class="order-status">
+
+                            <a href="${o.AttachedPath ? '/Content/' + o.AttachedPath.replace('~/', '') : '#'}"
+                               target="_blank"
+                               onclick="event.stopPropagation();"
+                               title="${o.AttachedPath ? 'View Invoice' : 'No PDF Available'}"
+                               style="margin-right:10px;">
+
+                                <i class="bi bi-file-pdf"
+                                   style="font-size:26px;
+                                          color:${o.AttachedPath ? '#0d6efd' : '#555'};
+                                          cursor:${o.AttachedPath ? 'pointer' : 'default'};">
+                                </i>
+
+                            </a>
+
                             <button class="btn-accept"
                                     onclick="event.preventDefault();event.stopPropagation();acceptOrder('${o.EnID}')">
                                 ✓ Approve
@@ -358,7 +440,8 @@
                                     onclick="event.stopPropagation();rejectOrder('${o.EnID}')">
                                 ✕ Reject
                             </button>
-                         </div>
+
+                        </div>
                      </div>
 
                      <div id="details_${o.ID}" class="order-details">

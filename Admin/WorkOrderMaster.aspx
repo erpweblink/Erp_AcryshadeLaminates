@@ -1034,6 +1034,11 @@
                             <asp:Label ID="lblMCImage" runat="server" Font-Bold="true" CssClass="form-label">Attach Order <span class="text-danger mt-1">(.pdf)</span>:</asp:Label>
                             <asp:FileUpload ID="FileMCImage" runat="server" CssClass="form-control" accept=".pdf" onchange="validateFileSize(this)" />
                             <small class="text-danger d-block mt-1">Maximum file size: 50 MB</small>
+                            <center>
+                                <a id="lblPdfUrl" runat="server" visible="false" title="View Invoice" style="margin-right: 10px;">
+                                    <i class="bi bi-file-pdf" style="font-size: 26px; color: #0d6efd; cursor: pointer;"></i>
+                                </a>
+                            </center>
                         </div>
                     </div>
                     <br />

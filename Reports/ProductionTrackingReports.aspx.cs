@@ -12,9 +12,33 @@ public partial class ProductionTrackingReports : System.Web.UI.Page
     CommonCls objcls = new CommonCls();
     protected void Page_Load(object sender, EventArgs e)
     {
-        if (!IsPostBack)
+        if (Session["UserCode"] == null)
         {
-            FillGrid();
+            Response.Redirect("../Login.aspx");
+        }
+        else
+        {
+            //Check if you has access to the page of not
+            {
+                string username = Session["ID"].ToString();
+                using (SqlConnection cons = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
+                {
+                    string query = @"SELECT PageAccess FROM tbl_UserRoleAuthorization WHERE UserID = @UserID AND PageName = 'ProductionTrackingReports.aspx'";
+                    SqlCommand cmds = new SqlCommand(query, cons);
+                    cmds.Parameters.AddWithValue("@UserID", username);
+                    cons.Open();
+                    object result = cmds.ExecuteScalar();
+                    if (result == null || result.ToString() != "True")
+                    {
+                        Response.Redirect("/AccessDenied.aspx");
+                    }
+                }
+            }
+
+            if (!IsPostBack)
+            {
+                FillGrid();
+            }
         }
     }
 

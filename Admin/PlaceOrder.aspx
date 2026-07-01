@@ -2,7 +2,7 @@
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.9/dist/sweetalert2.min.js"></script>
 
@@ -91,6 +91,12 @@
             align-items: center;
             gap: 10px;
             margin-left: auto;
+        }
+
+        /* optional styling for link h2 */
+        .product-link a {
+            text-decoration: none;
+            font-size: 16px;
         }
 
         /* ===== SEARCH ===== */
@@ -532,8 +538,8 @@
                 <div>
                     <h2 class="fw-bold" style="margin: 0; white-space: nowrap;">Product List</h2>
                     <div style="margin-top: 15px;">
-                        <h6 style="margin: 0;">
-                            <a href="/Admin/OrderHistory.aspx">My Orders</a>
+                        <h6 class="product-link">
+                            <a href="/Admin/OrderHistory.aspx"><i>My Orders</i></a>
                         </h6>
                     </div>
                 </div>

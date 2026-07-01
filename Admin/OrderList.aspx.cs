@@ -145,6 +145,36 @@ public partial class OrderList : System.Web.UI.Page
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@Dealer", Session["ID"].ToString());
                 cmd.Parameters.AddWithValue("@SP_Action", "PlaceorderHDR");
+
+                HttpPostedFile filess = null;
+
+                if (files.Count > 0)
+                {
+                    filess = files[0];
+                }
+
+                if (filess != null && filess.ContentLength > 0)
+                {
+                    string fileName = Guid.NewGuid() + "_" + Path.GetFileName(filess.FileName);
+
+                    string folderPath = Server.MapPath("~/Content/DealersInvoice/");
+
+                    if (!Directory.Exists(folderPath))
+                    {
+                        Directory.CreateDirectory(folderPath);
+                    }
+
+                    string fullPath = Path.Combine(folderPath, fileName);
+
+                    FileMCImage.SaveAs(fullPath);
+
+                    cmd.Parameters.AddWithValue("@UploadedImage", "~/DealersInvoice/" + fileName);
+
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@UploadedImage", DBNull.Value);
+                }
                 cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
                 cmd.ExecuteNonQuery();
                 Id = Convert.ToInt32(cmd.Parameters["@Result"].Value);
@@ -190,7 +220,7 @@ public partial class OrderList : System.Web.UI.Page
 
                         string fullPath = Path.Combine(folderPath, fileName);
 
-                        SaveCompressedImage(file, fullPath, quality: 60, maxWidth: 800);
+                        //  SaveCompressedImage(file, fullPath, quality: 60, maxWidth: 800);
 
 
                         cmd.Parameters.AddWithValue(

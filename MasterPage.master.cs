@@ -10,6 +10,10 @@ public partial class MasterPage : System.Web.UI.MasterPage
     {
         if (!IsPostBack)
         {
+            if (Session["Role"].ToString() == "Admin")
+            {
+                divNoti.Visible = true;
+            }
             UserNameShow();
             PageAuthorization();
         }
@@ -206,7 +210,13 @@ public partial class MasterPage : System.Web.UI.MasterPage
                         WOPackTab.Visible = PageAccess == "True" ? true : false;
                     }
 
-                    if (AssMCTab.Visible == false && DesAppTab.Visible == false && RecWOTab.Visible == false && WOProdTab.Visible == false && WOProd1Tab.Visible == false && WOPackTab.Visible == false)
+                    if (MenuName == "Delivery.aspx")
+                    {
+                        string PageAccess = row["PageAccess"].ToString();
+                        WODelTab.Visible = PageAccess == "True" ? true : false;
+                    }
+
+                    if (AssMCTab.Visible == false && DesAppTab.Visible == false && RecWOTab.Visible == false && WOProdTab.Visible == false && WOProd1Tab.Visible == false && WOPackTab.Visible == false && WODelTab.Visible == false)
                     {
                         ProductionTab.Visible = false;
                     }

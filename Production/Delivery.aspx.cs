@@ -31,7 +31,7 @@ public partial class Delivery : System.Web.UI.Page
                     string username = Session["ID"].ToString();
                     using (SqlConnection cons = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
                     {
-                        string query = @"SELECT PageAccess FROM tbl_UserRoleAuthorization WHERE UserID = @UserID AND PageName = 'AssignWorkOrder.aspx'";
+                        string query = @"SELECT PageAccess FROM tbl_UserRoleAuthorization WHERE UserID = @UserID AND PageName = 'Delivery.aspx'";
                         SqlCommand cmds = new SqlCommand(query, cons);
                         cmds.Parameters.AddWithValue("@UserID", username);
                         cons.Open();

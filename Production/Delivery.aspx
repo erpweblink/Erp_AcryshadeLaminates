@@ -200,7 +200,7 @@
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Status" ItemStyle-HorizontalAlign="Center" HeaderStyle-Width="160px">
                                     <ItemTemplate>
-                                        <asp:LinkButton ID="lblVal" runat="server" Enabled='<%# Eval("IsAllCompleted").ToString() == "True" ? false:true %>'
+                                        <asp:LinkButton ID="lblVal" runat="server" 
                                             Visible='<%# string.IsNullOrWhiteSpace(Eval("IsAllCompleted").ToString()) ? true : true %>'
                                             Text='<%#
                                                     Eval("IsAllCompleted").ToString() == "True" ? "Delivered" :

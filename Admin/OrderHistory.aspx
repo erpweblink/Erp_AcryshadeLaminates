@@ -21,7 +21,7 @@
         /* optional styling for link h2 */
         .product-link a {
             text-decoration: none;
-            font-size: 18px;
+            font-size: 16px;
         }
 
         /* Mobile responsiveness */
@@ -36,108 +36,161 @@
                 }
         }
 
-        .order-details {
-            display: none;
-            margin-top: 10px;
-        }
-
-        .order-header {
-            cursor: pointer;
-        }
-
-            .order-header:hover {
-                background: #f8f8f8;
-            }
-
         .order-container {
-            width: 95%;
+            width: min(1200px,95%);
             margin: auto;
             padding: 20px;
         }
 
         .order-card {
             background: #fff;
-            border-radius: 10px;
+            border-radius: 14px;
             margin-bottom: 20px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            padding: 18px;
+            box-shadow: 0 8px 20px rgba(0,0,0,.08);
+            transition: .25s;
         }
+
+            .order-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 15px 35px rgba(0,0,0,.12);
+            }
 
         .order-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
             gap: 20px;
+            flex-wrap: wrap;
             border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
+            padding-bottom: 15px;
+            cursor: pointer;
+        }
+
+            .order-header:hover {
+                background: #fafafa;
+            }
+
+            .order-header > div:nth-child(2) {
+                flex: 1;
+            }
+
+        .order-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
         }
 
         .order-status {
-            padding: 4px 10px;
-            border-radius: 17px;
-            font-size: 18px;
             color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 15px;
+            border-radius: 40px;
+            white-space: nowrap;
         }
 
         .status-placed {
             background: #ff9800;
         }
 
-        .status-shipped {
-            background: #2196f3;
+        .status-delivered {
+            background: #198754;
         }
 
-        .status-delivered {
-            background: #4caf50;
+        .status-shipped {
+            background: #0d6efd;
         }
 
         .status-rejected {
-            background: #ef0707;
+            background: #dc3545;
+        }
+
+        .pdf-link {
+            width: 42px;
+            height: 42px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            background: #f4f6f9;
+            transition: .2s;
+            text-decoration: none;
+        }
+
+            .pdf-link:hover {
+                background: #dbe9ff;
+                transform: scale(1.08);
+            }
+
+            .pdf-link i {
+                font-size: 24px;
+            }
+
+        .progress-ring {
+            position: relative;
+            width: 46px;
+            height: 46px;
+        }
+
+            .progress-ring svg {
+                width: 46px;
+                height: 46px;
+                transform: rotate(-90deg);
+            }
+
+        .progress-bg {
+            stroke: #ddd;
+            stroke-width: 4;
+            fill: none;
+        }
+
+        .progress-fill {
+            stroke-width: 4;
+            fill: none;
+            stroke-linecap: round;
+        }
+
+        .progress-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            font-weight: bold;
         }
 
         .products-container {
+            margin-top: 18px;
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 10px;
+            grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
+            gap: 18px;
         }
-
 
         .product-row {
             display: flex;
-            align-items: center;
-            border: 1px solid #f1f1f1;
-            border-radius: 8px;
-            padding: 10px;
-            background: #fafafa;
-        }
-
-        .product-row {
-            transition: all 0.2s ease;
-            cursor: pointer;
-            border-left: 4px solid transparent;
+            gap: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            transition: .25s;
+            background: #fff;
         }
 
             .product-row:hover {
-                transform: scale(1.02);
-                background: #eef6ff;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-                border-color: #cfe3ff;
-                border-left: 4px solid #2196f3;
+                transform: translateY(-3px);
+                box-shadow: 0 8px 18px rgba(0,0,0,.08);
+                border-color: #0d6efd;
             }
 
-                .product-row:hover .product-name {
-                    color: #1976d2;
-                }
-
             .product-row img {
-                width: 70px;
-                height: 70px;
+                width: 80px;
+                height: 80px;
                 object-fit: cover;
-                border-radius: 6px;
-                margin-right: 15px;
-                border: 1px solid #ddd;
+                border-radius: 8px;
+                cursor: pointer;
             }
 
         .product-info {
@@ -145,66 +198,60 @@
         }
 
         .product-name {
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 6px;
         }
 
         .product-meta {
-            font-size: 13px;
-            color: gray;
-        }
-
-        .delivery {
-            font-size: 13px;
-            color: #333;
-        }
-
-        .product-note {
-            font-size: 12px;
             color: #666;
-            margin: 5px 0;
-            line-height: 1.4;
-            background: #f9f9f9;
-            padding: 6px 8px;
-            border-radius: 5px;
+            font-size: 13px;
+            margin-top: 3px;
         }
 
         .product-note {
-            max-height: 60px;
-            overflow: hidden;
+            margin-top: 8px;
+            background: #f7f9fc;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
         }
 
-            .product-note:hover {
-                max-height: none;
+        .order-details {
+            display: none;
+            margin-top: 18px;
+        }
+
+        .img-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+            .img-modal img {
+                max-width: 90%;
+                max-height: 90%;
+                border-radius: 12px;
             }
 
-        #orderList span[id^="icon_"] {
-            font-size: 18px;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-
-        @media (max-width: 768px) {
+        @media(max-width:768px) {
 
             .order-container {
-                width: 100%;
                 padding: 10px;
-            }
-
-            .order-card {
-                padding: 12px;
             }
 
             .order-header {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 10px;
             }
 
-            .order-status {
-                font-size: 14px;
-                padding: 6px 12px;
-                border-radius: 15px;
+            .order-right {
+                width: 100%;
+                justify-content: space-between;
             }
 
             .products-container {
@@ -212,132 +259,43 @@
             }
 
             .product-row {
-                flex-direction: column;
-                text-align: center;
+                align-items: flex-start;
             }
 
                 .product-row img {
-                    margin-right: 0;
-                    margin-bottom: 10px;
-                    width: 90px;
-                    height: 90px;
+                    width: 70px;
+                    height: 70px;
                 }
 
-            .product-info {
+            .order-status {
+                font-size: 13px;
+            }
+
+            .pdf-link {
+                width: 38px;
+                height: 38px;
+            }
+        }
+
+        @media(max-width:480px) {
+
+            .order-right {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .order-status {
                 width: 100%;
+                text-align: center;
             }
 
-            .product-name {
-                font-size: 14px;
+            .progress-ring {
+                margin-left: auto;
             }
 
-            .product-meta {
-                font-size: 12px;
+            .pdf-link {
+                margin-left: auto;
             }
-        }
-
-        .progress-ring {
-            position: relative;
-            width: 70px;
-            height: 70px;
-        }
-
-            .progress-ring svg {
-                transform: rotate(-90deg);
-            }
-
-            .progress-ring circle {
-                fill: none;
-                stroke-width: 8;
-            }
-
-        .progress-bg {
-            stroke: #e6e6e6;
-        }
-
-        .progress-fill {
-            stroke-linecap: round;
-            transition: stroke-dashoffset .6s ease;
-        }
-
-        .progress-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        /* ===== MODAL ===== */
-        .img-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.9);
-            justify-content: center;
-            align-items: center;
-            z-index: 99999;
-        }
-
-            .img-modal img {
-                max-width: 90%;
-                max-height: 90%;
-                border-radius: 14px;
-                box-shadow: 0 0 40px rgba(0,0,0,0.6);
-            }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
-            .product-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .product-card img {
-                height: 150px;
-            }
-        }
-
-        .order-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-left: auto;
-        }
-
-        .progress-ring {
-            position: relative;
-            width: 40px;
-            height: 40px;
-            flex-shrink: 0;
-        }
-
-            .progress-ring svg {
-                width: 40px;
-                height: 40px;
-                transform: rotate(-90deg);
-            }
-
-            .progress-ring circle {
-                fill: none;
-                stroke-width: 4;
-            }
-
-        .progress-bg {
-            stroke: #e5e5e5;
-        }
-
-        .progress-fill {
-            stroke-linecap: round;
-        }
-
-        .progress-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 8px;
-            font-weight: bold;
         }
     </style>
     <script type="text/javascript">
@@ -377,6 +335,30 @@
 
             let html = "";
 
+            if (!orders || orders.length === 0) {
+                html = `
+                    <div class="text-center py-5">
+                        <i class="bi bi-bag-x-fill"
+                           style="font-size:70px;color:#c0c0c0;"></i>
+
+                        <h4 class="mt-3 text-secondary">
+                            No Orders Yet
+                        </h4>
+
+                        <p class="text-muted">
+                            You haven't placed any orders yet.
+                        </p>
+
+                        <a href="/Admin/PlaceOrder.aspx"
+                           class="btn btn-primary mt-2">
+                            Place Your First Order
+                        </a>
+                    </div>
+                `;
+
+                $("#orderList").html(html);
+                return;
+            }
 
             orders.forEach(o => {
                 let statusClass = "";
@@ -447,6 +429,18 @@
                                 <div class="order-status ${statusClass}">
                                     ${o.OrderStatus}
                                 </div>
+
+                                <a href="${o.AttachedPath ? '/Content/' + o.AttachedPath.replace('~/', '') : '#'}"
+                                       target="_blank"
+                                       onclick="event.stopPropagation();"
+                                       title="${o.AttachedPath ? 'Attached Invoice' : 'No Invoice Available'}"
+                                       class="pdf-link">
+
+                                        <i class="bi bi-file-earmark-pdf-fill"
+                                           style="color:${o.AttachedPath ? '#0d6efd' : '#888'}">
+                                        </i>
+
+                                    </a>
 
                                <div class="progress-ring">
 
@@ -558,7 +552,7 @@
                 <div class="order-headerss">
                     <h2 class="fw-bold">My Orders</h2>
                     <h2 class="product-link">
-                        <a href="/Admin/PlaceOrder.aspx">Product List</a>
+                        <a href="/Admin/PlaceOrder.aspx"><i>Product List</i></a>
                     </h2>
                 </div>
                 <br />

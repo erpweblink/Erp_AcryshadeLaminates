@@ -59,13 +59,13 @@ public partial class Notifications : System.Web.UI.Page
             string query = @"
             SELECT DH.ID,DH.OrderID, UM.FullName AS DealerName,CONVERT(varchar(10), DH.CreatedDate, 105) as CreatedDate,
                 DD.ProductID, DD.ProductName, DD.ProductType, DD.Size,
-                DD.Qty, DD.ImagePathName,DD.ProductNote
+                DD.Qty, DD.ImagePathName,DD.ProductNote,DH.InvoicePath as AttachedPath
             FROM tbl_DealersOrderHDR DH
             INNER JOIN tbl_DealersOrderDTLs DD
                     ON DD.HeaderID = DH.ID
             LEFT JOIN tbl_UserMaster UM
                     ON UM.ID = DH.DealerID
-            WHERE ( @OrderID IS NULL OR @OrderID = '' OR DH.ID =@OrderID) AND DH.OrderStatus ='Order Placed'
+            WHERE ( @OrderID IS NULL OR @OrderID = '' OR DH.ID = @OrderID) AND DH.OrderStatus ='Order Placed'
             ORDER BY DH.ID DESC";
 
             SqlCommand cmd = new SqlCommand(query, con);
@@ -86,6 +86,7 @@ public partial class Notifications : System.Web.UI.Page
                     orders[id]["OrderID"] = dr["OrderID"];
                     orders[id]["DealerName"] = dr["DealerName"];
                     orders[id]["CreatedDate"] = dr["CreatedDate"];
+                    orders[id]["AttachedPath"] = dr["AttachedPath"];
                     orders[id]["Products"] = new List<Dictionary<string, object>>();
                 }
 
