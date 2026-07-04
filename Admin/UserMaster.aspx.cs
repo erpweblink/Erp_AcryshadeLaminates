@@ -48,7 +48,7 @@ public partial class UserMaster : System.Web.UI.Page
                 if (dt.Rows.Count > 0)
                 {
                     ddlRoles.DataSource = dt;
-                    ddlRoles.DataTextField = "Roles";
+                    ddlRoles.DataTextField = "DepRoles";
                     ddlRoles.DataValueField = "Roles";
                     ddlRoles.DataBind();
 

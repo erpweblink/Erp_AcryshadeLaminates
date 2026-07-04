@@ -22,9 +22,9 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4 col-12">
-                            <asp:Label ID="lblUserFName" runat="server" Font-Bold="true" CssClass="form-label"><span class="spncls">*</span>Full Name :</asp:Label>
+                            <asp:Label ID="lblUserFName" runat="server" Font-Bold="true" CssClass="form-label"><span class="spncls">*</span>User Name :</asp:Label>
                             <asp:TextBox ID="txtUserFName" runat="server" ValidationGroup="001" AutoComplete="off" CssClass="form-control"></asp:TextBox>
-                            <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server" ErrorMessage="Please Enter Full Name"
+                            <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server" ErrorMessage="Please Enter User Name"
                                 ControlToValidate="txtUserFName" ForeColor="Red" SetFocusOnError="true" ValidationGroup="001"></asp:RequiredFieldValidator>
                         </div>
                         <div class="col-md-4 col-12">

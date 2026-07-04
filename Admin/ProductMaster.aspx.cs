@@ -5,6 +5,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Drawing.Text;
 using System.IO;
 using System.Linq;
 using System.Web;
@@ -129,6 +130,32 @@ public partial class Admin_ProductMaster : System.Web.UI.Page
 
                             using (var bitmap = new Bitmap(image, new Size(newWidth, newHeight)))
                             {
+                                using (Graphics g = Graphics.FromImage(bitmap))
+                                {
+                                    // smooth rendering
+                                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                                    g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+
+                                    string watermarkText = "ACRYSHAPE LAMINATED";
+
+                                    Font font = new Font("Arial", 18, FontStyle.Bold);
+                                    SolidBrush brush = new SolidBrush(Color.FromArgb(80, 255, 255, 255)); // transparent white
+
+                                    SizeF textSize = g.MeasureString(watermarkText, font);
+
+                                    // diagonal repeat watermark
+                                    for (int x = -bitmap.Width; x < bitmap.Width; x += 250)
+                                    {
+                                        for (int y = -bitmap.Height; y < bitmap.Height; y += 150)
+                                        {
+                                            g.TranslateTransform(x, y);
+                                            g.RotateTransform(-30);
+                                            g.DrawString(watermarkText, font, brush, 0, 0);
+                                            g.ResetTransform();
+                                        }
+                                    }
+                                }
+
                                 ImageFormat format = ImageFormat.Jpeg;
 
                                 if (file.ContentType.ToLower().Contains("png"))

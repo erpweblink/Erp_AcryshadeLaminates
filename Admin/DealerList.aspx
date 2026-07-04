@@ -132,20 +132,24 @@
                     <div class="row align-items-end">
                         <div class="col-md-3">
                             <asp:Label ID="Label1" runat="server" Font-Bold="true" CssClass="form-label">Search:</asp:Label>
-                            <asp:TextBox ID="txtcompanyname" CssClass="form-control" runat="server" Width="100%" OnTextChanged="txtCustomerName_TextChanged" AutoPostBack="true" autocomplete="off"></asp:TextBox>
-                     <%--       <asp:AutoCompleteExtender ID="AutoCompleteExtender1" runat="server" CompletionListCssClass="completionList"
+                            <asp:TextBox ID="txtcompanyname" CssClass="form-control" runat="server" Width="100%" autocomplete="off"></asp:TextBox>
+                            <%--       <asp:AutoCompleteExtender ID="AutoCompleteExtender1" runat="server" CompletionListCssClass="completionList"
                                 CompletionListHighlightedItemCssClass="itemHighlighted" CompletionListItemCssClass="listItem"
                                 CompletionInterval="10" MinimumPrefixLength="1" ServiceMethod="GetCompanyList"
                                 TargetControlID="txtcompanyname" Enabled="true">
                             </asp:AutoCompleteExtender>--%>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-2">
+                            <asp:LinkButton ID="btnSearch" runat="server"
+                                OnClick="txtCustomerName_TextChanged" CssClass="btn btn-outline-success"> 
+                                  <i class="bi bi-search" ></i>
+                            </asp:LinkButton>
                             <asp:LinkButton ID="btnrefresh" runat="server"
                                 OnClick="btnrefresh_Click" CssClass="btn btn-outline-danger"> 
                         <i class="bi bi-arrow-clockwise" ></i>
                             </asp:LinkButton>
                         </div>
-                        <div class="col-md-8 d-flex justify-content-end">
+                        <div class="col-md-7 d-flex justify-content-end">
                             <div style="width: 120px;">
                                 <asp:DropDownList ID="ddlPageSize" runat="server" CssClass="form-control" AutoPostBack="true" OnSelectedIndexChanged="ddlPageSize_SelectedIndexChanged">
                                     <asp:ListItem Text="10" Value="10" Selected="True" />
@@ -166,17 +170,17 @@
                                         <asp:Label ID="lblsno" runat="server" Text='<%# Container.DataItemIndex+1 %>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="User Code" ItemStyle-HorizontalAlign="Center">
+                                <asp:TemplateField HeaderText="Dealer Code" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
                                         <asp:Label ID="lblUserCode" runat="server" Text='<%#Eval("UserCode")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Distributer Name" ItemStyle-HorizontalAlign="Center">
+                                <asp:TemplateField HeaderText="Dealer Name" ItemStyle-HorizontalAlign="Center" >
                                     <ItemTemplate>
                                         <asp:Label ID="lblFullName" runat="server" Text='<%#Eval("FullName")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Company Name" ItemStyle-HorizontalAlign="Center">
+                                <asp:TemplateField HeaderText="Company Name" ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="d-none" ItemStyle-CssClass="d-none">
                                     <ItemTemplate>
                                         <asp:Label ID="lblCompanyName" runat="server" Text='<%#Eval("CompanyName")%>'></asp:Label>
                                     </ItemTemplate>
@@ -203,7 +207,7 @@
                                 <asp:TemplateField HeaderText="ACTION" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
                                         <asp:LinkButton ID="btnEdit" runat="server" ToolTip="Edit Company" CommandName="RowEdit" CommandArgument='<%#Eval("ID")%>' CssClass="btn btn-outline-info  btn-sm"><i class='bi bi-pencil'></i></asp:LinkButton>
-                                        <asp:LinkButton ID="btnDelete" runat="server" ToolTip="Delete Company" CommandName="RowDelete" OnClientClick="Javascript:return confirm('Are you sure to Delete?')" CommandArgument='<%#Eval("ID")%>' CssClass="btn btn-outline-danger  btn-sm"><i class='bi bi-trash3-fill'></i></asp:LinkButton>
+                                        <asp:LinkButton ID="btnDelete" runat="server" ToolTip="Delete Company" CommandName="RowDelete" OnClientClick="Javascript:return confirm('Are you sure to Delete?')" CommandArgument='<%#Eval("ID")%>' CssClass="btn btn-outline-danger  btn-sm d-none"><i class='bi bi-trash3-fill'></i></asp:LinkButton>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                             </Columns>

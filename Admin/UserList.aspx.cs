@@ -94,7 +94,6 @@ public partial class UserList : System.Web.UI.Page
         Response.Redirect("UserList.aspx");
     }
 
-    [ScriptMethod()]
     [WebMethod]
     public static List<string> GetCompanyList(string prefixText, int count)
     {
@@ -149,7 +148,7 @@ public partial class UserList : System.Web.UI.Page
         FillGrid();
     }
 
-    [System.Web.Services.WebMethod]
+    [WebMethod]
     public static string UpdateUserSetting(int id, bool val)
     {
         string query = "UPDATE tbl_UserMaster SET IsActivate=@val WHERE Id=@id";
@@ -167,6 +166,7 @@ public partial class UserList : System.Web.UI.Page
 
         return "Success";
     }
+
 
 }
 

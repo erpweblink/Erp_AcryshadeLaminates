@@ -264,6 +264,8 @@
                 justify-content: space-between;
             }
         }
+
+
     </style>
     <script type="text/javascript">
         let allProducts = [];
@@ -366,7 +368,6 @@
                 html += `
 
                 <div class="product-card">
-
                     <img id="img_${p.ID}" 
                         src="${p.ImagenamePath}"
                         onclick="openModal('${p.ImagenamePath}')">

@@ -102,6 +102,61 @@ public partial class WoProductionS1 : System.Web.UI.Page
         return JsonConvert.SerializeObject(dt);
     }
 
+    [WebMethod]
+    public static object SaveMachineStatus(int machineId, bool isActive, string reason, string workOrderIDs)
+    {
+        string query = @"INSERT INTO tbl_MachineBreakDown(MachineID,AssignedWorkOrdersIds,BDStatus,BDReason,BDDate,BDTime,CreatedBy)
+                         VALUES(@MachineID,@AssignedWorkOrdersIds,@BDStatus,@BDReason,GETDATE(),CONVERT(TIME, GETDATE()),@CreatedBy)";
+        using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
+        using (SqlCommand cmd = new SqlCommand(query, con))
+        {
+            cmd.Parameters.AddWithValue("@MachineID", machineId);
+            cmd.Parameters.AddWithValue("@AssignedWorkOrdersIds", workOrderIDs);
+            cmd.Parameters.AddWithValue("@BDStatus", isActive);
+            cmd.Parameters.AddWithValue("@BDReason", reason);
+            cmd.Parameters.AddWithValue("@CreatedBy", HttpContext.Current.Session["ID"].ToString());
+            con.Open();
+            cmd.ExecuteNonQuery();
+            con.Close();
+        }
+
+        return new
+        {
+            IsActive = "Success"
+        };
+    }
+
+    [WebMethod]
+    public static object GetMachineStatus(int machineId)
+    {
+        string query = @"SELECT TOP 1
+                        BDStatus as IsActive,
+                        BDReason as Reason
+                     FROM tbl_MachineBreakDown
+                     WHERE MachineID = @MachineID
+                       AND CAST(BDDate AS DATE) = CAST(GETDATE() AS DATE)
+                     ORDER BY BDDate DESC;";
+
+        DataTable dt = new DataTable();
+
+        using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
+        using (SqlCommand cmd = new SqlCommand(query, con))
+        {
+            cmd.Parameters.AddWithValue("@MachineID", machineId);
+            SqlDataAdapter da = new SqlDataAdapter(cmd);
+            da.Fill(dt);
+        }
+
+        if (dt.Rows.Count == 0)
+            return null;
+
+        return new
+        {
+            IsActive = Convert.ToBoolean(dt.Rows[0]["IsActive"]),
+            Reason = dt.Rows[0]["Reason"].ToString()
+        };
+    }
+
 
     [WebMethod]
     public static object SaveCompletedQty(int detailedId, decimal completedQty, decimal completedSqFt, string mistaken, string faulty, string reason)
@@ -157,7 +212,7 @@ public partial class WoProductionS1 : System.Web.UI.Page
                 if (block)
                 {
                     string message = "You cannot send quantity until " + operatorName + " with the higher allocated quantity starts working.";
-                  
+
                     return new
                     {
                         Status = "Error",

@@ -238,7 +238,7 @@
             html += "<th>Total Qty</th>";
             html += "<th>Allocated Qty</th>";
             html += "<th>Completed Qty</th>";
-            html += "<th>Status</th>";
+            html += "<th>Box Packed</th>";
             html += "</tr>";
             html += "</thead>";
 

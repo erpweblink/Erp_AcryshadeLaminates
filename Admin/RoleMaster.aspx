@@ -26,7 +26,10 @@
                             <asp:DropDownList ID="ddlDepartment" runat="server" ValidationGroup="001" AutoComplete="off" CssClass="form-control">
                                 <asp:ListItem Value="">--Select Department--</asp:ListItem>
                                 <asp:ListItem Value="In-House">Acryshade</asp:ListItem>
-                                <asp:ListItem Value="Outsourcing">Distributer</asp:ListItem>
+                                <asp:ListItem Value="Outsourcing">Dealer</asp:ListItem>
+                                <asp:ListItem Value="Production">Production </asp:ListItem>
+                                <asp:ListItem Value="Quality">Quality</asp:ListItem>
+                                <asp:ListItem Value="Packaging_Dispatch">Packaging/Dispatch</asp:ListItem>
                             </asp:DropDownList>
                             <asp:RequiredFieldValidator ID="RequiredFieldValidator2" runat="server" ErrorMessage="Please Select Department"
                                 ControlToValidate="ddlDepartment" ForeColor="Red" SetFocusOnError="true" InitialValue="" ValidationGroup="001"></asp:RequiredFieldValidator>
@@ -58,7 +61,13 @@
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Departments" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
-                                        <asp:Label ID="lblDepartments" runat="server" Text='<%#Eval("Departments").ToString() =="In-House"?"Acryshade":"Distributer"%>'></asp:Label>
+                                        <asp:Label ID="lblDepartments" runat="server"
+                                            Text='<%#Eval("Departments").ToString() =="In-House"?"Acryshade"
+                                                :Eval("Departments").ToString() =="Outsourcing"?"Dealer" 
+                                                :Eval("Departments").ToString() =="Production"?"Production" 
+                                                :Eval("Departments").ToString() =="Quality"?"Quality" 
+                                                :Eval("Departments").ToString() =="Packaging_Dispatch"?"Packaging/Dispatch" 
+                                                :""%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Role" ItemStyle-HorizontalAlign="Center">
@@ -66,12 +75,12 @@
                                         <asp:Label ID="lblRole" runat="server" Text='<%#Eval("Roles")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="ACTION" ItemStyle-HorizontalAlign="Center">
+                            <%--    <asp:TemplateField HeaderText="ACTION" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
-                                        <%--Are you sure to Delete?--%>
+                                        Are you sure to Delete?
                                         <asp:LinkButton ID="btnDelete" runat="server" ToolTip="Delete Role" CommandName="RowDelete" Enabled="false" OnClientClick="Javascript:return confirm('This button is not activated')" CommandArgument='<%#Eval("ID")%>' CssClass="btn btn-outline-danger  btn-sm"><i class='bi bi-trash3-fill'></i></asp:LinkButton>
                                     </ItemTemplate>
-                                </asp:TemplateField>
+                                </asp:TemplateField>--%>
                             </Columns>
                         </asp:GridView>
                     </div>

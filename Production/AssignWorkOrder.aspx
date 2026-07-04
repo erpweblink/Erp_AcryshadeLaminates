@@ -328,7 +328,7 @@
 
         function bindMachines() {
             var html = "<table>";
-            html += "<tr><th>Select</th><th>Stage</th><th>Name</th><th>Capacity</th><th>Load</th><th>Available</th><th>Load Per</th></tr>";
+            html += "<tr><th>Select</th><th>Stage</th><th>Name</th><th>Capacity (SqFt)</th><th>Available (SqFt)</th><th>Allocated (SqFt)</th><th>Over Time (SqFt)</th><th>Load Per(%)</th></tr>";
 
             $.each(machineData, function (i, m) {
 
@@ -339,13 +339,30 @@
                         load >= 70 ? "bg-warning" :
                             "bg-success";
 
+                var OTcap = parseFloat(m.MachineLoad) - parseFloat(m.MachineCapacity);
+                var perHourQty = parseFloat(m.MachinePerHRQty);   
+                // Extra hours required
+                var extraHours = OTcap / perHourQty;
+
+                // Convert to Hours & Minutes
+                var hrs = Math.floor(extraHours);
+                var mins = Math.round((extraHours - hrs) * 60);
+
+                var timeRequired = hrs + " Hr " + mins + " Min";
+                var extraInfo = "";
+
+                if (OTcap > 0) {
+                    extraInfo = " <small><i>(" + timeRequired + " Extra Work)</i></small>";
+                }
+
                 html += "<tr>";
                 html += "<td><input type='radio' name='machine' onclick='selectMachine(" + m.MachineID + ")'></td>";
                 html += "<td><span class='badge bg-info'>" + m.AllocatedStage + "</span></td>";
                 html += "<td>" + m.MachineName + "</td>";
                 html += "<td>" + m.MachineCapacity + "</td>";
-                html += "<td>" + m.MachineLoad + "</td>";
                 html += "<td>" + m.MachineAvailable + "</td>";
+                html += "<td>" + m.MachineLoad + "</td>";
+                html += "<td><b>" + OTcap + "</b> " + extraInfo + "</td>";
                 html += "<td><span class='badge " + badgeClass + "'>"
                     + m.LoadPercentage + " %</span></td>";
                 html += "</tr>";
@@ -528,7 +545,7 @@
 
             html += "<tbody>";
             $.each(todaysWorkOrders, function (i, wo) {
-                var isLocked = (wo.status === "Work Started" || wo.status === "Completed");
+                var isLocked = (wo.status === "Work Started" || wo.status === "Partially Completed");
 
                 var badges = wo.balanceQty;
                 var badgeHtml = "";
@@ -1269,7 +1286,7 @@
         <ContentTemplate>
             <div class="card">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h3 class="m-0 font-weight-bold"><b>Start Production</b></h3>
+                    <h3 class="m-0 font-weight-bold"><b>Scheduling/Allotment</b></h3>
                 </div>
                 <div class="card-body">
                     <div class="box">

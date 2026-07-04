@@ -98,11 +98,64 @@
         .detail-row td {
             background: #fafafa;
         }
+
+        /* Toggle switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 18px;
+        }
+
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            background-color: #ccc;
+            transition: .4s;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 14px;
+                width: 14px;
+                left: 2px;
+                bottom: 2px;
+                background: white;
+                transition: .4s;
+            }
+
+        input:checked + .slider {
+            background-color: #28a745;
+        }
+
+            input:checked + .slider:before {
+                transform: translateX(18px);
+            }
+
+        .slider.round {
+            border-radius: 34px;
+        }
+
+            .slider.round:before {
+                border-radius: 50%;
+            }
     </style>
     <script type="text/javascript">
         var AssignWorkOrders = [];
         var operatorData = [];
         var qtyUpdating = {};
+        var isMachineActive = true;
         $(function () {
             loadOperatorDetails();
         });
@@ -183,7 +236,6 @@
                 return;
             }
 
-
             currentMachineId = machineId;
 
             // show operator info
@@ -212,12 +264,133 @@
                             ${operator.CompletedQty}
                         </div>
                     </div>
+
+                   <div class="col-md-3">
+                        <div class="card p-2 h-100">
+
+                            <label class="form-label"><b>Reason</b></label>
+                            <textarea id="txtReason" class="form-control"
+                                      rows="2" placeholder="Enter reason..."></textarea>
+                            
+                            <div class="d-flex justify-content-center align-items-center mt-3">
+                                <label class="switch mb-0 me-2">
+                                    <input type="checkbox" id="chkMachineActive" checked>
+                                    <span class="slider round"></span>
+                                </label>
+
+                                <span id="machineStatus" class="badge bg-success">
+                                    Machine Running
+                                </span>
+                            </div>
+                              <input type="hidden" id="hdnWorkOrderIDs" />
+                        </div>
+                   </div>
                 </div>`;
+
                 $("#operatorInfo").html(html).show();
+                $("#hdnWorkOrderIDs").val(operator.WorkOrderIDs);
+
+                loadMachineStatus(machineId);
             }
 
             // 🔥 LOAD WORK ORDERS FOR SELECTED MACHINE
             loadWorkOrder(machineId);
+        }
+
+        $(document).on("change", "#chkMachineActive", function () {
+
+            var isActive = $(this).is(":checked");
+            var reason = $("#txtReason").val().trim();
+
+            // Prevent stop without reason
+            if (!isActive && reason === "") {
+                alert("Please enter a reason before stopping the machine.");
+
+                $(this).prop("checked", true);
+                return;
+            }
+
+            updateMachineUI(isActive); 
+
+            saveMachineStatus(isActive, reason);
+        });
+
+        function updateMachineUI(isActive) {
+
+            if (isActive) {
+
+                $("#machineStatus")
+                    .removeClass("bg-danger")
+                    .addClass("bg-success")
+                    .text("Machine Running");
+
+            }
+            else {
+
+                $("#machineStatus")
+                    .removeClass("bg-success")
+                    .addClass("bg-danger")
+                    .text("Machine Stopped");
+
+            }
+        }
+
+        function loadMachineStatus(machineId) {
+
+            $.ajax({
+                type: "POST",
+                url: "WoProductionS1.aspx/GetMachineStatus",
+                data: JSON.stringify({ machineId: machineId }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    var row = response.d;
+
+                    if (row) {
+                        isMachineActive = row.IsActive; 
+
+                        $("#chkMachineActive").prop("checked", row.IsActive);
+                        $("#txtReason").val(row.Reason);
+
+                        updateMachineUI(row.IsActive); // ✅ ADD THIS
+                    }
+                    else {
+                        isMachineActive = true; 
+                        $("#chkMachineActive").prop("checked", true);
+                        $("#txtReason").val("");
+
+                        updateMachineUI(true); // default active
+                    }
+                }
+            });
+
+        }
+
+        function saveMachineStatus(isActive, reason) {
+
+            var workOrderIDs = $("#hdnWorkOrderIDs").val();
+            $.ajax({
+                type: "POST",
+                url: "WoProductionS1.aspx/SaveMachineStatus",
+                data: JSON.stringify({
+                    machineId: currentMachineId,
+                    isActive: isActive,
+                    reason: reason,
+                    workOrderIDs: workOrderIDs
+                }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+
+                    if (response.d.IsActive !== "Success") {
+                        alert("Machine Status Updated successfully..");
+                    }
+                },
+                error: function () {
+                    alert("Unable to save machine status.");
+                }
+            });
+
         }
 
         function loadWorkOrder(machineId) {
@@ -477,6 +650,11 @@
 
         function showMinusPanel(woId, index) {
 
+            if (!isMachineActive) {
+                alert("Machine is stopped.");
+                return;
+            }
+
             var wo = AssignWorkOrders.find(x => x.woId == woId);
             var item = wo.details[index];
 
@@ -508,8 +686,13 @@
 
         function confirmMinus(woId, index) {
 
+            if (!isMachineActive) {
+                alert("Machine is stopped.");
+                return;
+            }
+
             var mistaken = $("#mistaken_" + woId + "_" + index).is(":checked");
-          
+
             if (!mistaken) {
                 alert("Select Mistaken");
                 return;
@@ -530,6 +713,12 @@
         }
 
         function changeQty(woId, index, delta, mistaken, faulty, reason) {
+
+            if (!isMachineActive) {
+                alert("Machine is stopped. You cannot update quantity.");
+                return;
+            }
+
             var key = woId + "_" + index;
 
             // 🚫 prevent multiple fast clicks

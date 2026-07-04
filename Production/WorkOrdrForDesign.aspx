@@ -81,26 +81,30 @@
         <ContentTemplate>
             <div class="card">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h3 class="m-0 font-weight-bold"><b>Approve Designs</b></h3>
+                    <h3 class="m-0 font-weight-bold"><b>Design Approval</b></h3>
                 </div>
                 <div class="card-body">
                     <div class="row align-items-end">
                         <div class="col-md-3">
                             <asp:Label ID="Label1" runat="server" Font-Bold="true" CssClass="form-label">Search:</asp:Label>
-                            <asp:TextBox ID="txtcompanyname" CssClass="form-control" runat="server" Width="100%" OnTextChanged="txtcompanyname_TextChanged" AutoPostBack="true"></asp:TextBox>
+                            <asp:TextBox ID="txtcompanyname" CssClass="form-control" runat="server" Width="100%"></asp:TextBox>
                             <%--  <asp:AutoCompleteExtender ID="AutoCompleteExtender1" runat="server" CompletionListCssClass="completionList"
                                 CompletionListHighlightedItemCssClass="itemHighlighted" CompletionListItemCssClass="listItem"
                                 CompletionInterval="10" MinimumPrefixLength="1" ServiceMethod="GetCompanyList"
                                 TargetControlID="txtcompanyname" Enabled="true">
                             </asp:AutoCompleteExtender>--%>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-2">
+                            <asp:LinkButton ID="btnSearch" runat="server"
+                                OnClick="txtcompanyname_TextChanged" CssClass="btn btn-outline-success"> 
+                            <i class="bi bi-search" ></i>
+                            </asp:LinkButton>
                             <asp:LinkButton ID="btnrefresh" runat="server"
                                 OnClick="btnrefresh_Click" CssClass="btn btn-outline-danger"> 
-                   <i class="bi bi-arrow-clockwise" ></i>
+                           <i class="bi bi-arrow-clockwise" ></i>
                             </asp:LinkButton>
                         </div>
-                        <div class="col-md-8 d-flex justify-content-end">
+                        <div class="col-md-7 d-flex justify-content-end">
                             <div style="width: 120px;">
                                 <asp:DropDownList ID="ddlPageSize" runat="server" CssClass="form-control" AutoPostBack="true" OnSelectedIndexChanged="ddlPageSize_SelectedIndexChanged">
                                     <asp:ListItem Text="10" Value="10" Selected="True" />
@@ -223,12 +227,12 @@
                                                  Convert.ToBoolean(Eval("CancelStatus")) ||
                                                  Convert.ToBoolean(Eval("HoldStatus")) 
                                              %>'
-                                             Text='<%#
+                                            Text='<%#
                                                  Convert.ToBoolean(Eval("CancelStatus")) ? "Canceled" :
                                                  Convert.ToBoolean(Eval("HoldStatus")) ? "On Hold" :
                                                  "Not Approved"
                                              %>'
-                                              ForeColor='<%#
+                                            ForeColor='<%#
                                                  Convert.ToBoolean(Eval("CancelStatus")) ? System.Drawing.Color.Red :
                                                  Convert.ToBoolean(Eval("HoldStatus")) ? System.Drawing.Color.Orange :
                                                  System.Drawing.Color.Green

@@ -539,7 +539,6 @@ public partial class WorkOrderMaster : System.Web.UI.Page
         Response.Redirect("WorkOrderList.aspx");
     }
 
-    [ScriptMethod]
     [WebMethod]
     public static List<string> GetDealerNameList(string prefixText, int count)
     {

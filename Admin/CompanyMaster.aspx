@@ -1073,7 +1073,7 @@
             <div class="card">
                 <div class="card">
                     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                        <h3 class="m-0 font-weight-bold"><b>Sub Dealers</b></h3>
+                        <h3 class="m-0 font-weight-bold"><b>Distributor</b></h3>
                         <asp:Button ID="btnDeList" CssClass="btn btn-outline-danger" Font-Bold="true" Text="List" CausesValidation="false" runat="server" OnClick="btn_DeList_click" />
                     </div>
                     <div class="card-body">
@@ -1090,7 +1090,7 @@
                                     ControlToValidate="txtCompanyName" ForeColor="Red" SetFocusOnError="true" ValidationGroup="001"></asp:RequiredFieldValidator>
                             </div>
                             <div class="col-md-6 col-12">
-                                <asp:Label ID="lblOwnerName" runat="server" Font-Bold="true" CssClass="form-label"><span class="spncls">*</span>Client Name:</asp:Label>
+                                <asp:Label ID="lblOwnerName" runat="server" Font-Bold="true" CssClass="form-label"><span class="spncls">*</span>Distributor Name:</asp:Label>
                                 <asp:TextBox ID="txtOwnerName" runat="server" Font-Bold="true" ForeColor="Red" AutoComplete="off" ValidationGroup="001" CssClass="form-control"></asp:TextBox>
                                 <asp:RequiredFieldValidator ID="RequiredFieldValidator2" runat="server" ErrorMessage="Please Enter Client Name"
                                     ControlToValidate="txtOwnerName" ForeColor="Red" SetFocusOnError="true" ValidationGroup="001"></asp:RequiredFieldValidator>

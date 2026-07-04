@@ -132,20 +132,25 @@
                     <div class="row align-items-end">
                         <div class="col-md-3">
                             <asp:Label ID="Label1" runat="server" Font-Bold="true" CssClass="form-label">Search:</asp:Label>
-                            <asp:TextBox ID="txtcompanyname" CssClass="form-control" runat="server" Width="100%" OnTextChanged="txtCustomerName_TextChanged" AutoPostBack="true" autocomplete="off"></asp:TextBox>
+                            <asp:TextBox ID="txtcompanyname" CssClass="form-control" runat="server" Width="100%" autocomplete="off"></asp:TextBox>
                            <%-- <asp:AutoCompleteExtender ID="AutoCompleteExtender1" runat="server" CompletionListCssClass="completionList"
                                 CompletionListHighlightedItemCssClass="itemHighlighted" CompletionListItemCssClass="listItem"
                                 CompletionInterval="10" MinimumPrefixLength="1" ServiceMethod="GetCompanyList"
                                 TargetControlID="txtcompanyname" Enabled="true">
                             </asp:AutoCompleteExtender>--%>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-2">
+                            <asp:LinkButton ID="btnSearch" runat="server"
+                                OnClick="txtCustomerName_TextChanged" CssClass="btn btn-outline-success"> 
+                           <i class="bi bi-search" ></i>
+                            </asp:LinkButton>
+
                             <asp:LinkButton ID="btnrefresh" runat="server"
                                 OnClick="btnrefresh_Click" CssClass="btn btn-outline-danger"> 
                            <i class="bi bi-arrow-clockwise" ></i>
                             </asp:LinkButton>
                         </div>
-                        <div class="col-md-8 d-flex justify-content-end">
+                        <div class="col-md-7 d-flex justify-content-end">
                             <div style="width: 120px;">
                                 <asp:DropDownList ID="ddlPageSize" runat="server" CssClass="form-control" AutoPostBack="true" OnSelectedIndexChanged="ddlPageSize_SelectedIndexChanged">
                                     <asp:ListItem Text="10" Value="10" Selected="True" />
@@ -171,7 +176,7 @@
                                         <asp:Label ID="lblUserCode" runat="server" Text='<%#Eval("UserCode")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Full Name" ItemStyle-HorizontalAlign="Center">
+                                <asp:TemplateField HeaderText="User Name" ItemStyle-HorizontalAlign="Center" >
                                     <ItemTemplate>
                                         <asp:Label ID="lblFullName" runat="server" Text='<%#Eval("FullName")%>'></asp:Label>
                                     </ItemTemplate>
