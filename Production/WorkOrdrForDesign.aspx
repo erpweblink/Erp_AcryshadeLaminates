@@ -195,7 +195,11 @@
                                             ToolTip="Approve" CommandName="Approved"
                                             CommandArgument='<%#Eval("ID")%>'
                                             CssClass="btn btn-outline-info btn-sm"
-                                            Visible='<%# Eval("isdesignapproved").ToString() == "False" ? true : false %>'>
+                                            Visible='<%#
+                                                 !(Convert.ToBoolean(Eval("isdesignapproved")) ||
+                                                   Convert.ToBoolean(Eval("HoldStatus")) ||
+                                                   Convert.ToBoolean(Eval("CancelStatus")))
+                                             %>'>
                                             <i class="bi bi-check-lg"></i>
                                         </asp:LinkButton>
                                         &nbsp;&nbsp;
@@ -204,9 +208,32 @@
                                             CommandName="DisApproved"
                                             CommandArgument='<%# Eval("ID") %>'
                                             CssClass="btn btn-outline-danger btn-sm"
-                                            Visible='<%# Eval("isdesignapproved").ToString() == "False" ? true : false %>'>
+                                            Visible='<%#
+                                                 !(Convert.ToBoolean(Eval("isdesignapproved")) ||
+                                                   Convert.ToBoolean(Eval("HoldStatus")) ||
+                                                   Convert.ToBoolean(Eval("CancelStatus")))
+                                             %>'>
                                              <i class="bi bi-x-lg"></i>
                                         </asp:LinkButton>
+
+                                        <asp:Label ID="lblStatus"
+                                            runat="server"
+                                            Font-Bold="true"
+                                            Visible='<%#
+                                                 Convert.ToBoolean(Eval("CancelStatus")) ||
+                                                 Convert.ToBoolean(Eval("HoldStatus")) 
+                                             %>'
+                                             Text='<%#
+                                                 Convert.ToBoolean(Eval("CancelStatus")) ? "Canceled" :
+                                                 Convert.ToBoolean(Eval("HoldStatus")) ? "On Hold" :
+                                                 "Not Approved"
+                                             %>'
+                                              ForeColor='<%#
+                                                 Convert.ToBoolean(Eval("CancelStatus")) ? System.Drawing.Color.Red :
+                                                 Convert.ToBoolean(Eval("HoldStatus")) ? System.Drawing.Color.Orange :
+                                                 System.Drawing.Color.Green
+                                             %>'>
+                                        </asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                             </Columns>

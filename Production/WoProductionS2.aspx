@@ -675,7 +675,7 @@
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <asp:HiddenField ID="hdnRole" runat="server" />
                     <h3 class="m-0 font-weight-bold"><b>Production Stage 2</b></h3>
-                    <select id="ddlMachine" class="form-control" style="width: 155px;" onchange="machineChanged()">
+                    <select id="ddlMachine" class="form-control" style="width: 174px;" onchange="machineChanged()">
                         <option value="">-Select Machine-</option>
                     </select>
                 </div>
