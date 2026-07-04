@@ -92,19 +92,48 @@
         }
 
         .status-placed {
-            background: #ff9800;
+            background: #F59E0B;
+            color: #fff;
         }
 
-        .status-delivered {
-            background: #198754;
+        .status-hold {
+            background: #6B7280;
+            color: #fff;
         }
 
-        .status-shipped {
-            background: #0d6efd;
+        .status-approved {
+            background: #2563EB;
+            color: #fff;
+        }
+
+        .status-design {
+            background: #8B5CF6;
+            color: #fff;
+        }
+
+        .status-production {
+            background: #F97316;
+            color: #fff;
+        }
+
+        .status-packed {
+            background: #06B6D4;
+            color: #fff;
+        }
+
+        .status-dispatched {
+            background: #14B8A6;
+            color: #fff;
+        }
+
+        .status-outfordelivery {
+            background: #22C55E;
+            color: #fff;
         }
 
         .status-rejected {
-            background: #dc3545;
+            background: #DC2626;
+            color: #fff;
         }
 
         .pdf-link {
@@ -363,41 +392,52 @@
             orders.forEach(o => {
                 let statusClass = "";
                 let progress = 0;
-                let progressColor = "#ff9800";
+                let progressColor = "";
+
                 if (o.OrderStatus === "Order Placed") {
                     statusClass = "status-placed";
                     progress = 0;
-                    progressColor = "#ff9800";
+                    progressColor = "#F59E0B";      // Orange
+                }
+                else if (o.OrderStatus === "Order Hold") {
+                    statusClass = "status-hold";
+                    progress = 0;
+                    progressColor = "#6B7280";      // Gray
                 }
                 else if (o.OrderStatus === "Order Approved") {
-                    statusClass = "status-delivered";
+                    statusClass = "status-approved";
                     progress = 20;
-                    progressColor = "#2196f3";
+                    progressColor = "#2563EB";      // Blue
                 }
                 else if (o.OrderStatus === "Design Approved") {
-                    statusClass = "status-shipped";
+                    statusClass = "status-design";
                     progress = 40;
-                    progressColor = "#4caf50";
+                    progressColor = "#8B5CF6";      // Purple
                 }
                 else if (o.OrderStatus === "Production Started") {
-                    statusClass = "status-shipped";
+                    statusClass = "status-production";
                     progress = 60;
-                    progressColor = "#4caf50";
+                    progressColor = "#F97316";      // Orange-Red
                 }
                 else if (o.OrderStatus === "Order Packed") {
-                    statusClass = "status-shipped";
+                    statusClass = "status-packed";
                     progress = 80;
-                    progressColor = "#4caf50";
+                    progressColor = "#06B6D4";      // Cyan
                 }
                 else if (o.OrderStatus === "Order Dispatched") {
-                    statusClass = "status-shipped";
-                    progress = 100;
-                    progressColor = "#4caf50";
+                    statusClass = "status-dispatched";
+                    progress = 90;
+                    progressColor = "#14B8A6";      // Teal
                 }
-                else if (o.OrderStatus === "Order Rejected") {
+                else if (o.OrderStatus === "Out for Delivery") {
+                    statusClass = "status-outfordelivery";
+                    progress = 100;
+                    progressColor = "#22C55E";      // Green
+                }
+                else if (o.OrderStatus === "Order Rejected" || o.OrderStatus === "Order Canceled") {
                     statusClass = "status-rejected";
                     progress = 100;
-                    progressColor = "#f44336";
+                    progressColor = "#DC2626";      // Red
                 }
 
                 let tallyRefHtml = "";
@@ -412,8 +452,23 @@
                 }
 
                 html += `
-                    <div class="order-card">
+                    <div class="order-card" style="position:relative;">
+                     ${o.OrderStatus !== "Order Rejected" && o.OrderStatus !== "Order Canceled" ? `
+                     <div class="position-absolute d-flex gap-2"
+                             style="top:10px; right:10px; z-index:10;">
 
+                                    <button class="btn btn-primary btn-sm" title="Hold Order"
+                                            onclick="event.stopPropagation(); holdOrder('${o.ID}' ,'${o.WoID}')">
+                                        <i class="bi bi-pause-circle"></i>
+                                    </button>
+
+                                    <button class="btn btn-danger btn-sm" title="Cancel Order"
+                                            onclick="event.stopPropagation(); cancelOrder('${o.ID}' ,'${o.WoID}')">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>                       
+                        </div>
+                         ` : ""}
+                        <br/>
                         <div class="order-header" onclick="toggleOrder('${o.ID}')">
 
                             <span id="icon_${o.ID}">▼</span>
@@ -424,8 +479,9 @@
                                 <small>Placed on: ${o.CreatedDate}</small>
                             </div>
 
+                            
                             <div class="order-right">
-
+         
                                 <div class="order-status ${statusClass}">
                                     ${o.OrderStatus}
                                 </div>
@@ -472,7 +528,7 @@
 
                             </div>
 
-                            </div>
+                        </div>
 
                         </div>
 
@@ -491,6 +547,7 @@
 
                     html += `
                         <div class="product-row">
+
                             <img src="${Image}" onclick="openModal('${Image}')" />
 
                             <div class="product-info">
@@ -526,6 +583,38 @@
             });
 
             $("#orderList").html(html);
+        }
+
+        function holdOrder(orderId, WorkOId) {
+
+            if (!confirm("Hold this order?"))
+                return;
+
+            $.ajax({
+                type: "POST",
+                url: "OrderHistory.aspx/holdOrder",
+                data: JSON.stringify({ orderId: orderId, WorkOId: WorkOId }),
+                contentType: "application/json; charset=utf-8",
+                success: function () {
+                    window.location.href = window.location.href;
+                }
+            });
+        }
+
+        function cancelOrder(orderId, WorkOId) {
+
+            if (!confirm("Cancel this order?"))
+                return;
+
+            $.ajax({
+                type: "POST",
+                url: "OrderHistory.aspx/CancelOrder",
+                data: JSON.stringify({ orderId: orderId, WorkOId: WorkOId }),
+                contentType: "application/json; charset=utf-8",
+                success: function () {
+                    window.location.href = window.location.href;
+                }
+            });
         }
 
         function openModal(src) {

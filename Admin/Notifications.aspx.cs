@@ -59,7 +59,8 @@ public partial class Notifications : System.Web.UI.Page
             string query = @"
             SELECT DH.ID,DH.OrderID, UM.FullName AS DealerName,CONVERT(varchar(10), DH.CreatedDate, 105) as CreatedDate,
                 DD.ProductID, DD.ProductName, DD.ProductType, DD.Size,
-                DD.Qty, DD.ImagePathName,DD.ProductNote,DH.InvoicePath as AttachedPath
+                DD.Qty, DD.ImagePathName,DD.ProductNote,DH.InvoicePath as AttachedPath,
+                CASE WHEN DH.HoldStatus = 1 AND DH.HoldStatus IS NOT NULL THEN 'ON HOLD' ELSE '' END as HoldStatus
             FROM tbl_DealersOrderHDR DH
             INNER JOIN tbl_DealersOrderDTLs DD
                     ON DD.HeaderID = DH.ID
@@ -87,6 +88,7 @@ public partial class Notifications : System.Web.UI.Page
                     orders[id]["DealerName"] = dr["DealerName"];
                     orders[id]["CreatedDate"] = dr["CreatedDate"];
                     orders[id]["AttachedPath"] = dr["AttachedPath"];
+                    orders[id]["HoldStatus"] = dr["HoldStatus"];
                     orders[id]["Products"] = new List<Dictionary<string, object>>();
                 }
 

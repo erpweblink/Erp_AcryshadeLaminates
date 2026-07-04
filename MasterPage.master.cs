@@ -14,6 +14,12 @@ public partial class MasterPage : System.Web.UI.MasterPage
             {
                 divNoti.Visible = true;
             }
+            if (Session["Role"].ToString() == "Dealer")
+            {
+                PLoTab.Visible = true;
+                ODLiTab.Visible = true;
+                MyOTab.Visible = true;
+            }
             UserNameShow();
             PageAuthorization();
         }
@@ -152,13 +158,13 @@ public partial class MasterPage : System.Web.UI.MasterPage
                 /*End*/
 
                 /*PlaceOrder*/
-                {
-                    if (MenuName == "PlaceOrder.aspx")
-                    {
-                        string PageAccess = row["PageAccess"].ToString();
-                        PLoTab.Visible = PageAccess == "True" ? true : false;
-                    }
-                }
+                //{
+                //    if (MenuName == "PlaceOrder.aspx")
+                //    {
+                //        string PageAccess = row["PageAccess"].ToString();
+                //        PLoTab.Visible = PageAccess == "True" ? true : false;
+                //    }
+                //}
                 /*End*/
 
                 /*Scheduler*/

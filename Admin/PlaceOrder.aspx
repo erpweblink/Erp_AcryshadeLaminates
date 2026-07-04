@@ -375,17 +375,15 @@
                         ${p.ProductName}
                     </div>
 
-                    <select id="size_${p.ID}">
+                     <select id="type_${p.ID}" onchange="toggleSize(${p.ID}, '${p.Size}')">
+                        <option value="Regular" selected>Regular</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+
+                    <select id="size_${p.ID}" disabled>
                         <option value="">Select Size</option>
-
-                        <option value="8x2"  ${p.Size === "8x2" ? "selected" : ""}>
-                            ${is8x2Regular ? "8x2 (Regular)" : "8x2 (Custom)"}
-                        </option>
-
-                        <option value="8x4"  ${p.Size === "8x4" ? "selected" : ""}>
-                            ${is8x4Regular ? "8x4 (Regular)" : "8x4 (Custom)"}
-                        </option>
-
+                        <option value="8x2"  ${p.Size === "8x2" ? "selected" : ""}>8x2</option>
+                        <option value="8x4"  ${p.Size === "8x4" ? "selected" : ""}>8x4</option>
                     </select>
 
                     <input id="qty_${p.ID}" autocomplete="off" placeholder="Quantity" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
@@ -405,6 +403,19 @@
             document
                 .getElementById(containerId)
                 .innerHTML = html;
+        }
+
+        function toggleSize(id, originalSize) {
+
+            const type = document.getElementById(`type_${id}`);
+            const size = document.getElementById(`size_${id}`);
+
+            if (type.value === "Custom") {
+                size.disabled = false;
+            } else {
+                size.value = originalSize;   // Restore original size
+                size.disabled = true;
+            }
         }
 
         function searchProducts() {
@@ -444,50 +455,53 @@
         function addToCart(productId) {
 
             let size = document.getElementById("size_" + productId).value;
+
             let Textsize = document.getElementById("size_" + productId).options[
                 document.getElementById("size_" + productId).selectedIndex
             ].text.trim();
 
-            let productType = Textsize.toLowerCase().includes("regular") ? "Regular" : "Custom";
+            let Type = document.getElementById("type_" + productId).options[
+                document.getElementById("type_" + productId).selectedIndex
+            ].text.trim();
 
             let qty = document.getElementById("qty_" + productId).value;
             let productName = document.getElementById("name_" + productId).innerText.trim();
             let imgN = document.getElementById("img_" + productId).src;
             imgN = "~/" + imgN.split("/Content/")[1];
             if (size === "") {
-
                 alert("Select Size");
                 window.location.href = window.location.href;
                 return;
             }
 
-            if (qty === "" || qty <= 0) {
+            if (Type === "") {
+                alert("Select Type");
+                window.location.href = window.location.href;
+                return;
+            }
 
+            if (qty === "" || qty <= 0) {
                 alert("Enter Quantity");
                 window.location.href = window.location.href;
                 return;
             }
 
             fetch("PlaceOrder.aspx/AddToCart", {
-
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json"
                 },
-
                 body: JSON.stringify({
                     productId: productId,
                     productN: productName,
                     size: size,
-                    productType: productType,
+                    productType: Type,
                     qty: qty,
                     imagename: imgN
                 })
             })
                 .then(r => r.json())
                 .then(() => {
-
                     alert("Added To Cart");
                     window.location.href = window.location.href;
                 });

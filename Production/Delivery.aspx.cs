@@ -63,83 +63,101 @@ public partial class Delivery : System.Web.UI.Page
 
     protected void GVCompany_RowCommand(object sender, GridViewCommandEventArgs e)
     {
-        if (e.CommandName == "RowPO")
+        try
         {
-            string ID = e.CommandArgument.ToString();
-            string fileName = Path.GetFileName(e.CommandArgument.ToString());
-            Response.Redirect("~/Content/WOAttachedFiles/" + fileName);
-        }
-        if (e.CommandName == "UpdateStatus")
-        {
-            string[] args = e.CommandArgument.ToString().Split(',');
-
-            int id = Convert.ToInt32(args[0]);
-            bool isProductionCompleted = Convert.ToBoolean(args[1]);
-            bool isDispatched = Convert.ToBoolean(args[2]);
-
-            if (isDispatched)
+            con.Open();
+            if (e.CommandName == "RowPO")
             {
-                hfOrderId.Value = id.ToString();
-
-                ScriptManager.RegisterStartupScript(
-                    this,
-                    GetType(),
-                    "showModal",
-                    "$('#deliveryModal').modal('show');",
-                    true);
-
-                return;
+                string ID = e.CommandArgument.ToString();
+                Response.Redirect(ID.Replace("~/", "/Content/"));
             }
-            else
+            if (e.CommandName == "UpdateStatus")
             {
-                SqlCommand Cmd = new SqlCommand("SP_ProductionsPlanning", con);
-                Cmd.CommandType = CommandType.StoredProcedure;
-                Cmd.Parameters.AddWithValue("@SP_Action", "IsDipatchedStatus");
-                Cmd.Parameters.AddWithValue("@Id", args[0]);
-                Cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
-                con.Open();
-                Cmd.ExecuteNonQuery();
-                con.Close();
+                string[] args = e.CommandArgument.ToString().Split(',');
 
-                int PalcOrderId = 0;
-                string getStage2 = @"SELECT ISNULL(PlaceOrderID,0) as PlaceOrder FROM tbl_WorkOrderHDR
+                int id = Convert.ToInt32(args[0]);
+                bool isProductionCompleted = Convert.ToBoolean(args[1]);
+                bool isDispatched = Convert.ToBoolean(args[2]);
+
+                bool isAllCompleted = Convert.ToBoolean(string.IsNullOrWhiteSpace(args[3]) ? "False" : args[3]);
+
+                if (isAllCompleted == null || isAllCompleted == false)
+                {
+                    if (isDispatched)
+                    {
+                        hfOrderId.Value = id.ToString();
+
+                        ScriptManager.RegisterStartupScript(
+                            this,
+                            GetType(),
+                            "showModal",
+                            "$('#deliveryModal').modal('show');",
+                            true);
+
+                        return;
+                    }
+                    else
+                    {
+                        SqlCommand Cmd = new SqlCommand("SP_ProductionsPlanning", con);
+                        Cmd.CommandType = CommandType.StoredProcedure;
+                        Cmd.Parameters.AddWithValue("@SP_Action", "IsDipatchedStatus");
+                        Cmd.Parameters.AddWithValue("@Id", args[0]);
+                        Cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
+
+                        Cmd.ExecuteNonQuery();
+
+                        int PalcOrderId = 0;
+                        string getStage2 = @"SELECT ISNULL(PlaceOrderID,0) as PlaceOrder FROM tbl_WorkOrderHDR
                            WHERE ID = @WoId ";
 
-                using (SqlCommand cmd = new SqlCommand(getStage2, con))
-                {
-                    cmd.Parameters.AddWithValue("@WoId", args[0]);
-                    using (SqlDataReader dr = cmd.ExecuteReader())
-                    {
-                        if (dr.Read())
+                        using (SqlCommand cmd = new SqlCommand(getStage2, con))
                         {
-                            PalcOrderId = Convert.ToInt32(dr["PlaceOrder"]);
+                            cmd.Parameters.AddWithValue("@WoId", args[0]);
+                            using (SqlDataReader dr = cmd.ExecuteReader())
+                            {
+                                if (dr.Read())
+                                {
+                                    PalcOrderId = Convert.ToInt32(dr["PlaceOrder"]);
+                                }
+                            }
                         }
-                    }
-                }
-                if (PalcOrderId != 0)
-                {
-                    string querys = @"
+                        if (PalcOrderId != 0)
+                        {
+                            string querys = @"
                                 UPDATE tbl_DealersOrderHDR
                                 SET DispatchedStatus = @DispatchedStatus
                                 WHERE ID = @Id";
 
-                    using (SqlCommand cmds = new SqlCommand(querys, con))
-                    {
-                        cmds.Parameters.AddWithValue("@DispatchedStatus", "Order Dispatched");
-                        cmds.Parameters.AddWithValue("@Id", PalcOrderId);
+                            using (SqlCommand cmds = new SqlCommand(querys, con))
+                            {
+                                cmds.Parameters.AddWithValue("@DispatchedStatus", "Order Dispatched");
+                                cmds.Parameters.AddWithValue("@Id", PalcOrderId);
 
-                        cmds.ExecuteNonQuery();
+                                cmds.ExecuteNonQuery();
+                            }
+                        }
+
+
+                        Session["message"] = "Work Order Dispatched successfully.";
+                        Session["icon"] = "success";
+                        Session["time"] = "2000";
+                        Session["url"] = "/Production/Delivery.aspx";
+                        Response.Redirect("/Alerts.aspx");
                     }
                 }
 
-
-                Session["message"] = "Work Order Dispatched successfully.";
-                Session["icon"] = "success";
-                Session["time"] = "2000";
-                Session["url"] = "/Production/Delivery.aspx";
-                Response.Redirect("/Alerts.aspx");
-            }            
+            }
         }
+        catch (Exception)
+        {
+            con.Close();
+            throw;
+        }
+        finally
+        {
+            con.Close();
+        }
+
     }
 
     protected void btnrefresh_Click(object sender, EventArgs e)
@@ -219,49 +237,118 @@ public partial class Delivery : System.Web.UI.Page
 
     protected void btnConfirmDelivery_Click(object sender, EventArgs e)
     {
-       
-        string id = hfOrderId.Value.ToString();
-
-        string remark = txtRemark.Text.Trim();
-
-        string fileName = "";
-
-        if (fuLRCopy.HasFile)
+        try
         {
-            string Filenamenew = fuLRCopy.FileName;
-            string codenew = Guid.NewGuid().ToString();
+            con.Open();
+            string id = hfOrderId.Value.ToString();
 
-            string folderPath = Server.MapPath("~/Content/LR_Attached/");
+            string remark = txtRemark.Text.Trim();
 
-            if (!Directory.Exists(folderPath))
+            string LRName = "";
+
+            if (fuLRCopy.HasFile)
             {
-                Directory.CreateDirectory(folderPath);
+                string Filenamenew = fuLRCopy.FileName;
+                string codenew = Guid.NewGuid().ToString();
+
+                string folderPath = Server.MapPath("~/Content/LR_Invoice_Attachment/");
+
+                if (!Directory.Exists(folderPath))
+                {
+                    Directory.CreateDirectory(folderPath);
+                }
+
+                LRName = codenew + "_" + Filenamenew;
+                string fullPath = Path.Combine(folderPath, LRName);
+
+                fuLRCopy.SaveAs(fullPath);
             }
 
-            fileName = codenew + "_" + Filenamenew;
-            string fullPath = Path.Combine(folderPath, fileName);
+            string InvoiceName = null;
+            if (fuINCopy.HasFile)
+            {
+                string Filenamenew = fuINCopy.FileName;
+                string codenew = Guid.NewGuid().ToString();
 
-            fuLRCopy.SaveAs(fullPath);
+                string folderPath = Server.MapPath("~/Content/LR_Invoice_Attachment/");
+
+                if (!Directory.Exists(folderPath))
+                {
+                    Directory.CreateDirectory(folderPath);
+                }
+
+                InvoiceName = codenew + "_" + Filenamenew;
+                string fullPath = Path.Combine(folderPath, InvoiceName);
+
+                fuLRCopy.SaveAs(fullPath);
+            }
+
+            SqlCommand Cmd = new SqlCommand("SP_ProductionsPlanning", con);
+            Cmd.CommandType = CommandType.StoredProcedure;
+            Cmd.Parameters.AddWithValue("@SP_Action", "IsCompletedStatus");
+            Cmd.Parameters.AddWithValue("@Id", id);
+            Cmd.Parameters.AddWithValue("@IsLRAttached", string.IsNullOrWhiteSpace(LRName) ? (Object)DBNull.Value : "~/LR_Invoice_Attachment/" + LRName);
+            Cmd.Parameters.AddWithValue("@IsInvoiceAttached", string.IsNullOrWhiteSpace(InvoiceName) ? (Object)DBNull.Value : "~/LR_Invoice_Attachment/" + InvoiceName);
+            Cmd.Parameters.AddWithValue("@MachineID", HttpContext.Current.Session["ID"].ToString());
+            Cmd.Parameters.AddWithValue("@Remark", remark);
+            Cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
+            Cmd.ExecuteNonQuery();
+
+            ScriptManager.RegisterStartupScript(
+                this,
+                GetType(),
+                "hideModal",
+                "$('#deliveryModal').modal('hide');",
+                true);
+
+
+            int PalcOrderId = 0;
+            string getStage2 = @"SELECT ISNULL(PlaceOrderID,0) as PlaceOrder FROM tbl_WorkOrderHDR
+                           WHERE ID = @WoId ";
+
+            using (SqlCommand cmd = new SqlCommand(getStage2, con))
+            {
+                cmd.Parameters.AddWithValue("@WoId", id);
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    if (dr.Read())
+                    {
+                        PalcOrderId = Convert.ToInt32(dr["PlaceOrder"]);
+                    }
+                }
+            }
+            if (PalcOrderId != 0)
+            {
+                string querys = @"
+                                UPDATE tbl_DealersOrderHDR
+                                SET DispatchedStatus = @DispatchedStatus
+                                WHERE ID = @Id";
+
+                using (SqlCommand cmds = new SqlCommand(querys, con))
+                {
+                    cmds.Parameters.AddWithValue("@DispatchedStatus", "Out for Delivery");
+                    cmds.Parameters.AddWithValue("@Id", PalcOrderId);
+
+                    cmds.ExecuteNonQuery();
+                }
+            }
+
+            Session["message"] = "Work Order Is Out For Delivery.";
+            Session["icon"] = "success";
+            Session["time"] = "2000";
+            Session["url"] = "/Production/Delivery.aspx";
+            Response.Redirect("/Alerts.aspx");
+        }
+        catch (Exception)
+        {
+            con.Close();
+            throw;
+        }
+        finally
+        {
+            con.Close();
         }
 
-        SqlCommand Cmd = new SqlCommand("SP_ProductionsPlanning", con);
-        Cmd.CommandType = CommandType.StoredProcedure;
-        Cmd.Parameters.AddWithValue("@SP_Action", "IsCompletedStatus");
-        Cmd.Parameters.AddWithValue("@Id", id);
-        Cmd.Parameters.AddWithValue("@IsLRAttached", "~/LR_Attached/" + fileName);
-        Cmd.Parameters.AddWithValue("@MachineID", HttpContext.Current.Session["ID"].ToString());
-        Cmd.Parameters.AddWithValue("@Remark", remark);
-        Cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
-        con.Open();
-        Cmd.ExecuteNonQuery();
-        con.Close();
-
-        ScriptManager.RegisterStartupScript(
-            this,
-            GetType(),
-            "hideModal",
-            "$('#deliveryModal').modal('hide');",
-            true);
     }
 
 }

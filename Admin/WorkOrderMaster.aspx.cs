@@ -4,7 +4,10 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Web;
 using System.Web.Script.Serialization;
 using System.Web.Script.Services;
@@ -436,7 +439,11 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                             Directory.CreateDirectory(folderPath);
                         }
 
-                        file.SaveAs(Path.Combine(folderPath, fileName));
+                        string fullPath = Path.Combine(folderPath, fileName);
+
+                        SaveCompressedImage(file, fullPath, quality: 60, maxWidth: 800);
+
+                       // file.SaveAs(Path.Combine(folderPath, fileName));
 
                         cmd.Parameters.AddWithValue(
                             "@UploadedImage",
@@ -494,6 +501,36 @@ public partial class WorkOrderMaster : System.Web.UI.Page
         {
             con.Close();
             throw;
+        }
+    }
+
+    public static void SaveCompressedImage(HttpPostedFile file, string fullPath, int quality = 60, int maxWidth = 800)
+    {
+        using (var image = Image.FromStream(file.InputStream))
+        {
+            int newWidth = image.Width;
+            int newHeight = image.Height;
+
+            // resize if image is too large
+            if (image.Width > maxWidth)
+            {
+                newWidth = maxWidth;
+                newHeight = (image.Height * maxWidth) / image.Width;
+            }
+
+            using (var bitmap = new Bitmap(image, new Size(newWidth, newHeight)))
+            {
+                ImageCodecInfo jpgEncoder = ImageCodecInfo
+                    .GetImageDecoders()
+                    .First(c => c.FormatID == ImageFormat.Jpeg.Guid);
+
+                Encoder encoder = Encoder.Quality;
+                EncoderParameters encParams = new EncoderParameters(1);
+
+                encParams.Param[0] = new EncoderParameter(encoder, quality);
+
+                bitmap.Save(fullPath, jpgEncoder, encParams);
+            }
         }
     }
 
@@ -703,7 +740,8 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                        ID,
                        Productname,
                        PartNo,
-                       Size
+                       Size,
+                       ImagenamePath
                 FROM tbl_prodcutmaster
                 WHERE Productname LIKE '%' + @Search + '%'
                   AND isdeleted = 0 AND isActive = 1
@@ -723,7 +761,8 @@ public partial class WorkOrderMaster : System.Web.UI.Page
                         ProductId = Convert.ToInt32(dr["ID"]),
                         ProductName = dr["Productname"].ToString(),
                         PartNo = dr["PartNo"].ToString(),
-                        Size = dr["Size"].ToString()
+                        Size = dr["Size"].ToString(),
+                        ImagenamePath = dr["ImagenamePath"].ToString(),
                     });
                 }
             }

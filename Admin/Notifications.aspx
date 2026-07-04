@@ -413,6 +413,7 @@
                          <div>
                                  <b>${o.DealerName}</b> <br/>
                              <small>Placed on: ${o.CreatedDate}</small>
+                             <small style="color:red;"><b>${o.HoldStatus}</b></small>
                          </div>
 
                         <div class="order-status">

@@ -108,14 +108,15 @@ public partial class Dashboard : System.Web.UI.Page
                        UM.FullName AS DealerName,
                        CONVERT(varchar(10), CreatedDate, 105) AS CDate,
                        COUNT(DD.HeaderID) AS TotProducts,
-                       SUM(CAST(Qty AS decimal)) AS ProductQty
+                       SUM(CAST(Qty AS decimal)) AS ProductQty,
+                       CASE WHEN DH.HoldStatus = 1 AND DH.HoldStatus IS NOT NULL THEN 'ON HOLD' ELSE '' END as HoldStatus
                 FROM tbl_DealersOrderHDR DH
                 INNER JOIN tbl_DealersOrderDTLs DD
                     ON DD.HeaderID = DH.ID
                 LEFT JOIN tbl_UserMaster UM
                     ON UM.ID = DH.DealerID
                 WHERE DH.OrderStatus ='Order Placed'
-                GROUP BY DH.ID, OrderID, UM.FullName, CreatedDate,DH.OrderStatus
+                GROUP BY DH.ID, OrderID, UM.FullName, CreatedDate,DH.OrderStatus,DH.HoldStatus
                 ORDER BY DH.ID DESC", con);
 
                 con.Open();
@@ -131,6 +132,7 @@ public partial class Dashboard : System.Web.UI.Page
                     { "dealerName", dr["DealerName"].ToString() },
                     { "totalProducts", dr["TotProducts"].ToString() },
                     { "productQty", dr["ProductQty"].ToString() },
+                    { "holdStatus", dr["HoldStatus"].ToString() },
                     { "orderDate", dr["CDate"].ToString() }
                 });
                 }

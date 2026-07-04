@@ -118,6 +118,7 @@ public partial class OrderList : System.Web.UI.Page
             string[] ProductName = Request.Form.GetValues("ProductName[]");
             string[] SheetNo = Request.Form.GetValues("SheetNo[]");
             string[] Description = Request.Form.GetValues("Description[]");
+            string[] Type = Request.Form.GetValues("Type[]");
             string[] Size = Request.Form.GetValues("Size[]");
             string[] Qty = Request.Form.GetValues("Qty[]");
             string[] SqFeet = Request.Form.GetValues("SqFeet[]");
@@ -194,6 +195,7 @@ public partial class OrderList : System.Web.UI.Page
                     cmd.Parameters.AddWithValue("@ProductId", string.IsNullOrWhiteSpace(ProductId[i]) ? "" : ProductId[i]);
                     cmd.Parameters.AddWithValue("@ProductName", string.IsNullOrWhiteSpace(ProductName[i]) ? "" : ProductName[i]);
                     cmd.Parameters.AddWithValue("@Description", string.IsNullOrWhiteSpace(Description[i]) ? "" : Description[i]);
+                    cmd.Parameters.AddWithValue("@Type", string.IsNullOrWhiteSpace(Type[i]) ? "" : Type[i]);
                     cmd.Parameters.AddWithValue("@Size", string.IsNullOrWhiteSpace(Size[i]) ? "0" : Size[i]);
                     cmd.Parameters.AddWithValue("@Qty", string.IsNullOrWhiteSpace(Qty[i]) ? "0" : Qty[i]);
 
@@ -220,21 +222,18 @@ public partial class OrderList : System.Web.UI.Page
 
                         string fullPath = Path.Combine(folderPath, fileName);
 
-                        //  SaveCompressedImage(file, fullPath, quality: 60, maxWidth: 800);
-
+                        SaveCompressedImage(file, fullPath, quality: 60, maxWidth: 800);
 
                         cmd.Parameters.AddWithValue(
                             "@UploadedImage",
                             "~/WOCustomProducts/" + fileName
                         );
-                        cmd.Parameters.AddWithValue("@Type", "Custom");
                     }
                     else
                     {
                         if (!string.IsNullOrWhiteSpace(ProdImageName[i]) && ProdImageName[i] != "null")
                         {
-                            cmd.Parameters.AddWithValue("@UploadedImage", ProdImageName[i]);
-                            cmd.Parameters.AddWithValue("@Type", "Regular");
+                            cmd.Parameters.AddWithValue("@UploadedImage", ProdImageName[i]);                
                         }
                     }
 
@@ -268,7 +267,7 @@ public partial class OrderList : System.Web.UI.Page
         }
     }
 
-    public static void SaveCompressedImage(HttpPostedFile file, string fullPath, int quality = 60, int maxWidth = 800)
+  public static void SaveCompressedImage(HttpPostedFile file, string fullPath, int quality = 60, int maxWidth = 800)
     {
         using (var image = Image.FromStream(file.InputStream))
         {

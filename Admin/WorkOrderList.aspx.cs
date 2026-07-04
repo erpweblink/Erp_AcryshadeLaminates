@@ -85,6 +85,40 @@ public partial class WorkOrderList : System.Web.UI.Page
             Session["url"] = "/Admin/WorkOrderList.aspx";
             Response.Redirect("/Alerts.aspx");
         }
+        if (e.CommandName == "RowHold")
+        {
+            SqlCommand Cmd = new SqlCommand("SP_WorkOrderMaster", con);
+            Cmd.CommandType = CommandType.StoredProcedure;
+            Cmd.Parameters.AddWithValue("@SP_Action", "HoldWoHdr");
+            Cmd.Parameters.AddWithValue("@Id", e.CommandArgument.ToString());
+            Cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
+            con.Open();
+            Cmd.ExecuteNonQuery();
+            con.Close();
+
+            Session["message"] = "Hold Status changed successfully.";
+            Session["icon"] = "success";
+            Session["time"] = "2000";
+            Session["url"] = "/Admin/WorkOrderList.aspx";
+            Response.Redirect("/Alerts.aspx");
+        }
+        if (e.CommandName == "RowCancel")
+        {
+            SqlCommand Cmd = new SqlCommand("SP_WorkOrderMaster", con);
+            Cmd.CommandType = CommandType.StoredProcedure;
+            Cmd.Parameters.AddWithValue("@SP_Action", "CancelWoHdr");
+            Cmd.Parameters.AddWithValue("@Id", e.CommandArgument.ToString());
+            Cmd.Parameters.Add("@Result", SqlDbType.Int).Direction = ParameterDirection.Output;
+            con.Open();
+            Cmd.ExecuteNonQuery();
+            con.Close();
+
+            Session["message"] = "Canceled Status changed successfully.";
+            Session["icon"] = "success";
+            Session["time"] = "2000";
+            Session["url"] = "/Admin/WorkOrderList.aspx";
+            Response.Redirect("/Alerts.aspx");
+        }
         if (e.CommandName == "RowPO")
         {
             string ID = e.CommandArgument.ToString();

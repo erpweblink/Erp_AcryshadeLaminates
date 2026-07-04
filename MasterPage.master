@@ -130,9 +130,19 @@
                     <span class="nav-text">Work Order</span>
                 </a>
 
-                <a class="nav-link active" href="/Admin/PlaceOrder.aspx" aria-current="page" id="PLoTab" runat="server">
+                <a class="nav-link active" href="/Admin/PlaceOrder.aspx" aria-current="page" id="PLoTab" runat="server" visible="false">
                     <span class="nav-icon"><i class="bi bi-shop-window" aria-hidden="true"></i></span>
                     <span class="nav-text">Place Order</span>
+                </a>
+
+                <a class="nav-link active" href="/Admin/OrderList.aspx" aria-current="page" id="ODLiTab" runat="server" visible="false">
+                    <span class="nav-icon"><i class="bi bi-cart" aria-hidden="true"></i></span>
+                    <span class="nav-text">Add Cart</span>
+                </a>
+
+                <a class="nav-link active" href="/Admin/OrderHistory.aspx" aria-current="page" id="MyOTab" runat="server" visible="false">
+                    <span class="nav-icon"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+                    <span class="nav-text">My Order</span>
                 </a>
 
                 <div class="nav-dropdown" id="ProductionTab" runat="server">
@@ -388,6 +398,7 @@
 
                             <div class="notification-time">
                                 ${item.orderDate}
+                                ${item.holdStatus === "ON HOLD" ? ` &nbsp;|&nbsp; <small style="color:#ff0000;"><b>ON HOLD</b></small>` : ""}           
                             </div>
                         </div>`;
                         });

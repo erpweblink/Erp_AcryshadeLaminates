@@ -55,7 +55,7 @@
             box-shadow: 0 0 25px rgba(0,0,0,.4);
         }
 
-        .image-popup img {
+            .image-popup img {
                 max-width: 600px;
                 max-height: 500px;
                 width: auto;
@@ -92,11 +92,6 @@
                         <div class="col-md-3">
                             <asp:Label ID="Label1" runat="server" Font-Bold="true" CssClass="form-label">Search:</asp:Label>
                             <asp:TextBox ID="txtcompanyname" CssClass="form-control" runat="server" Width="100%" OnTextChanged="txtCustomerName_TextChanged" AutoPostBack="true"></asp:TextBox>
-                            <%-- <asp:AutoCompleteExtender ID="AutoCompleteExtender1" runat="server" CompletionListCssClass="completionList"
-                                CompletionListHighlightedItemCssClass="itemHighlighted" CompletionListItemCssClass="listItem"
-                                CompletionInterval="10" MinimumPrefixLength="1" ServiceMethod="GetCompanyList"
-                                TargetControlID="txtcompanyname" Enabled="true">
-                            </asp:AutoCompleteExtender>--%>
                         </div>
                         <div class="col-md-1">
                             <asp:LinkButton ID="btnrefresh" runat="server"
@@ -196,13 +191,58 @@
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="ACTION" ItemStyle-HorizontalAlign="Center" HeaderStyle-Width="160px">
                                     <ItemTemplate>
-                                        <asp:LinkButton ID="btnEdit" Visible='<%# string.IsNullOrWhiteSpace(Eval("isdesignapproved").ToString()) || Eval("isdesignapproved").ToString() =="False" ?true:false %>' runat="server" ToolTip="Edit W/O" CommandName="RowEdit" CommandArgument='<%#Eval("ID")%>' CssClass="btn btn-outline-info btn-sm"><i class='bi bi-pencil'></i></asp:LinkButton>
-                                        <asp:LinkButton ID="btnDelete" Visible='<%# string.IsNullOrWhiteSpace(Eval("isdesignapproved").ToString()) || Eval("isdesignapproved").ToString() =="False" ?true:false %>' runat="server" ToolTip="Delete W/O" CommandName="RowDelete" OnClientClick="Javascript:return confirm('Are you sure to Delete?')" CommandArgument='<%#Eval("ID")%>' CssClass="btn btn-outline-danger btn-sm"><i class='bi bi-trash3-fill'></i></asp:LinkButton>
-                                        <asp:Label ID="lblVal" runat="server" Visible='<%# !string.IsNullOrWhiteSpace(Eval("isdesignapproved").ToString()) && Eval("isdesignapproved").ToString() =="True" ?true:false %>'
-                                            Text='<%#Eval("isdesignapproved").ToString() == "True"?"Approved": "Not Approved" %>'
-                                            ForeColor='<%#Eval("isdesignapproved").ToString() == "True"? System.Drawing.Color.Green : System.Drawing.Color.Red  %>'
-                                            Font-Bold="true">
+                                        <asp:LinkButton ID="btnEdit"
+                                            runat="server"
+                                            CommandName="RowEdit"
+                                            CommandArgument='<%# Eval("ID") %>'
+                                            CssClass="btn btn-outline-info btn-sm"
+                                            Visible='<%#
+                                                    !(Convert.ToBoolean(Eval("isdesignapproved")) ||
+                                                      Convert.ToBoolean(Eval("HoldStatus")) ||
+                                                      Convert.ToBoolean(Eval("CancelStatus")))
+                                                %>'>
+                                                <i class="bi bi-pencil"></i>
+                                        </asp:LinkButton>
+
+                                        <asp:LinkButton ID="btnDelete"
+                                            runat="server"
+                                            CommandName="RowDelete"
+                                            CommandArgument='<%# Eval("ID") %>'
+                                            OnClientClick="return confirm('Are you sure to Delete?')"
+                                            CssClass="btn btn-outline-danger btn-sm"
+                                            Visible='<%#
+                                                    !(Convert.ToBoolean(Eval("isdesignapproved")) ||
+                                                      Convert.ToBoolean(Eval("HoldStatus")) ||
+                                                      Convert.ToBoolean(Eval("CancelStatus")))
+                                                %>'>
+                                                <i class="bi bi-trash3-fill"></i>
+                                        </asp:LinkButton>
+                                        <asp:Label ID="lblStatus"
+                                            runat="server"
+                                            Font-Bold="true"
+                                            Visible='<%#
+                                                Convert.ToBoolean(Eval("CancelStatus")) ||
+                                                Convert.ToBoolean(Eval("HoldStatus")) ||
+                                                Convert.ToBoolean(Eval("isdesignapproved"))
+                                            %>'
+                                            Text='<%#
+                                                Convert.ToBoolean(Eval("CancelStatus")) ? "Canceled" :
+                                                Convert.ToBoolean(Eval("HoldStatus")) ? "On Hold" :
+                                                Convert.ToBoolean(Eval("isdesignapproved")) ? "Approved" :
+                                                "Not Approved"
+                                            %>'
+                                            ForeColor='<%#
+                                                Convert.ToBoolean(Eval("CancelStatus")) ? System.Drawing.Color.Red :
+                                                Convert.ToBoolean(Eval("HoldStatus")) ? System.Drawing.Color.Orange :
+                                                System.Drawing.Color.Green
+                                            %>'>
                                         </asp:Label>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Hold/Cancel" ItemStyle-HorizontalAlign="Center" HeaderStyle-Width="160px">
+                                    <ItemTemplate>
+                                        <asp:LinkButton ID="btnHold" runat="server" ToolTip="Hold W/O" CommandName="RowHold" CommandArgument='<%#Eval("ID")%>' CssClass="btn btn-primary btn-sm"><i class="bi bi-pause-circle"></i></asp:LinkButton>
+                                        <asp:LinkButton ID="btnCancel" runat="server" ToolTip="Cancel W/O" CommandName="RowCancel" OnClientClick="Javascript:return confirm('Are you sure to Cancel?')" CommandArgument='<%#Eval("ID")%>' CssClass="btn btn-danger btn-sm"><i class="bi bi-x-circle"></i></asp:LinkButton>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                             </Columns>

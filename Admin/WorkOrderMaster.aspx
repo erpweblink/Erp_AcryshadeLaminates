@@ -7,6 +7,61 @@
 
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <style type="text/css">
+        /* ===== FULL SCREEN LOADER ===== */
+        #pageLoader {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(6px);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ===== SPINNER ===== */
+        .loader-ring {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top: 4px solid #4f7cff;
+            border-right: 4px solid #7c4dff;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 25px rgba(79,124,255,0.6);
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* glow text */
+        .loader-text {
+            margin-top: 15px;
+            color: #fff;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-align: center;
+            font-size: 14px;
+            animation: pulse 1.2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,100% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
         .spncls {
             color: red;
         }
@@ -142,6 +197,11 @@
                 line-height: 1.4;
             }
         }
+
+        .size.locked {
+            pointer-events: none;
+            background-color: #e9ecef;
+        }
     </style>
 
     <script type="text/javascript">
@@ -176,7 +236,10 @@
                                     label: item.ProductName,
                                     value: item.ProductName,
                                     id: item.ProductId,
-                                    size: item.Size
+                                    size: item.Size,
+                                    imagename: item.ImagenamePath && item.ImagenamePath.trim() !== 'null'
+                                        ? item.ImagenamePath.replace('~/', '/Content/')
+                                        : 'https://placehold.co/100x100?text=Image'
                                 };
                             }));
                         }
@@ -188,6 +251,11 @@
                     row.find('textarea[name="ProductName[]"]').val(ui.item.value);
                     row.find('select[name="Size[]"]').val(ui.item.size);
 
+                    // Update image preview
+                    row.find('.product-image-preview').attr('src', ui.item.imagename);
+
+                    // Store image path in hidden field
+                    row.find('input[name="ProdImageName[]"]').val(ui.item.imagename);
                     return false;
                 }
             });
@@ -239,7 +307,7 @@
              
                     <!-- Type -->
                    <td style="border: 1px solid #e3e6f0; padding: 8px;">
-                       <select name="Type[]"
+                       <select name="Type[]" onchange="toggleSize(this)"
                            class="form-control typo"
                            style="border-radius: 8px; min-width: 120px; resize: none;" >
                            <option value="Regular" selected>Regular</option>
@@ -260,7 +328,7 @@
                  <!-- Size -->
                  <td style="border: 1px solid #e3e6f0; padding: 8px;">
                      <select name="Size[]"
-                         class="form-control size"
+                         class="form-control size" 
                          style="border-radius: 8px; height: 42px; min-width: 120px;" onchange="GetSQFeet(this)">
                          <option value="">-Select Size-</option>
                          <option value="8x2">8x2</option>
@@ -272,10 +340,10 @@
                  <!-- Qty -->
                  <td style="border: 1px solid #e3e6f0; padding: 8px;">
                      <input type="number"
-                         step="0.01"
+                         min="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57"
                          name="Qty[]"
                          class="form-control qty"
-                         style="border-radius: 8px; height: 42px; min-width: 70px;" oninput="GetSQFeet(this)"/>
+                         style="border-radius: 8px; height: 42px; min-width: 70px;" oninput=" if(this.value==0) this.value=1; GetSQFeet(this)"/>
                      <div class="error-msg qty-error text-danger" style="font-size: 12px;"></div>
                  </td>
 
@@ -594,7 +662,7 @@
 
                 //Type 
                 row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
-                    '<select name="Type[]" ' +
+                    '<select name="Type[]" onchange="toggleSize(this)"' +
                     'class="form-control typo" ' +
                     'style="border-radius: 8px; min-width: 120px; resize: none;" >' +
                     '<option value="Regular" ' + (item.Type == 'Regular' ? ' selected' : '') + '>Regular</option>' +
@@ -615,7 +683,7 @@
 
                 //Size
                 row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">';
-                row += '<select name="Size[]" class="form-control size" ' +
+                row += '<select name="Size[]" class="form-control size"' +
                     'style="border-radius: 8px; height: 42px; min-width: 120px;"  onchange="GetSQFeet(this)">';
                 row += '<option value="">-Select Size-</option>';
                 row += ' <option value="8x2"' + (item.Size == '8x2' ? ' selected' : '') + '>8x2</option>';
@@ -627,10 +695,10 @@
 
                 //Qty
                 row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
-                    '<input type="number" step="0.01" name="Qty[]" ' +
-                    'class="form-control qty" ' +
+                    '<input type="number"  min="1" name="Qty[]" ' +
+                    'class="form-control qty" onkeypress="return event.charCode >= 48 && event.charCode <= 57" ' +
                     'value="' + item.Qty + '" ' +
-                    'style="border-radius: 8px; height: 42px; min-width: 70px;" oninput="GetSQFeet(this)"/>' +
+                    'style="border-radius: 8px; height: 42px; min-width: 70px;" oninput=" if(this.value==0) this.value=1; GetSQFeet(this)"/>' +
                     '<div class="error-msg qty-error text-danger" style="font-size: 12px;"></div>' +
                     '</td>';
 
@@ -688,6 +756,8 @@
                 row += '</tr>';
 
                 $('#tblRawMaterial tbody').append(row);
+                var lastRow = $('#tblRawMaterial tbody tr:last')[0];
+                toggleSize(lastRow.querySelector('.typo'));
             });
 
             updateSerialNumbers();
@@ -729,7 +799,7 @@
 
                 //Type 
                 row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
-                    '<select name="Type[]" ' +
+                    '<select name="Type[]" onchange="toggleSize(this)"' +
                     'class="form-control typo" ' +
                     'style="border-radius: 8px; min-width: 120px; resize: none;" >' +
                     '<option value="Regular" ' + (item.ProductType == 'Regular' ? ' selected' : '') + '>Regular</option>' +
@@ -750,7 +820,7 @@
 
                 //Size
                 row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">';
-                row += '<select name="Size[]" class="form-control size" ' +
+                row += '<select name="Size[]" class="form-control size ' +
                     'style="border-radius: 8px; height: 42px; min-width: 120px;"  onchange="GetSQFeet(this)">';
                 row += '<option value="">-Select Size-</option>';
                 row += ' <option value="8x2"' + (item.Size == '8x2' ? ' selected' : '') + '>8x2</option>';
@@ -762,10 +832,10 @@
 
                 //Qty
                 row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
-                    '<input type="number" step="0" name="Qty[]" ' +
-                    'class="form-control qty" ' +
+                    '<input type="number"  min="1" name="Qty[]" ' +
+                    'class="form-control qty" onkeypress="return event.charCode >= 48 && event.charCode <= 57" ' +
                     'value="' + item.Qty + '" ' +
-                    'style="border-radius: 8px; height: 42px; min-width: 70px;" oninput="GetSQFeet(this)"/>' +
+                    'style="border-radius: 8px; height: 42px; min-width: 70px;" oninput=" if(this.value==0) this.value=1; GetSQFeet(this)"/>' +
                     '<div class="error-msg qty-error text-danger" style="font-size: 12px;"></div>' +
                     '</td>';
 
@@ -833,6 +903,8 @@
                 row += '</tr>';
 
                 $('#tblRawMaterial tbody').append(row);
+                var lastRow = $('#tblRawMaterial tbody tr:last')[0];
+                toggleSize(lastRow.querySelector('.typo'));
             });
 
             updateSerialNumbers();
@@ -917,6 +989,21 @@
                 reader.readAsDataURL(file);
             }
         });
+
+        function toggleSize(typeSelect) {
+            const row = typeSelect.closest("tr");
+            const sizeSelect = row.querySelector(".size");
+
+            if (typeSelect.value === "Custom") {
+                sizeSelect.classList.remove("locked");
+            } else {
+                sizeSelect.classList.add("locked");
+            }
+        }
+
+        function showLoader() {
+            document.getElementById("pageLoader").style.display = "flex";
+        }
     </script>
 
 </asp:Content>
@@ -924,6 +1011,12 @@
     <asp:ToolkitScriptManager ID="ToolkitScriptManager1" runat="server"></asp:ToolkitScriptManager>
     <asp:UpdatePanel ID="UpdatePanel" runat="server">
         <ContentTemplate>
+            <div id="pageLoader">
+                <div style="text-align: center;">
+                    <div class="loader-ring"></div>
+                    <div class="loader-text">Saving Work Order...</div>
+                </div>
+            </div>
             <div class="card">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h3 class="m-0 font-weight-bold"><b>Work Order</b></h3>
@@ -932,9 +1025,9 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4 col-12">
-                            <asp:Label ID="lbltallyref" runat="server" Font-Bold="true" CssClass="form-label"><span class="spncls">*</span>Tally Ref No:</asp:Label>
+                            <asp:Label ID="lbltallyref" runat="server" Font-Bold="true" CssClass="form-label"><span class="spncls">*</span>Work Order No:</asp:Label>
                             <asp:TextBox ID="txttallyref" runat="server" AutoComplete="off" ValidationGroup="001" CssClass="form-control" ForeColor="Red" Font-Bold="true" onchange="ValidateTalRef()"></asp:TextBox>
-                            <asp:RequiredFieldValidator ID="RequiredFieldValidator5" runat="server" ErrorMessage="Please Enter Tally Ref. Number"
+                            <asp:RequiredFieldValidator ID="RequiredFieldValidator5" runat="server" ErrorMessage="Please Enter Work Order Number"
                                 ControlToValidate="txttallyref" ForeColor="Red" SetFocusOnError="true" ValidationGroup="001"></asp:RequiredFieldValidator>
                         </div>
                         <div class="col-md-4 col-12">
@@ -1081,7 +1174,7 @@
 
                                     <!-- Type -->
                                     <td style="border: 1px solid #e3e6f0; padding: 8px;">
-                                        <select name="Type[]"
+                                        <select name="Type[]" onchange="toggleSize(this)"
                                             class="form-control typo"
                                             style="border-radius: 8px; min-width: 120px; resize: none;">
                                             <option value="Regular" selected>Regular</option>
@@ -1113,9 +1206,9 @@
 
                                     <!-- Qty -->
                                     <td style="border: 1px solid #e3e6f0; padding: 8px;">
-                                        <input type="number" step="0.01" name="Qty[]"
-                                            class="form-control qty"
-                                            style="border-radius: 8px; height: 42px; min-width: 70px;" oninput="GetSQFeet(this)" />
+                                        <input type="number" min="1" name="Qty[]"
+                                            class="form-control qty" onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                                            style="border-radius: 8px; height: 42px; min-width: 70px;" oninput=" if(this.value==0) this.value=1; GetSQFeet(this)" />
                                         <div class="error-msg qty-error text-danger" style="font-size: 12px;"></div>
                                     </td>
 
@@ -1167,7 +1260,7 @@
                     <center>
                         <div>
                             <asp:HiddenField ID="hdnVal" runat="server" />
-                            <asp:LinkButton ID="btnsave" ValidationGroup="001" class="btn btn-outline-success me-3" runat="server" Text="Save" OnClick="btnsave_Click"></asp:LinkButton>
+                            <asp:LinkButton ID="btnsave" ValidationGroup="001" class="btn btn-outline-success me-3" runat="server" Text="Save" OnClientClick="showLoader();" OnClick="btnsave_Click"></asp:LinkButton>
                         </div>
                     </center>
                 </div>

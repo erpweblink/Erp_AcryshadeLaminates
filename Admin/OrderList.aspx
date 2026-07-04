@@ -130,27 +130,27 @@
                     ? item.ImagePathName.replace('~/', '/Content/')
                     : 'https://placehold.co/100x100?text=Image';
 
-                row += '<td class="text-center">' +
+                var type = item.ProductType;
 
+                row += '<td class="text-center">' +
                     '<div class="d-flex flex-column align-items-center">' +
 
                     `<img src="${imageUrl}" class="product-image-preview mb-2" />` +
 
-                    '<button type="button" class="btn btn-outline-primary btn-sm  upload-btn">' +
-                    '<i class="bi bi-camera-fill"></i> Upload' +
-                    '</button>' +
-
-                    '<input type="file" ' +
-                    'name="ProductImage[]" ' +
-                    'class="file-input d-none" ' +
-                    'accept="image/*" />' +
+                    (type === "Custom"
+                        ? '<button type="button" class="btn btn-outline-primary btn-sm upload-btn">' +
+                        '<i class="bi bi-camera-fill"></i> Upload' +
+                        '</button>' +
+                        '<input type="file" ' +
+                        'name="ProductImage[]" ' +
+                        'class="file-input d-none" ' +
+                        'accept="image/*" />'
+                        : '') +
 
                     '<input type="hidden" value="' + item.ImagePathName + '" name="ProdImageName[]" />' +
 
                     '</div>' +
-
                     '</td>';
-
 
                 // Product Name
                 row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
@@ -170,6 +170,15 @@
                     '</textarea>' +
                     '</td>';
 
+                //Type
+                row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
+                    '<input  name="Type[]"  readonly="true" ' +
+                    'class="form-control typ" ' +
+                    'value="' + item.ProductType + '" ' +
+                    'style="border-radius: 8px; height: 42px; min-width: 20px;" />' +
+                 '</td>';
+
+
                 //Size
                 row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">';
                 row += '<select name="Size[]" class="form-control size readonly-select" ' +
@@ -181,14 +190,19 @@
                 row += '</td>';
 
 
-                //Qty
+                // Qty
                 row += '<td style="border: 1px solid #e3e6f0; padding: 8px;">' +
-                    '<input  name="Qty[]"  readonly="true" ' +
+                    '<input type="number" ' +
+                    'name="Qty[]" ' +
                     'class="form-control qty" ' +
-                    'value="' + item.Qty + '" ' +
+                    'value="' + (item.Qty > 0 ? item.Qty : 1) + '" ' +
+                    'min="1" ' +
+                    'onkeypress="return event.charCode >= 48 && event.charCode <= 57" ' +
+                    'oninput="if(this.value==0) this.value=1;" ' +
+                    'onblur="if(this.value==\'\' || parseInt(this.value)<=0) this.value=1;" ' +
+                    'onchange="updateSummary()"'+
                     'style="border-radius: 8px; height: 42px; min-width: 20px;" />' +
                     '</td>';
-
 
 
                 row += '<input type="hidden" name="rowid[]" class="rowid" value="' + item.ID + '" />';
@@ -207,7 +221,6 @@
             $('#summaryProducts').text(totalProducts);
             $('#summaryQty').text(totalQty);
         }
-
 
         $(document).on('mousedown', '.readonly-select', function (e) {
             e.preventDefault();
@@ -256,6 +269,7 @@
 
                     if (response.d === "Success") {
                         row.remove();
+                        updateSummary();
                     }
                     else {
                         alert(response.d);
@@ -267,6 +281,24 @@
                 }
             });
         });
+
+        function updateSummary() {
+
+            var totalProducts = 0;
+            var totalQty = 0;
+
+            $('#tblRawMaterial tbody tr').each(function () {
+
+                totalProducts++;
+
+                var qty = parseInt($(this).find('.qty').val()) || 1;
+                totalQty += qty;
+            });
+
+            $('#productCount').text(totalProducts);
+            $('#summaryProducts').text(totalProducts);
+            $('#summaryQty').text(totalQty);
+        }
     </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
@@ -379,9 +411,10 @@
                                                 <th width="140">Image</th>
                                                 <th>Product</th>
                                                 <th>Description</th>
-                                                <th width="50">Size</th>
-                                                <th width="40">Qty</th>
-                                                <th width="50">Action</th>
+                                                <th width="50">Type</th>
+                                                <th width="30">Size</th>
+                                                <th width="30">Qty</th>
+                                                <th width="30">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>

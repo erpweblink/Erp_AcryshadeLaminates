@@ -79,13 +79,14 @@
         });
 
         function ToggleConfirmButton() {
-
-            var file = document.getElementById("<%= fuLRCopy.ClientID %>");
+            var lrFile = document.getElementById("<%= fuLRCopy.ClientID %>");
+            var invoiceFile = document.getElementById("<%= fuINCopy.ClientID %>");
             var btn = document.getElementById("<%= btnConfirmDelivery.ClientID %>");
 
-            btn.disabled = (file.value == "");
-        }
+            var hasFile = lrFile.files.length > 0 || invoiceFile.files.length > 0;
 
+            btn.disabled = !hasFile;
+        }
     </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
@@ -190,17 +191,25 @@
                                         <asp:Label ID="lblWorkOrderDate" runat="server" Text='<%#Eval("WorkOrderDate")%>'></asp:Label>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Attachment" ItemStyle-HorizontalAlign="Center">
+                                <asp:TemplateField HeaderText="LR Attachment" ItemStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
-                                        <asp:LinkButton ID="btn_View_aattach" runat="server" CommandName="RowPO" CommandArgument='<%# Eval("AttachmentPath") %>'
-                                            ForeColor='<%# string.IsNullOrEmpty(Convert.ToString(Eval("AttachmentPath"))) ? System.Drawing.Color.Red : System.Drawing.Color.FromArgb(13,110,253) %>'
-                                            Enabled='<%# string.IsNullOrEmpty(Convert.ToString(Eval("AttachmentPath"))) ? false:true %>'
+                                        <asp:LinkButton ID="btn_View_aattach" runat="server" CommandName="RowPO" CommandArgument='<%# Eval("AttachmentLR") %>'
+                                            ForeColor='<%# string.IsNullOrEmpty(Convert.ToString(Eval("AttachmentLR"))) ? System.Drawing.Color.Red : System.Drawing.Color.FromArgb(13,110,253) %>'
+                                            Enabled='<%# string.IsNullOrEmpty(Convert.ToString(Eval("AttachmentLR"))) ? false:true %>'
+                                            ToolTip="Open File"><i class="bi-file-earmark-medical"  style="font-size:26px;"></i></asp:LinkButton>
+                                    </ItemTemplate>
+                                </asp:TemplateField>
+                                <asp:TemplateField HeaderText="Invoice Attachment" ItemStyle-HorizontalAlign="Center">
+                                    <ItemTemplate>
+                                        <asp:LinkButton ID="btn_View_IN_aattach" runat="server" CommandName="RowPO" CommandArgument='<%# Eval("InvoiceAttached") %>'
+                                            ForeColor='<%# string.IsNullOrEmpty(Convert.ToString(Eval("InvoiceAttached"))) ? System.Drawing.Color.Red : System.Drawing.Color.FromArgb(13,110,253) %>'
+                                            Enabled='<%# string.IsNullOrEmpty(Convert.ToString(Eval("InvoiceAttached"))) ? false:true %>'
                                             ToolTip="Open File"><i class="bi-file-earmark-medical"  style="font-size:26px;"></i></asp:LinkButton>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                                 <asp:TemplateField HeaderText="Status" ItemStyle-HorizontalAlign="Center" HeaderStyle-Width="160px">
                                     <ItemTemplate>
-                                        <asp:LinkButton ID="lblVal" runat="server" 
+                                        <asp:LinkButton ID="lblVal" runat="server"
                                             Visible='<%# string.IsNullOrWhiteSpace(Eval("IsAllCompleted").ToString()) ? true : true %>'
                                             Text='<%#
                                                     Eval("IsAllCompleted").ToString() == "True" ? "Delivered" :
@@ -216,7 +225,7 @@
                                                 %>'
                                             Font-Bold="true"
                                             CommandName="UpdateStatus"
-                                            CommandArgument='<%# Eval("ID") + "," + Eval("IsProductionCompleted") + "," + Eval("IsDispatched") %>'>
+                                            CommandArgument='<%# Eval("ID") + "," + Eval("IsProductionCompleted") + "," + Eval("IsDispatched") + "," + Eval("IsAllCompleted") %>'>
                                        </asp:LinkButton>
                                     </ItemTemplate>
                                 </asp:TemplateField>
@@ -239,8 +248,13 @@
                             <asp:HiddenField ID="hfOrderId" runat="server" />
 
                             <div class="mb-3">
-                                <label style="color: whitesmoke">LR Copy<span style="color: red">*</span></label>
+                                <label style="color: whitesmoke">LR Copy <span style="color: red">*</span></label>
                                 <asp:FileUpload ID="fuLRCopy" runat="server" CssClass="form-control" onchange="ToggleConfirmButton();" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label style="color: whitesmoke">Invoice Copy<span style="color: red">*</span></label>
+                                <asp:FileUpload ID="fuINCopy" runat="server" CssClass="form-control" onchange="ToggleConfirmButton();" />
                             </div>
 
                             <div class="mb-3">

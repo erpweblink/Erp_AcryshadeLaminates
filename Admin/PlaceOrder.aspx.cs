@@ -38,7 +38,6 @@ public partial class PlaceOrder : System.Web.UI.Page
         }
     }
 
-
     [WebMethod]
     public static string GetCartData()
     {
