@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.Web;
 
 
 public partial class ProfilePage : System.Web.UI.Page
@@ -95,11 +96,12 @@ public partial class ProfilePage : System.Web.UI.Page
 
         using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
         {
-            string query = "SELECT COUNT(*) FROM tbl_UserMaster WHERE EmailId=@Email";
+            string query = "SELECT COUNT(*) FROM tbl_UserMaster WHERE EmailId=@Email AND ID != @ID";
 
             using (SqlCommand cmd = new SqlCommand(query, con))
             {
                 cmd.Parameters.AddWithValue("@Email", email);
+                cmd.Parameters.AddWithValue("@ID", HttpContext.Current.Session["ID"].ToString());
 
                 con.Open();
 
