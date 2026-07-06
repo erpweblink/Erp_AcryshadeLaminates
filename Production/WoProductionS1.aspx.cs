@@ -122,7 +122,8 @@ public partial class WoProductionS1 : System.Web.UI.Page
 
         return new
         {
-            IsActive = "Success"
+            IsActive = "Success",
+            Status = isActive
         };
     }
 
@@ -613,12 +614,20 @@ public partial class WoProductionS1 : System.Web.UI.Page
                 }
                 else
                 {
-                    string updateHeaderQuery = @"UPDATE tbl_MachineProductionHDR SET S1Status = 'Partially Completed' 
+                    string updateHeaderQuery = @"UPDATE tbl_MachineProductionHDR SET S1Status = @S1Status 
                     WHERE WorkOrderID =  @DetailedId";
 
                     using (SqlCommand cmupdateHeaderQueryd = new SqlCommand(updateHeaderQuery, con))
                     {
                         cmupdateHeaderQueryd.Parameters.AddWithValue("@DetailedId", workOrderId);
+                        if (totalCompletedQty == 0)
+                        {
+                            cmupdateHeaderQueryd.Parameters.AddWithValue("@S1Status", "Machine Allocated");
+                        }
+                        else
+                        {
+                            cmupdateHeaderQueryd.Parameters.AddWithValue("@S1Status", "Partially Completed");
+                        }
                         cmupdateHeaderQueryd.ExecuteNonQuery();
                     }
                 }

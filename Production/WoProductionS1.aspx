@@ -310,6 +310,10 @@
                 return;
             }
 
+            if (isActive) {
+                reason = "";                 // IMPORTANT
+                $("#txtReason").val("");
+            }
             updateMachineUI(isActive); 
 
             saveMachineStatus(isActive, reason);
@@ -323,7 +327,6 @@
                     .removeClass("bg-danger")
                     .addClass("bg-success")
                     .text("Machine Running");
-
             }
             else {
 
@@ -381,9 +384,17 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function (response) {
+                    
+                    var result = response.d;
 
-                    if (response.d.IsActive !== "Success") {
+                    if (result.IsActive === "Success") {
+
+                        isMachineActive = result.Status; // true/false
+
                         alert("Machine Status Updated successfully..");
+                    }
+                    else {
+                        alert("Failed to update machine status");
                     }
                 },
                 error: function () {
@@ -401,11 +412,11 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function (response) {
-                    debugger;
+                    
                     var rows = JSON.parse(response.d);
                     AssignWorkOrders = [];
                     var grouped = {};
-                    debugger;
+                    
                     $.each(rows, function (i, row) {
                         if (!grouped[row.ProductionID]) {
                             grouped[row.ProductionID] = {

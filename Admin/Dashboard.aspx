@@ -434,7 +434,7 @@
                                 <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
                             </div>
 
-                            <div class="modal-body">
+                            <div class="modal-body" style="overflow-y: auto;height: 483px;">
                                 <div class="table-responsive">
                                     <table class="table table-bordered table-striped" id="callMeetingTable">
                                     </table>

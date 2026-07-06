@@ -340,7 +340,8 @@
                             "bg-success";
 
                 var OTcap = parseFloat(m.MachineLoad) - parseFloat(m.MachineCapacity);
-                var perHourQty = parseFloat(m.MachinePerHRQty);   
+                OTcap = OTcap > 0 ? OTcap : 0;
+                var perHourQty = parseFloat(m.MachinePerHRQty);
                 // Extra hours required
                 var extraHours = OTcap / perHourQty;
 
@@ -540,12 +541,13 @@
             html += "<th>Total Qty</th>";
             html += "<th>Balance</th>";
             html += "<th>Status</th>";
+            html += "<th>Reschedule</th>";
             html += "</tr>";
             html += "</thead>";
 
             html += "<tbody>";
             $.each(todaysWorkOrders, function (i, wo) {
-                var isLocked = (wo.status === "Work Started" || wo.status === "Partially Completed");
+                var isLocked = (wo.status === "Work Started" || wo.status === "Partially Completed" || wo.status === "Completed");
 
                 var badges = wo.balanceQty;
                 var badgeHtml = "";
@@ -587,6 +589,16 @@
                 html += "<td style='font-weight:bold;color:" + statusColor + "'>" +
                     wo.status +
                     "</td>";
+                html += "<td>"
+                    + "<button type='button' "
+                    + "title='Remove From Today' "
+                    + "onclick='rescheduleWO(" + wo.woId + ")' "
+                    + (isLocked ? "disabled class='btn btn-danger' " : "class='btn btn-warning' ")
+                    + ">"
+                    + "<i class='bi bi-calendar4-event " + (isLocked ? "text-white" : "") + "'></i>"
+                    + "</button>"
+                    + "</td>";
+
                 html += "</tr>";
 
                 html += "<tr id='detailRow_" + wo.woId + "' style='display:none'>";
@@ -601,6 +613,29 @@
 
             $("#woContainer").html(html);
             enableDragDrop();
+        }
+
+        function rescheduleWO(id) {
+            if (!confirm("Are you sure you want to reschedule this Work Order?")) {
+                return; // stop if user clicks Cancel
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "AssignWorkOrder.aspx/ReScheduledWO",
+                data: JSON.stringify({ id: id }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+
+                    alert("Work Order Removed Successfully From Today's List");
+                    window.location.href = window.location.href;
+                },
+                error: function () {
+                    alert("Error checking available capacity.");
+                    chk.checked = false;
+                }
+            });
         }
 
         function toggleDetails(id) {

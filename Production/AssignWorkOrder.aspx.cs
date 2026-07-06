@@ -122,6 +122,59 @@ public partial class AssignWorkOrder : System.Web.UI.Page
     }
 
     [WebMethod]
+    public static string ReScheduledWO(string id)
+    {        
+        try
+        {
+          
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString))
+            {
+                con.Open();
+
+                string query = @"UPDATE tbl_WorkOrderHDR SET ScheduledDate=NULL WHERE ID = @ID";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.ExecuteNonQuery();
+
+                    string querys = @"
+                                        DELETE A
+                                        FROM tbl_machineproductionallocation A
+                                        INNER JOIN tbl_machineproductiondtls D 
+                                            ON A.ProductDtlID = D.ID
+                                        INNER JOIN tbl_machineproductionhdr H 
+                                            ON D.HeaderID = H.ID
+                                        WHERE H.WorkOrderID = @WorkOrderID;
+                                       
+                                        DELETE D
+                                        FROM tbl_machineproductiondtls D
+                                        INNER JOIN tbl_machineproductionhdr H 
+                                            ON D.HeaderID = H.ID
+                                        WHERE H.WorkOrderID = @WorkOrderID;
+
+
+                                        DELETE FROM tbl_machineproductionhdr
+                                        WHERE WorkOrderID = @WorkOrderID;";
+
+                    using (SqlCommand cmds = new SqlCommand(querys, con))
+                    {
+                        cmds.Parameters.AddWithValue("@WorkOrderID", id);
+                        cmds.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // log error if needed
+            throw new Exception("Error fetching scheduled quantity: " + ex.Message);
+        }
+
+        return "Success";
+    }
+
+    [WebMethod]
     public static string SetScheduledDates(object[] list)
     {
         try

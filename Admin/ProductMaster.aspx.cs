@@ -132,27 +132,54 @@ public partial class Admin_ProductMaster : System.Web.UI.Page
                             {
                                 using (Graphics g = Graphics.FromImage(bitmap))
                                 {
-                                    // smooth rendering
                                     g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                                    g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+                                    g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                                    g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver;
 
-                                    string watermarkText = "ACRYSHAPE LAMINATED";
+                                    string logoPath = Server.MapPath("~/Content/assets/images/CompanyLogo/WhiteLogo.png");
 
-                                    Font font = new Font("Arial", 18, FontStyle.Bold);
-                                    SolidBrush brush = new SolidBrush(Color.FromArgb(80, 255, 255, 255)); // transparent white
-
-                                    SizeF textSize = g.MeasureString(watermarkText, font);
-
-                                    // diagonal repeat watermark
-                                    for (int x = -bitmap.Width; x < bitmap.Width; x += 250)
+                                    using (Image watermark = Image.FromFile(logoPath))
+                                    using (ImageAttributes imageAttributes = new ImageAttributes())
                                     {
-                                        for (int y = -bitmap.Height; y < bitmap.Height; y += 150)
+                                        // Opacity (0.0 - 1.0)
+                                        float opacity = 0.4f;   // 8%
+
+                                        ColorMatrix matrix = new ColorMatrix();
+                                        matrix.Matrix33 = opacity;
+
+                                        imageAttributes.SetColorMatrix(
+                                            matrix,
+                                            ColorMatrixFlag.Default,
+                                            ColorAdjustType.Bitmap);
+
+                                        int tileWidth = 450;
+                                        int tileHeight = 450;
+
+                                        // Rotate watermark like your sample
+                                        g.TranslateTransform(bitmap.Width / 3f, bitmap.Height / 3f);
+                                        g.RotateTransform(-20f);
+                                        g.TranslateTransform(-bitmap.Width / 3f, -bitmap.Height / 3f);
+
+                                        for (int y = -bitmap.Height; y < bitmap.Height * 2; y += tileHeight)
                                         {
-                                            g.TranslateTransform(x, y);
-                                            g.RotateTransform(-30);
-                                            g.DrawString(watermarkText, font, brush, 0, 0);
-                                            g.ResetTransform();
+                                            for (int x = -bitmap.Width; x < bitmap.Width * 2; x += tileWidth)
+                                            {
+                                                Rectangle dest = new Rectangle(x, y, 350, 180);
+
+                                                g.DrawImage(
+                                                    watermark,
+                                                    dest,
+                                                    0,
+                                                    0,
+                                                    watermark.Width,
+                                                    watermark.Height,
+                                                    GraphicsUnit.Pixel,
+                                                    imageAttributes);
+                                            }
                                         }
+
+                                        g.ResetTransform();
                                     }
                                 }
 
@@ -162,13 +189,12 @@ public partial class Admin_ProductMaster : System.Web.UI.Page
                                     format = ImageFormat.Png;
 
                                 var codec = ImageCodecInfo.GetImageDecoders()
-                                            .FirstOrDefault(c => c.FormatID == format.Guid);
+                                    .FirstOrDefault(c => c.FormatID == format.Guid);
 
                                 var encParams = new EncoderParameters(1);
                                 encParams.Param[0] = new EncoderParameter(
                                     System.Drawing.Imaging.Encoder.Quality,
-                                    quality
-                                );
+                                    quality);
 
                                 bitmap.Save(fullPath, codec, encParams);
                             }
@@ -226,7 +252,7 @@ public partial class Admin_ProductMaster : System.Web.UI.Page
         catch (Exception)
         {
             throw;
-        }     
+        }
     }
 
     protected void LoadData(string ID)
@@ -246,7 +272,7 @@ public partial class Admin_ProductMaster : System.Web.UI.Page
             ddlSize.SelectedValue = dt.Rows[0]["Size"].ToString();
             txtpartname.Text = dt.Rows[0]["PartName"].ToString();
             txtpartno.Text = dt.Rows[0]["PartNo"].ToString();
-           
+
             btnsave.Text = "Update";
         }
     }
