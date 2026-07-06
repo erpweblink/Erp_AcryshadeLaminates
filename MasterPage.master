@@ -297,6 +297,7 @@
                                 <span id="spnUserName" runat="server" class="profile-name d-none d-sm-inline">Admin</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="Admin/ProfilePage.aspx">My Profile</a></li>
                                 <li><a class="dropdown-item" href="../Login.aspx">Sign out</a></li>
                             </ul>
                         </div>
